@@ -1,4 +1,4 @@
-// https://www.luogu.com.cn/problem/P2842
+// https://www.luogu.com.cn/problem/P2840
 #include "../template.cpp"
 
 void init()
@@ -14,10 +14,10 @@ void solve()
     cin >> arr;
     sort(all(arr));
 
-    vi dp(w + 1, iINF); // dp[i] 表示凑够 i 价值的最少纸币数
-    dp[0] = 0;
+    vi dp(w + 1);                                   // dp[i] 表示凑够 i 价值的方案数
+    dp[0] = 1;                                      // 凑够 0 价值只有一种方案，就是不选任何纸币
     for (int i = 1; i <= w; ++i)                    // 枚举所有可能的总价值 i
         for (int j = 0; j < n && i >= arr[j]; ++j)  // 考虑最后一张可能的面值
-            dp[i] = min(dp[i], dp[i - arr[j]] + 1); // 状态转移
+            dp[i] = (dp[i] + dp[i - arr[j]]) % MOD; // 状态转移
     cout << dp[w];
 }
