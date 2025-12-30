@@ -30,17 +30,17 @@
 #define pf push_front
 #define qf pop_front
 #define endl '\n'
-#define no                    \
-    do                        \
-    {                         \
-        cout << "No" << endl; \
-        return;               \
+#define no                                                                                                             \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        cout << "No" << endl;                                                                                          \
+        return;                                                                                                        \
     } while (0)
-#define yes                    \
-    do                         \
-    {                          \
-        cout << "Yes" << endl; \
-        return;                \
+#define yes                                                                                                            \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        cout << "Yes" << endl;                                                                                         \
+        return;                                                                                                        \
     } while (0)
 
 using namespace std;
@@ -63,21 +63,18 @@ const ll lINF = 0x3f3f3f3f3f3f3f3f;
 const int mod = 998244353;
 const ll MOD = 1000000007;
 
-template <typename T1, typename T2>
-istream &operator>>(istream &in, pair<T1, T2> &obj)
+template <typename T1, typename T2> istream &operator>>(istream &in, pair<T1, T2> &obj)
 {
     in >> obj.first >> obj.second;
     return in;
 }
-template <typename T>
-istream &operator>>(istream &in, vector<T> &obj)
+template <typename T> istream &operator>>(istream &in, vector<T> &obj)
 {
     for (auto &p : obj)
         in >> p;
     return in;
 }
-template <typename T>
-ostream &operator<<(ostream &out, const set<T> &obj)
+template <typename T> ostream &operator<<(ostream &out, const set<T> &obj)
 {
     out << "set(";
     for (auto it = obj.begin(); it != obj.end(); it++)
@@ -85,8 +82,7 @@ ostream &operator<<(ostream &out, const set<T> &obj)
     out << ")";
     return out;
 }
-template <typename T1, typename T2>
-ostream &operator<<(ostream &out, const map<T1, T2> &obj)
+template <typename T1, typename T2> ostream &operator<<(ostream &out, const map<T1, T2> &obj)
 {
     out << "map(";
     for (auto it = obj.begin(); it != obj.end(); it++)
@@ -94,14 +90,12 @@ ostream &operator<<(ostream &out, const map<T1, T2> &obj)
     out << ")";
     return out;
 }
-template <typename T1, typename T2>
-ostream &operator<<(ostream &out, const pair<T1, T2> &obj)
+template <typename T1, typename T2> ostream &operator<<(ostream &out, const pair<T1, T2> &obj)
 {
     out << "<" << obj.first << ", " << obj.second << ">";
     return out;
 }
-template <typename T>
-ostream &operator<<(ostream &out, const vector<T> &obj)
+template <typename T> ostream &operator<<(ostream &out, const vector<T> &obj)
 {
     out << "vector(";
     for (auto it = obj.begin(); it != obj.end(); it++)
@@ -114,18 +108,17 @@ ll gcd(ll a, ll b)
     return b ? gcd(b, a % b) : a;
 }
 
-void solve()
-{
-}
+void init();
+void solve();
 
+int t;
 signed main()
 {
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
     cout.tie(nullptr);
 
-    int t = 1;
-    cin >> t;
+    init();
     while (t--)
         solve();
 
