@@ -70,6 +70,9 @@ class AlgorithmBlog {
         // 自动添加标签
         this.addTagsToFiles();
         this.renderFileList();
+        
+        // 默认加载template.cpp文件
+        this.loadDefaultFile();
     }
 
     // 动态扫描目录结构
@@ -277,19 +280,43 @@ class AlgorithmBlog {
         });
 
         // 渲染每个日期组
-        sortedDates.forEach(date => {
+        sortedDates.forEach((date, index) => {
             // 创建日期标题
             const dateHeader = document.createElement('div');
             dateHeader.className = 'date-header';
             dateHeader.innerHTML = `
-                <i class="fas fa-calendar-day"></i>
+                <i class="fas fa-chevron-right"></i>
                 ${date}
             `;
+            
+            // 为所有日期添加点击事件
+            dateHeader.style.cursor = 'pointer';
+            dateHeader.addEventListener('click', () => {
+                const isCollapsed = dateHeader.classList.contains('collapsed');
+                const icon = dateHeader.querySelector('i');
+                
+                if (isCollapsed) {
+                    // 展开
+                    dateFiles.style.display = 'block';
+                    dateHeader.classList.remove('collapsed');
+                    icon.className = 'fas fa-chevron-down';
+                } else {
+                    // 收起
+                    dateFiles.style.display = 'none';
+                    dateHeader.classList.add('collapsed');
+                    icon.className = 'fas fa-chevron-right';
+                }
+            });
+            
             fileList.appendChild(dateHeader);
 
             // 创建该日期下的文件列表
             const dateFiles = document.createElement('div');
             dateFiles.className = 'date-files';
+            
+            // 所有日期都默认收起
+            dateFiles.style.display = 'none';
+            dateHeader.classList.add('collapsed');
             
             // 按文件名分组，让PLUS版本排在后面
             const fileGroups = {};
@@ -538,6 +565,26 @@ class AlgorithmBlog {
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // 默认加载template.cpp文件
+    async loadDefaultFile() {
+        // 查找template.cpp文件
+        const templateFile = this.files.find(file => file.name === 'template.cpp');
+        
+        if (templateFile) {
+            // 延迟一点时间确保DOM已经完全渲染
+            setTimeout(() => {
+                // 模拟点击template.cpp文件
+                const templateFileElement = document.querySelector('.file-item.template-file');
+                if (templateFileElement) {
+                    templateFileElement.click();
+                } else {
+                    // 如果找不到DOM元素，直接调用loadFile方法
+                    this.loadFile(templateFile);
+                }
+            }, 100);
+        }
     }
 
     setupEventListeners() {

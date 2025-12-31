@@ -208,6 +208,18 @@ body {
     font-size: 0.8rem;
 }
 
+/* 收起状态的日期标题 */
+.date-header.collapsed {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    opacity: 0.8;
+}
+
+.date-header.collapsed:hover {
+    opacity: 1;
+    transform: translateX(2px);
+    transition: all 0.2s ease;
+}
+
 /* 火车头header特殊样式 */
 .template-header {
     background: linear-gradient(135deg, #667eea, #764ba2);
