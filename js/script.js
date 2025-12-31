@@ -8,7 +8,6 @@ class AlgorithmBlog {
     async init() {
         await this.loadFileList();
         this.setupEventListeners();
-        this.loadTheme();
     }
 
     async loadFileList() {
@@ -238,11 +237,6 @@ class AlgorithmBlog {
     }
 
     setupEventListeners() {
-        // 主题切换
-        document.getElementById('toggleTheme').addEventListener('click', () => {
-            this.toggleTheme();
-        });
-
         // 复制代码
         document.getElementById('copyCode').addEventListener('click', () => {
             this.copyCode();
@@ -267,27 +261,7 @@ class AlgorithmBlog {
         });
     }
 
-    toggleTheme() {
-        const html = document.documentElement;
-        const currentTheme = html.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        html.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        
-        const themeIcon = document.querySelector('#toggleTheme i');
-        themeIcon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        
-        this.showToast(`已切换到${newTheme === 'dark' ? '深色' : '浅色'}主题`, 'info');
-    }
-
-    loadTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        
-        const themeIcon = document.querySelector('#toggleTheme i');
-        themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-    }
+    
 
     async copyCode() {
         const codeDisplay = document.getElementById('codeDisplay');
