@@ -421,9 +421,24 @@ class AlgorithmBlog {
     }
 
     async copyLink(url) {
+        const copyBtn = document.querySelector('.copy-link-btn');
+        const originalIcon = copyBtn.innerHTML;
+        
         try {
             await navigator.clipboard.writeText(url);
+            
+            // 添加成功样式
+            copyBtn.classList.add('copied');
+            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+            
             this.showToast('题目链接已复制到剪贴板', 'success');
+            
+            // 2秒后恢复原始样式
+            setTimeout(() => {
+                copyBtn.classList.remove('copied');
+                copyBtn.innerHTML = originalIcon;
+            }, 2000);
+            
         } catch (error) {
             // 降级方案
             const textArea = document.createElement('textarea');
@@ -432,7 +447,18 @@ class AlgorithmBlog {
             textArea.select();
             document.execCommand('copy');
             document.body.removeChild(textArea);
+            
+            // 添加成功样式
+            copyBtn.classList.add('copied');
+            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+            
             this.showToast('题目链接已复制到剪贴板', 'success');
+            
+            // 2秒后恢复原始样式
+            setTimeout(() => {
+                copyBtn.classList.remove('copied');
+                copyBtn.innerHTML = originalIcon;
+            }, 2000);
         }
     }
 
