@@ -291,36 +291,63 @@ class AlgorithmBlog {
             const dateFiles = document.createElement('div');
             dateFiles.className = 'date-files';
             
+            // 按文件名分组，让PLUS版本排在后面
+            const fileGroups = {};
             regularFiles[date].forEach(file => {
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
-                
-                // 检查文件类型和标签
-                const hasDpTag = file.tag === 'dp';
-                const hasPlusTag = file.plus === true;
-                
-                let iconClass = 'fa-file-code';
-                let specialBadges = [];
-                
-                if (hasDpTag) {
-                    specialBadges.push('<span class="dp-badge">DP</span>');
+                const baseName = this.getDisplayName(file.name);
+                if (!fileGroups[baseName]) {
+                    fileGroups[baseName] = [];
                 }
+                fileGroups[baseName].push(file);
+            });
+            
+            // 对每个分组内的文件进行排序，PLUS版本排在后面
+            Object.keys(fileGroups).forEach(baseName => {
+                const group = fileGroups[baseName];
+                group.sort((a, b) => {
+                    // 确保PLUS标签正确识别
+                    const aIsPlus = a.name.includes('-优化空间') || a.name.includes('-优化');
+                    const bIsPlus = b.name.includes('-优化空间') || b.name.includes('-优化');
+                    
+                    // PLUS版本排在后面
+                    if (aIsPlus && !bIsPlus) return 1;
+                    if (!aIsPlus && bIsPlus) return -1;
+                    return 0;
+                });
                 
-                if (hasPlusTag) {
-                    iconClass = 'fa-rocket';
-                    specialBadges.push('<span class="optimized-badge">plus</span>');
-                }
-                
-                // 使用处理后的显示名称
-                const displayName = this.getDisplayName(file.name);
-                
-                fileItem.innerHTML = `
-                    <i class="fas ${iconClass} file-icon"></i>
-                    ${displayName}
-                    ${specialBadges.join('')}
-                `;
-                fileItem.addEventListener('click', () => this.loadFile(file));
-                dateFiles.appendChild(fileItem);
+                // 渲染分组内的文件
+                group.forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    
+                    // 检查文件类型和标签
+                    const hasDpTag = file.tag === 'dp';
+                    // 统一使用文件名判断PLUS标签
+                    const hasPlusTag = file.name.includes('-优化空间') || file.name.includes('-优化');
+                    
+                    let iconClass = 'fa-file-code';
+                    let specialBadges = [];
+                    
+                    if (hasDpTag) {
+                        specialBadges.push('<span class="dp-badge">DP</span>');
+                    }
+                    
+                    if (hasPlusTag) {
+                        iconClass = 'fa-rocket';
+                        specialBadges.push('<span class="optimized-badge">plus</span>');
+                    }
+                    
+                    // 使用处理后的显示名称
+                    const displayName = this.getDisplayName(file.name);
+                    
+                    fileItem.innerHTML = `
+                        <i class="fas ${iconClass} file-icon"></i>
+                        ${displayName}
+                        ${specialBadges.join('')}
+                    `;
+                    fileItem.addEventListener('click', () => this.loadFile(file));
+                    dateFiles.appendChild(fileItem);
+                });
             });
             
             fileList.appendChild(dateFiles);
