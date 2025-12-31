@@ -1,5 +1,5 @@
 // https://www.luogu.com.cn/problem/P2834
-#include "../template.cpp"
+#include "../../template.cpp"
 
 void init()
 {
