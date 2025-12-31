@@ -21,7 +21,7 @@ void solve()
                 mp[j].push_back(i);
         }
 
-    int ans = 0;
+    int ans = 0;   // 最优解的下标
     vi dp = arr;   // dp[i] 表示从第i个格子出发能得到的最大分数, 最少arr[i]
     vi pre(n, -1); // pre[i] 表示从第i个格子出发能得到的最大分数的前一个格子
 
