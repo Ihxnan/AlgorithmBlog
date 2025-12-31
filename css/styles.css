@@ -174,8 +174,89 @@ body {
     font-size: 0.8rem;
 }
 
+/* 火车头header特殊样式 */
+.template-header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.2);
+}
+
+.template-header i {
+    font-size: 1rem;
+    color: #ffd700;
+}
+
 .date-files {
     margin-left: 0.5rem;
+}
+
+/* DP tag badge */
+.dp-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(72, 187, 120, 0.3);
+}
+
+/* Template file badge */
+.template-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+/* Template file special styling */
+.template-file {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    position: relative;
+}
+
+.template-file::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 2px 0 0 2px;
+}
+
+.template-file:hover {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    transform: translateX(4px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+}
+
+.template-file .file-icon {
+    color: var(--primary-color);
+    opacity: 1;
+}
+
+.template-file:hover .file-icon {
+    color: white;
 }
 
 /* Optimized version badge */

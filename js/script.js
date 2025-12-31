@@ -21,31 +21,35 @@ class AlgorithmBlog {
             } else {
                 // 如果API不可用，使用静态文件列表
                 this.files = [
+                                // 模板文件
+                                { name: 'template.cpp', path: 'template.cpp', date: null, isTemplate: true, category: '火车头' },
                                 // 2025-12-30 的题目
-                                { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30' },
-                                { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30' },
-                                { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30' },
-                                { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30' },
+                                { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30', tag: 'dp' },
+                                { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30', tag: 'dp' },
+                                { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30', tag: 'dp' },
+                                { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30', tag: 'dp' },
                                 // 2025-12-31 的题目
-                                { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31' },
-                                { name: 'P1048采药_优化空间.cpp', path: 'dp/2025-12-31/P1048采药_优化空间.cpp', date: '2025-12-31' },
-                                { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31' },
-                                { name: 'P2834纸币问题3_优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3_优化空间.cpp', date: '2025-12-31' }
+                                { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31', tag: 'dp' },
+                                { name: 'P1048采药_优化空间.cpp', path: 'dp/2025-12-31/P1048采药_优化空间.cpp', date: '2025-12-31', tag: 'dp' },
+                                { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31', tag: 'dp' },
+                                { name: 'P2834纸币问题3_优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3_优化空间.cpp', date: '2025-12-31', tag: 'dp' }
                             ];                this.renderFileList();
             }
         } catch (error) {
             console.log('使用静态文件列表');
             this.files = [
+                // 模板文件
+                { name: 'template.cpp', path: 'template.cpp', date: null, isTemplate: true, category: '火车头' },
                 // 2025-12-30 的题目
-                { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30' },
-                { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30' },
-                { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30' },
-                { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30' },
+                { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30', tag: 'dp' },
+                { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30', tag: 'dp' },
+                { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30', tag: 'dp' },
+                { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30', tag: 'dp' },
                 // 2025-12-31 的题目
-                { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31' },
-                { name: 'P1048采药_优化空间.cpp', path: 'dp/2025-12-31/P1048采药_优化空间.cpp', date: '2025-12-31' },
-                { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31' },
-                { name: 'P2834纸币问题3_优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3_优化空间.cpp', date: '2025-12-31' }
+                { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31', tag: 'dp' },
+                { name: 'P1048采药_优化空间.cpp', path: 'dp/2025-12-31/P1048采药_优化空间.cpp', date: '2025-12-31', tag: 'dp' },
+                { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31', tag: 'dp' },
+                { name: 'P2834纸币问题3_优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3_优化空间.cpp', date: '2025-12-31', tag: 'dp' }
             ];
             this.renderFileList();
         }
@@ -55,18 +59,55 @@ class AlgorithmBlog {
         const fileList = document.getElementById('fileList');
         fileList.innerHTML = '';
 
-        // 按日期分组
-        const groupedFiles = {};
+        // 分离模板文件和普通文件
+        const templateFiles = [];
+        const regularFiles = {};
+        
         this.files.forEach(file => {
-            const date = file.date || '未知日期';
-            if (!groupedFiles[date]) {
-                groupedFiles[date] = [];
+            if (file.isTemplate) {
+                templateFiles.push(file);
+            } else {
+                const date = file.date || '未知日期';
+                if (!regularFiles[date]) {
+                    regularFiles[date] = [];
+                }
+                regularFiles[date].push(file);
             }
-            groupedFiles[date].push(file);
         });
 
-        // 按日期排序（最新的在前）
-        const sortedDates = Object.keys(groupedFiles).sort((a, b) => {
+        // 渲染火车头header和文件
+        if (templateFiles.length > 0) {
+            // 创建火车头标题
+            const templateHeader = document.createElement('div');
+            templateHeader.className = 'date-header template-header';
+            templateHeader.innerHTML = `
+                <i class="fas fa-train"></i>
+                header
+            `;
+            fileList.appendChild(templateHeader);
+
+            // 创建火车头文件列表
+            const templateFilesContainer = document.createElement('div');
+            templateFilesContainer.className = 'date-files';
+            
+            templateFiles.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item template-file';
+                
+                fileItem.innerHTML = `
+                    <i class="fas fa-layer-group file-icon"></i>
+                    ${file.name}
+                    <span class="template-badge">火车头</span>
+                `;
+                fileItem.addEventListener('click', () => this.loadFile(file));
+                templateFilesContainer.appendChild(fileItem);
+            });
+            
+            fileList.appendChild(templateFilesContainer);
+        }
+
+        // 按日期排序普通文件
+        const sortedDates = Object.keys(regularFiles).sort((a, b) => {
             return new Date(b) - new Date(a);
         });
 
@@ -85,19 +126,30 @@ class AlgorithmBlog {
             const dateFiles = document.createElement('div');
             dateFiles.className = 'date-files';
             
-            groupedFiles[date].forEach(file => {
+            regularFiles[date].forEach(file => {
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
                 
-                // 检查是否是优化版本
+                // 检查文件类型
                 const isOptimized = file.name.includes('_优化空间');
-                const iconClass = isOptimized ? 'fa-rocket' : 'fa-file-code';
-                const optimizedBadge = isOptimized ? '<span class="optimized-badge">优化版</span>' : '';
+                const hasDpTag = file.tag === 'dp';
+                
+                let iconClass = 'fa-file-code';
+                let specialBadges = [];
+                
+                if (hasDpTag) {
+                    specialBadges.push('<span class="dp-badge">DP</span>');
+                }
+                
+                if (isOptimized) {
+                    iconClass = 'fa-rocket';
+                    specialBadges.push('<span class="optimized-badge">plus</span>');
+                }
                 
                 fileItem.innerHTML = `
                     <i class="fas ${iconClass} file-icon"></i>
                     ${file.name}
-                    ${optimizedBadge}
+                    ${specialBadges.join('')}
                 `;
                 fileItem.addEventListener('click', () => this.loadFile(file));
                 dateFiles.appendChild(fileItem);
@@ -230,7 +282,7 @@ class AlgorithmBlog {
     }
 
     loadTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
+        const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
         
         const themeIcon = document.querySelector('#toggleTheme i');
