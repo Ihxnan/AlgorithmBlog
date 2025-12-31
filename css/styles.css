@@ -342,6 +342,88 @@ body {
     transform: translateY(-2px);
 }
 
+/* Problem Link Container */
+.problem-link-container {
+    margin-bottom: 1rem;
+}
+
+.problem-link {
+    background: linear-gradient(135deg, #667eea20, #764ba220);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.problem-link:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.problem-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+}
+
+.problem-link i {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.problem-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.problem-url {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: var(--transition);
+}
+
+.problem-url:hover {
+    color: var(--primary-color);
+}
+
+.copy-link-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.copy-link-btn:hover {
+    background: var(--secondary-color);
+    transform: scale(1.05);
+}
+
+.copy-link-btn:active {
+    transform: scale(0.95);
+}
+
 /* Code Container */
 .code-container {
     padding: 2rem;
