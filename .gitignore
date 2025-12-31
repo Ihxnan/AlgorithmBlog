@@ -1,6 +1,7 @@
 *.out
 *.exe
 *.json
+*.sh
 
 .vscode
 IFLOW.md
