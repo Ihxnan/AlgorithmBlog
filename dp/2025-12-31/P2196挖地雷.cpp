@@ -8,23 +8,46 @@ void init()
 
 void solve()
 {
-    int t, m;
-    cin >> t >> m;
-    vi weight(m + 1), value(m + 1);
-    for (int i = 1; i <= m; ++i)
-        cin >> weight[i] >> value[i];
-
-    vvi dp(m + 1, vi(t + 1)); // dp[i][j]: 前i个物品在时间j内能获得的最大价值
-
-    // 状态转移方程:
-    // dp[i][j] = max{ dp[i-1][j], dp[i-1][j-weight[i]] + value[i] } (j >= weight[i])
-    for (int i = 1; i <= m; ++i)
-        for (int j = 1; j <= t; ++j)
+    int n;
+    cin >> n;
+    vi arr(n);
+    cin >> arr;
+    vvi mp(n);
+    for (int i = 0; i < n - 1; ++i)
+        for (int j = i + 1, t; j < n; ++j)
         {
-            dp[i][j] = dp[i - 1][j];
-            if (j >= weight[i])
-                dp[i][j] = max(dp[i][j], dp[i - 1][j - weight[i]] + value[i]);
+            cin >> t;
+            if (t)
+                mp[j].push_back(i);
         }
 
-    cout << dp[m][t] << endl;
+    int ans = 0;
+    vi dp = arr;   // dp[i] 表示从第i个格子出发能得到的最大分数, 最少arr[i]
+    vi pre(n, -1); // pre[i] 表示从第i个格子出发能得到的最大分数的前一个格子
+
+    // 状态转移方程:
+    // dp[i] = max{ dp[p] + arr[i] } (p为所有能到达i的格子)
+    for (int i = 1; i < n; ++i)
+    {
+        for (auto &p : mp[i])
+            if (dp[p] + arr[i] > dp[i])
+            {
+                dp[i] = dp[p] + arr[i];
+                pre[i] = p;
+            }
+        if (dp[i] > dp[ans])
+            ans = i;
+    }
+
+    // 求路径
+    int tmp = ans;
+    vi path;
+    while (tmp != -1)
+        path.pb(tmp), tmp = pre[tmp];
+
+    // 输出结果
+    for (auto it = path.rbegin(); it < path.rend(); ++it)
+        cout << *it + 1 << "\n "[it < path.rend()];
+    cout << endl
+         << dp[ans];
 }
