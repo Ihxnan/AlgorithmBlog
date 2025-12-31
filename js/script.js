@@ -12,55 +12,145 @@ class AlgorithmBlog {
 
     async loadFileList() {
         try {
-            // 获取dp目录下的所有.cpp文件
+            // 首先尝试从API获取文件列表
             const response = await fetch('api/files');
             if (response.ok) {
                 this.files = await response.json();
-                // 自动添加标签
-                this.addTagsToFiles();
-                this.renderFileList();
+                console.log('从API获取文件列表成功');
             } else {
-                // 如果API不可用，使用静态文件列表
-                this.files = [
-                                // 模板文件
-                                { name: 'template.cpp', path: 'template.cpp', date: null, isTemplate: true, category: '火车头' },
-                                // 2025-12-30 的题目
-                                { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30' },
-                                { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30' },
-                                { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30' },
-                                { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30' },
-                                // 2025-12-31 的题目
-                                { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31' },
-                                { name: 'P1048采药-优化空间.cpp', path: 'dp/2025-12-31/P1048采药-优化空间.cpp', date: '2025-12-31' },
-                                { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31' },
-                                { name: 'P2834纸币问题3-优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3-优化空间.cpp', date: '2025-12-31' },
-                                { name: 'P2196挖地雷.cpp', path: 'dp/2025-12-31/P2196挖地雷.cpp', date: '2025-12-31' },
-                            ];
-                // 自动添加标签
-                this.addTagsToFiles();
-                this.renderFileList();
+                throw new Error('API不可用');
             }
         } catch (error) {
-            console.log('使用静态文件列表');
-            this.files = [
-                // 模板文件
-                { name: 'template.cpp', path: 'template.cpp', date: null, isTemplate: true, category: '火车头' },
-                // 2025-12-30 的题目
-                { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30' },
-                { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30' },
-                { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30' },
-                { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30' },
-                // 2025-12-31 的题目
-                { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31' },
-                { name: 'P1048采药-优化空间.cpp', path: 'dp/2025-12-31/P1048采药-优化空间.cpp', date: '2025-12-31' },
-                { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31' },
-                { name: 'P2834纸币问题3-优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3-优化空间.cpp', date: '2025-12-31' },
-                                { name: 'P2196挖地雷.cpp', path: 'dp/2025-12-31/P2196挖地雷.cpp', date: '2025-12-31' },
-            ];
-            // 自动添加标签
-            this.addTagsToFiles();
-            this.renderFileList();
+            console.log('API不可用，尝试动态扫描目录结构');
+            try {
+                // 尝试动态扫描目录结构
+                this.files = await this.scanDirectoryStructure();
+                console.log('动态扫描目录成功');
+            } catch (scanError) {
+                console.log('动态扫描失败，使用静态文件列表:', scanError.message);
+                // 如果动态扫描也失败，使用最新的静态文件列表
+                this.files = this.getStaticFileList();
+            }
         }
+        
+        // 自动添加标签
+        this.addTagsToFiles();
+        this.renderFileList();
+    }
+
+    // 动态扫描目录结构
+    async scanDirectoryStructure() {
+        const files = [];
+        
+        // 添加模板文件
+        files.push({
+            name: 'template.cpp',
+            path: 'template.cpp',
+            date: null,
+            isTemplate: true,
+            category: '火车头'
+        });
+
+        try {
+            // 获取dp目录下的所有子目录
+            const dpResponse = await fetch('dp/');
+            if (!dpResponse.ok) {
+                throw new Error('无法访问dp目录');
+            }
+
+            // 解析dp目录页面获取所有日期目录
+            const dpHtmlText = await dpResponse.text();
+            const dateDirs = this.parseDateDirectoriesFromHTML(dpHtmlText);
+            
+            // 如果没有找到日期目录，使用已知的目录作为备选
+            const directoriesToScan = dateDirs.length > 0 ? dateDirs : ['2025-12-30', '2025-12-31'];
+            
+            for (const dateDir of directoriesToScan) {
+                try {
+                    const dateDirResponse = await fetch(`dp/${dateDir}/`);
+                    if (dateDirResponse.ok) {
+                        // 解析目录页面获取文件列表
+                        const htmlText = await dateDirResponse.text();
+                        const cppFiles = this.parseFilesFromDirectoryHTML(htmlText, dateDir);
+                        
+                        cppFiles.forEach(file => {
+                            files.push({
+                                name: file,
+                                path: `dp/${dateDir}/${file}`,
+                                date: dateDir
+                            });
+                        });
+                    }
+                } catch (error) {
+                    console.warn(`无法扫描目录 dp/${dateDir}:`, error.message);
+                }
+            }
+        } catch (error) {
+            console.warn('扫描dp目录失败:', error.message);
+        }
+
+        return files;
+    }
+
+    // 从dp目录HTML页面解析日期目录
+    parseDateDirectoriesFromHTML(htmlText) {
+        const dateDirs = [];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+        
+        // 查找所有链接，过滤出日期目录（格式：YYYY-MM-DD）
+        const links = doc.querySelectorAll('a[href]');
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && href.match(/^\d{4}-\d{2}-\d{2}\/?$/)) {
+                const dirName = href.replace(/\/$/, '');
+                if (!dateDirs.includes(dirName)) {
+                    dateDirs.push(dirName);
+                }
+            }
+        });
+        
+        // 按日期排序（最新的在前）
+        dateDirs.sort((a, b) => new Date(b) - new Date(a));
+        
+        return dateDirs;
+    }
+
+    // 从目录HTML页面解析文件列表
+    parseFilesFromDirectoryHTML(htmlText, dateDir) {
+        const files = [];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+        
+        // 查找所有链接，过滤出.cpp文件
+        const links = doc.querySelectorAll('a[href]');
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && href.endsWith('.cpp') && !href.includes('../')) {
+                files.push(href);
+            }
+        });
+        
+        return files;
+    }
+
+    // 获取最新的静态文件列表（作为备选方案）
+    getStaticFileList() {
+        return [
+            // 模板文件
+            { name: 'template.cpp', path: 'template.cpp', date: null, isTemplate: true, category: '火车头' },
+            // 2025-12-30 的题目
+            { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30' },
+            { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30' },
+            { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30' },
+            { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30' },
+            // 2025-12-31 的题目
+            { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31' },
+            { name: 'P1048采药-优化空间.cpp', path: 'dp/2025-12-31/P1048采药-优化空间.cpp', date: '2025-12-31' },
+            { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31' },
+            { name: 'P2834纸币问题3-优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3-优化空间.cpp', date: '2025-12-31' },
+            { name: 'P2196挖地雷.cpp', path: 'dp/2025-12-31/P2196挖地雷.cpp', date: '2025-12-31' }
+        ];
     }
 
     // 自动为文件添加标签
