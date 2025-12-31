@@ -25,6 +25,36 @@ body {
     color: var(--text-primary);
     line-height: 1.6;
     transition: var(--transition);
+    overflow-x: hidden;
+}
+
+/* 粒子背景样式 */
+.particle-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    opacity: 0.8;
+}
+
+/* 确保内容在粒子背景之上 */
+.container,
+.header,
+.main-content,
+.sidebar,
+.footer {
+    position: relative;
+    z-index: 1;
+}
+
+/* 为粒子背景优化半透明元素 */
+.code-display,
+.file-item,
+.date-header {
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
 }
 
 .container {
