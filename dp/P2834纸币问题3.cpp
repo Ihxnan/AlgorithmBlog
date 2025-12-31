@@ -14,10 +14,15 @@ void solve()
     cin >> arr;
     sort(all(arr));
 
-    vi dp(w + 1);                                   // dp[i] 表示凑够 i 价值的方案数
-    dp[0] = 1;                                      // 凑够 0 价值只有一种方案，就是不选任何纸币
-    for (int i = 1; i <= w; ++i)                    // 枚举所有可能的总价值 i
-        for (int j = 0; j < n && i >= arr[j]; ++j)  // 考虑最后一张可能的面值
-            dp[i] = (dp[i] + dp[i - arr[j]]) % MOD; // 状态转移
-    cout << dp[w];
+    vvi dp(n + 1, vi(w + 1));
+    dp[0][0] = 1;
+    for (int i = 1; i <= n; ++i)
+        for (int j = 0; j <= w; ++j)
+        {
+            dp[i][j] = dp[i - 1][j];
+            if (j >= arr[i - 1])
+                dp[i][j] = (dp[i][j - arr[i - 1]] + dp[i][j]) % MOD;
+        }
+
+    cout << dp[n][w] << endl;
 }
