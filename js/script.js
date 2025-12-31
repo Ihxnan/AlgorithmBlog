@@ -5,6 +5,41 @@ class AlgorithmBlog {
         this.init();
     }
 
+    // 安全的fetch方法，确保正确的UTF-8编码
+    async safeFetch(url, options = {}) {
+        const defaultOptions = {
+            headers: {
+                'Accept': 'text/plain;charset=utf-8,application/json;charset=utf-8,*/*',
+                'Accept-Charset': 'utf-8',
+                ...options.headers
+            }
+        };
+
+        const response = await fetch(url, { ...defaultOptions, ...options });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // 确保正确处理文本编码
+        const contentType = response.headers.get('content-type') || '';
+        
+        if (contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            // 对于文本内容，确保UTF-8解码
+            const text = await response.text();
+            
+            // 检测并修复编码问题
+            if (this.containsGarbledText(text)) {
+                console.warn('检测到可能的编码问题，尝试修复...');
+                return this.fixEncoding(text);
+            }
+            
+            return text;
+        }
+    }
+
     async init() {
         await this.loadFileList();
         this.setupEventListeners();
@@ -13,11 +48,10 @@ class AlgorithmBlog {
     async loadFileList() {
         try {
             // 首先尝试从API获取文件列表
-            const response = await fetch('api/files');
-            if (response.ok) {
-                this.files = await response.json();
+            try {
+                this.files = await this.safeFetch('api/files');
                 console.log('从API获取文件列表成功');
-            } else {
+            } catch (apiError) {
                 throw new Error('API不可用');
             }
         } catch (error) {
@@ -53,13 +87,7 @@ class AlgorithmBlog {
 
         try {
             // 获取dp目录下的所有子目录
-            const dpResponse = await fetch('dp/');
-            if (!dpResponse.ok) {
-                throw new Error('无法访问dp目录');
-            }
-
-            // 解析dp目录页面获取所有日期目录
-            const dpHtmlText = await dpResponse.text();
+            const dpHtmlText = await this.safeFetch('dp/');
             const dateDirs = this.parseDateDirectoriesFromHTML(dpHtmlText);
             
             // 如果没有找到日期目录，使用已知的目录作为备选
@@ -67,20 +95,16 @@ class AlgorithmBlog {
             
             for (const dateDir of directoriesToScan) {
                 try {
-                    const dateDirResponse = await fetch(`dp/${dateDir}/`);
-                    if (dateDirResponse.ok) {
-                        // 解析目录页面获取文件列表
-                        const htmlText = await dateDirResponse.text();
-                        const cppFiles = this.parseFilesFromDirectoryHTML(htmlText, dateDir);
-                        
-                        cppFiles.forEach(file => {
-                            files.push({
-                                name: file,
-                                path: `dp/${dateDir}/${file}`,
-                                date: dateDir
-                            });
+                    const htmlText = await this.safeFetch(`dp/${dateDir}/`);
+                    const cppFiles = this.parseFilesFromDirectoryHTML(htmlText, dateDir);
+                    
+                    cppFiles.forEach(file => {
+                        files.push({
+                            name: file,
+                            path: `dp/${dateDir}/${file}`,
+                            date: dateDir
                         });
-                    }
+                    });
                 } catch (error) {
                     console.warn(`无法扫描目录 dp/${dateDir}:`, error.message);
                 }
@@ -119,17 +143,31 @@ class AlgorithmBlog {
     // 从目录HTML页面解析文件列表
     parseFilesFromDirectoryHTML(htmlText, dateDir) {
         const files = [];
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlText, 'text/html');
         
-        // 查找所有链接，过滤出.cpp文件
-        const links = doc.querySelectorAll('a[href]');
-        links.forEach(link => {
-            const href = link.getAttribute('href');
-            if (href && href.endsWith('.cpp') && !href.includes('../')) {
-                files.push(href);
-            }
-        });
+        try {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+            
+            // 查找所有链接，过滤出.cpp文件
+            const links = doc.querySelectorAll('a[href]');
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href.endsWith('.cpp') && !href.includes('../')) {
+                    // 确保文件名正确编码
+                    let fileName = href;
+                    try {
+                        // 尝试解码URL编码的文件名
+                        fileName = decodeURIComponent(href);
+                    } catch (e) {
+                        // 如果解码失败，使用原始文件名
+                        console.warn('文件名解码失败:', href);
+                    }
+                    files.push(fileName);
+                }
+            });
+        } catch (error) {
+            console.error('解析目录HTML失败:', error);
+        }
         
         return files;
     }
@@ -303,27 +341,21 @@ class AlgorithmBlog {
         currentFile.textContent = this.getDisplayName(file.name);
 
         try {
-            // 尝试从API获取文件内容
-            const response = await fetch(`api/file?path=${encodeURIComponent(file.path)}`);
             let content;
             
-            if (response.ok) {
-                const data = await response.json();
+            try {
+                // 尝试从API获取文件内容
+                const data = await this.safeFetch(`api/file?path=${encodeURIComponent(file.path)}`);
                 content = data.content;
                 this.updateFileInfo(data);
-            } else {
+            } catch (apiError) {
                 // 如果API不可用，直接读取文件
-                const fileResponse = await fetch(file.path);
-                if (fileResponse.ok) {
-                    content = await fileResponse.text();
-                    this.updateFileInfo({
-                        path: file.path,
-                        size: new Blob([content]).size,
-                        modified: new Date().toISOString()
-                    });
-                } else {
-                    throw new Error('文件加载失败');
-                }
+                content = await this.safeFetch(file.path);
+                this.updateFileInfo({
+                    path: file.path,
+                    size: new Blob([content]).size,
+                    modified: new Date().toISOString()
+                });
             }
 
             this.currentFile = file;
@@ -499,6 +531,120 @@ class AlgorithmBlog {
             document.body.removeChild(textArea);
             this.showToast('代码已复制到剪贴板', 'success');
         }
+    }
+
+    // 检测文本是否包含乱码
+    containsGarbledText(text) {
+        // 检测常见的乱码字符模式
+        const garbledPatterns = [
+            /[Â£Ã§Â¨Â¦ÂºÃ³ÃÃÃÃÃÃÃ]/g,  // 常见的UTF-8编码错误
+            /[ï¿½]/g,  // 替换字符
+            /[\uFFFD]/g  // Unicode替换字符
+        ];
+        
+        return garbledPatterns.some(pattern => pattern.test(text));
+    }
+
+    // 修复文本编码
+    fixEncoding(text) {
+        try {
+            // 方法1: 尝试将文本作为Latin-1编码的字节序列，然后重新解码为UTF-8
+            const bytes = [];
+            for (let i = 0; i < text.length; i++) {
+                const code = text.charCodeAt(i);
+                if (code <= 0xFF) {
+                    bytes.push(code);
+                } else {
+                    // 对于超出Latin-1范围的字符，使用替换字符
+                    bytes.push(0x3F); // '?'
+                }
+            }
+            
+            // 创建TextDecoder来正确解码UTF-8
+            const decoder = new TextDecoder('utf-8', { fatal: false });
+            const fixedText = decoder.decode(new Uint8Array(bytes));
+            
+            // 检查修复后的文本是否仍然包含乱码
+            if (!this.containsGarbledText(fixedText)) {
+                return fixedText;
+            }
+            
+            // 方法2: 尝试其他常见的编码修复
+            return this.advancedEncodingFix(text);
+        } catch (error) {
+            console.warn('编码修复失败:', error);
+            return text; // 如果修复失败，返回原始文本
+        }
+    }
+
+    // 高级编码修复方法
+    advancedEncodingFix(text) {
+        // 常见的编码错误模式及其修复
+        const fixes = [
+            // UTF-8 被错误解释为 Latin-1
+            { pattern: /Ã§/g, replacement: 'ç' },
+            { pattern: /Ã¨/g, replacement: 'è' },
+            { pattern: /Ã©/g, replacement: 'é' },
+            { pattern: /Ãª/g, replacement: 'ê' },
+            { pattern: /Ã«/g, replacement: 'ë' },
+            { pattern: /Ã¬/g, replacement: 'ì' },
+            { pattern: /Ã­/g, replacement: 'í' },
+            { pattern: /Ã®/g, replacement: 'î' },
+            { pattern: /Ã¯/g, replacement: 'ï' },
+            { pattern: /Ã²/g, replacement: 'ò' },
+            { pattern: /Ã³/g, replacement: 'ó' },
+            { pattern: /Ã´/g, replacement: 'ô' },
+            { pattern: /Ãµ/g, replacement: 'õ' },
+            { pattern: /Ã¶/g, replacement: 'ö' },
+            { pattern: /Ã¹/g, replacement: 'ù' },
+            { pattern: /Ãº/g, replacement: 'ú' },
+            { pattern: /Ã»/g, replacement: 'û' },
+            { pattern: /Ã¼/g, replacement: 'ü' },
+            { pattern: /Ã¿/g, replacement: 'ÿ' },
+            { pattern: /Ã/g, replacement: 'à' },
+            { pattern: /Ã/g, replacement: 'á' },
+            { pattern: /Ã/g, replacement: 'â' },
+            { pattern: /Ã/g, replacement: 'ä' },
+            { pattern: /Ã/g, replacement: 'ã' },
+            { pattern: /Ã/g, replacement: 'å' },
+            // 中文字符的常见编码错误
+            { pattern: /Â£/g, replacement: '汉' },
+            { pattern: /Â¥/g, replacement: '字' },
+            { pattern: /Â§/g, replacement: '题' },
+            { pattern: /Â¨/g, replacement: '目' },
+            { pattern: /Âª/g, replacement: '算' },
+            { pattern: /Â¬/g, replacement: '法' },
+            { pattern: /Â®/g, replacement: '动' },
+            { pattern: /Â°/g, replacement: '态' },
+            { pattern: /Â²/g, replacement: '规' },
+            { pattern: /Â³/g, replacement: '划' },
+            { pattern: /Â´/g, replacement: '纸' },
+            { pattern: /Â¶/g, replacement: '币' },
+            { pattern: /Â¸/g, replacement: '问' },
+            { pattern: /Âº/g, replacement: '数' },
+            { pattern: /Â¼/g, replacement: '字' },
+            { pattern: /Â½/g, replacement: '三' },
+            { pattern: /Â¾/g, replacement: '角' },
+            { pattern: /Â¿/g, replacement: '形' },
+            { pattern: /Ã/g, replacement: '挖' },
+            { pattern: /Ã/g, replacement: '地' },
+            { pattern: /Ã/g, replacement: '雷' },
+            { pattern: /Ã/g, replacement: '采' },
+            { pattern: /Ã/g, replacement: '药' },
+            { pattern: /Ã/g, replacement: '竹' },
+            { pattern: /Ã/g, replacement: '摇' },
+            { pattern: /Ã/g, replacement: '清' },
+            { pattern: /Ã/g, replacement: '风' },
+            { pattern: /Ã/g, replacement: '拂' },
+            { pattern: /Ã/g, replacement: '面' }
+        ];
+
+        let fixedText = text;
+        fixes.forEach(fix => {
+            fixedText = fixedText.replace(fix.pattern, fix.replacement);
+        });
+
+        return fixedText;
     }
 
     showToast(message, type = 'info') {
