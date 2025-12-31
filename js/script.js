@@ -16,6 +16,8 @@ class AlgorithmBlog {
             const response = await fetch('api/files');
             if (response.ok) {
                 this.files = await response.json();
+                // 自动添加标签
+                this.addTagsToFiles();
                 this.renderFileList();
             } else {
                 // 如果API不可用，使用静态文件列表
@@ -23,16 +25,19 @@ class AlgorithmBlog {
                                 // 模板文件
                                 { name: 'template.cpp', path: 'template.cpp', date: null, isTemplate: true, category: '火车头' },
                                 // 2025-12-30 的题目
-                                { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30', tag: 'dp' },
-                                { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30', tag: 'dp' },
-                                { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30', tag: 'dp' },
-                                { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30', tag: 'dp' },
+                                { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30' },
+                                { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30' },
+                                { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30' },
+                                { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30' },
                                 // 2025-12-31 的题目
-                                { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31', tag: 'dp' },
-                                { name: 'P1048采药_优化空间.cpp', path: 'dp/2025-12-31/P1048采药_优化空间.cpp', date: '2025-12-31', tag: 'dp' },
-                                { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31', tag: 'dp' },
-                                { name: 'P2834纸币问题3_优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3_优化空间.cpp', date: '2025-12-31', tag: 'dp' }
-                            ];                this.renderFileList();
+                                { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31' },
+                                { name: 'P1048采药-优化空间.cpp', path: 'dp/2025-12-31/P1048采药-优化空间.cpp', date: '2025-12-31' },
+                                { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31' },
+                                { name: 'P2834纸币问题3-优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3-优化空间.cpp', date: '2025-12-31' }
+                            ];
+                // 自动添加标签
+                this.addTagsToFiles();
+                this.renderFileList();
             }
         } catch (error) {
             console.log('使用静态文件列表');
@@ -40,18 +45,35 @@ class AlgorithmBlog {
                 // 模板文件
                 { name: 'template.cpp', path: 'template.cpp', date: null, isTemplate: true, category: '火车头' },
                 // 2025-12-30 的题目
-                { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30', tag: 'dp' },
-                { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30', tag: 'dp' },
-                { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30', tag: 'dp' },
-                { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30', tag: 'dp' },
+                { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30' },
+                { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30' },
+                { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30' },
+                { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30' },
                 // 2025-12-31 的题目
-                { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31', tag: 'dp' },
-                { name: 'P1048采药_优化空间.cpp', path: 'dp/2025-12-31/P1048采药_优化空间.cpp', date: '2025-12-31', tag: 'dp' },
-                { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31', tag: 'dp' },
-                { name: 'P2834纸币问题3_优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3_优化空间.cpp', date: '2025-12-31', tag: 'dp' }
+                { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31' },
+                { name: 'P1048采药-优化空间.cpp', path: 'dp/2025-12-31/P1048采药-优化空间.cpp', date: '2025-12-31' },
+                { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31' },
+                { name: 'P2834纸币问题3-优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3-优化空间.cpp', date: '2025-12-31' }
             ];
+            // 自动添加标签
+            this.addTagsToFiles();
             this.renderFileList();
         }
+    }
+
+    // 自动为文件添加标签
+    addTagsToFiles() {
+        this.files.forEach(file => {
+            // 如果不是模板文件，且路径包含dp目录，自动添加dp标签
+            if (!file.isTemplate && file.path && file.path.includes('dp/')) {
+                file.tag = 'dp';
+            }
+            
+            // 如果文件名包含"-优化"，添加plus标签
+            if (file.name && file.name.includes('-优化')) {
+                file.plus = true;
+            }
+        });
     }
 
     renderFileList() {
@@ -129,9 +151,9 @@ class AlgorithmBlog {
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
                 
-                // 检查文件类型
-                const isOptimized = file.name.includes('_优化空间');
+                // 检查文件类型和标签
                 const hasDpTag = file.tag === 'dp';
+                const hasPlusTag = file.plus === true;
                 
                 let iconClass = 'fa-file-code';
                 let specialBadges = [];
@@ -140,7 +162,7 @@ class AlgorithmBlog {
                     specialBadges.push('<span class="dp-badge">DP</span>');
                 }
                 
-                if (isOptimized) {
+                if (hasPlusTag) {
                     iconClass = 'fa-rocket';
                     specialBadges.push('<span class="optimized-badge">plus</span>');
                 }
