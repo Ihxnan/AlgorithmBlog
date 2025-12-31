@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>算法博客 - Algorithm Blog</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">
+                    <i class="fas fa-code"></i>
+                    算法博客
+                </h1>
+                <p class="subtitle">Algorithm Blog - 动态规划专题</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <div class="layout">
+                <aside class="sidebar">
+                    <div class="sidebar-header">
+                        <h2><i class="fas fa-folder"></i> 题目列表</h2>
+                    </div>
+                    <div class="file-list" id="fileList">
+                        <!-- 文件列表将通过JavaScript动态生成 -->
+                    </div>
+                </aside>
+
+                <section class="content">
+                    <div class="content-header">
+                        <h2 id="currentFile">选择一个文件查看代码</h2>
+                        <div class="controls">
+                            <button id="toggleTheme" class="btn btn-secondary">
+                                <i class="fas fa-moon"></i> 切换主题
+                            </button>
+                            <button id="copyCode" class="btn btn-primary">
+                                <i class="fas fa-copy"></i> 复制代码
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="code-container">
+                        <pre><code class="language-cpp" id="codeDisplay">// 请从左侧选择一个C++文件查看代码</code></pre>
+                    </div>
+
+                    <div class="file-info" id="fileInfo" style="display: none;">
+                        <h3><i class="fas fa-info-circle"></i> 文件信息</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="label">文件路径:</span>
+                                <span id="filePath"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">文件大小:</span>
+                                <span id="fileSize"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">修改时间:</span>
+                                <span id="fileModified"></span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Algorithm Blog. Created with <i class="fas fa-heart"></i> by Ihxnan</p>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>
