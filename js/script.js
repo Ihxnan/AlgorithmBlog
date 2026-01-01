@@ -43,6 +43,8 @@ class AlgorithmBlog {
     async init() {
         await this.loadFileList();
         this.setupEventListeners();
+        this.restoreUserPreferences();
+        this.updateStats();
     }
 
     async loadFileList() {
@@ -593,6 +595,28 @@ class AlgorithmBlog {
             this.copyCode();
         });
 
+        // 刷新文件列表
+        document.getElementById('refreshFiles').addEventListener('click', () => {
+            this.refreshFileList();
+        });
+
+        // 切换主题
+        document.getElementById('toggleTheme').addEventListener('click', () => {
+            this.toggleTheme();
+        });
+
+        
+
+        // 切换侧边栏
+        document.getElementById('toggleSidebar').addEventListener('click', () => {
+            this.toggleSidebar();
+        });
+
+        // 下载代码
+        document.getElementById('downloadCode').addEventListener('click', () => {
+            this.downloadCurrentCode();
+        });
+
         // 键盘快捷键
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey || e.metaKey) {
@@ -606,6 +630,14 @@ class AlgorithmBlog {
                     case 'd':
                         e.preventDefault();
                         this.toggleTheme();
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        this.refreshFileList();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        this.downloadCurrentCode();
                         break;
                 }
             }
@@ -745,6 +777,126 @@ class AlgorithmBlog {
         });
 
         return fixedText;
+    }
+
+    // 刷新文件列表
+    async refreshFileList() {
+        const refreshBtn = document.getElementById('refreshFiles');
+        refreshBtn.querySelector('i').classList.add('fa-spin');
+        
+        try {
+            await this.loadFileList();
+            this.showToast('文件列表已刷新', 'success');
+        } catch (error) {
+            this.showToast('刷新失败', 'error');
+        } finally {
+            refreshBtn.querySelector('i').classList.remove('fa-spin');
+        }
+    }
+
+    // 切换主题
+    toggleTheme() {
+        const root = document.documentElement;
+        const currentTheme = root.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        root.setAttribute('data-theme', newTheme);
+        
+        // 更新按钮状态
+        const themeBtn = document.getElementById('toggleTheme');
+        themeBtn.classList.toggle('active', newTheme === 'light');
+        
+        // 保存主题偏好
+        localStorage.setItem('theme', newTheme);
+        
+        this.showToast(`已切换到${newTheme === 'dark' ? '深色' : '浅色'}主题`, 'info');
+    }
+
+    
+
+    // 切换侧边栏
+    toggleSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const sidebarBtn = document.getElementById('toggleSidebar');
+        const isHidden = sidebar.style.display === 'none';
+        
+        sidebar.style.display = isHidden ? 'block' : 'none';
+        sidebarBtn.classList.toggle('active', isHidden);
+        
+        // 保存侧边栏状态
+        localStorage.setItem('sidebarVisible', isHidden);
+        
+        this.showToast(isHidden ? '侧边栏已显示' : '侧边栏已隐藏', 'info');
+    }
+
+    // 下载当前代码
+    downloadCurrentCode() {
+        if (!this.currentFile) {
+            this.showToast('请先选择一个文件', 'warning');
+            return;
+        }
+
+        const codeDisplay = document.getElementById('codeDisplay');
+        const code = codeDisplay.textContent;
+        const fileName = this.currentFile.name;
+        
+        // 创建下载链接
+        const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showToast(`已下载 ${fileName}`, 'success');
+    }
+
+    // 恢复用户偏好设置
+    restoreUserPreferences() {
+        // 恢复主题设置
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        const themeBtn = document.getElementById('toggleTheme');
+        if (themeBtn) {
+            themeBtn.classList.toggle('active', savedTheme === 'light');
+        }
+        
+        
+        
+        // 恢复侧边栏设置
+        const sidebarVisible = localStorage.getItem('sidebarVisible') !== 'false';
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) {
+            sidebar.style.display = sidebarVisible ? 'block' : 'none';
+        }
+        const sidebarBtn = document.getElementById('toggleSidebar');
+        if (sidebarBtn) {
+            sidebarBtn.classList.toggle('active', !sidebarVisible);
+        }
+    }
+
+    // 更新统计信息
+    updateStats() {
+        // 计算题目总数
+        const totalProblems = this.files.filter(file => 
+            file.path.includes('dp/') && file.name.endsWith('.cpp') && !file.name.includes('template')
+        ).length;
+        
+        // 计算优化版本数量
+        const optimizedCount = this.files.filter(file => 
+            file.name.includes('-优化空间')
+        ).length;
+        
+        // 更新DOM
+        document.getElementById('totalProblems').textContent = totalProblems;
+        document.getElementById('optimizedCount').textContent = optimizedCount;
+        
+        // 活跃天数和代码行数是静态值，可以从配置中获取
+        document.getElementById('activeDays').textContent = '3';
+        document.getElementById('totalLines').textContent = '451';
     }
 
     showToast(message, type = 'info') {
