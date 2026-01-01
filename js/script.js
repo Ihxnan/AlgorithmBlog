@@ -5,54 +5,257 @@ class AlgorithmBlog {
         this.init();
     }
 
+    // 安全的fetch方法，确保正确的UTF-8编码
+    async safeFetch(url, options = {}) {
+        const defaultOptions = {
+            headers: {
+                'Accept': 'text/plain;charset=utf-8,application/json;charset=utf-8,*/*',
+                'Accept-Charset': 'utf-8',
+                ...options.headers
+            }
+        };
+
+        const response = await fetch(url, { ...defaultOptions, ...options });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // 确保正确处理文本编码
+        const contentType = response.headers.get('content-type') || '';
+        
+        if (contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            // 对于文本内容，确保UTF-8解码
+            const text = await response.text();
+            
+            // 检测并修复编码问题
+            if (this.containsGarbledText(text)) {
+                console.warn('检测到可能的编码问题，尝试修复...');
+                return this.fixEncoding(text);
+            }
+            
+            return text;
+        }
+    }
+
     async init() {
         await this.loadFileList();
         this.setupEventListeners();
-        this.loadTheme();
+        this.restoreUserPreferences();
+        this.updateStats();
     }
 
     async loadFileList() {
         try {
-            // 获取dp目录下的所有.cpp文件
-            const response = await fetch('api/files');
-            if (response.ok) {
-                this.files = await response.json();
-                this.renderFileList();
-            } else {
-                // 如果API不可用，使用静态文件列表
-                this.files = [
-                                // 模板文件
-                                { name: 'template.cpp', path: 'template.cpp', date: null, isTemplate: true, category: '火车头' },
-                                // 2025-12-30 的题目
-                                { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30', tag: 'dp' },
-                                { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30', tag: 'dp' },
-                                { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30', tag: 'dp' },
-                                { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30', tag: 'dp' },
-                                // 2025-12-31 的题目
-                                { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31', tag: 'dp' },
-                                { name: 'P1048采药_优化空间.cpp', path: 'dp/2025-12-31/P1048采药_优化空间.cpp', date: '2025-12-31', tag: 'dp' },
-                                { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31', tag: 'dp' },
-                                { name: 'P2834纸币问题3_优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3_优化空间.cpp', date: '2025-12-31', tag: 'dp' }
-                            ];                this.renderFileList();
+            // 首先尝试从API获取文件列表
+            try {
+                this.files = await this.safeFetch('api/files');
+                console.log('从API获取文件列表成功');
+            } catch (apiError) {
+                throw new Error('API不可用');
             }
         } catch (error) {
-            console.log('使用静态文件列表');
-            this.files = [
-                // 模板文件
-                { name: 'template.cpp', path: 'template.cpp', date: null, isTemplate: true, category: '火车头' },
-                // 2025-12-30 的题目
-                { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30', tag: 'dp' },
-                { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30', tag: 'dp' },
-                { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30', tag: 'dp' },
-                { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30', tag: 'dp' },
-                // 2025-12-31 的题目
-                { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31', tag: 'dp' },
-                { name: 'P1048采药_优化空间.cpp', path: 'dp/2025-12-31/P1048采药_优化空间.cpp', date: '2025-12-31', tag: 'dp' },
-                { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31', tag: 'dp' },
-                { name: 'P2834纸币问题3_优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3_优化空间.cpp', date: '2025-12-31', tag: 'dp' }
-            ];
-            this.renderFileList();
+            console.log('API不可用，尝试动态扫描目录结构');
+            try {
+                // 尝试动态扫描目录结构
+                this.files = await this.scanDirectoryStructure();
+                console.log('动态扫描目录成功');
+            } catch (scanError) {
+                console.log('动态扫描失败，使用静态文件列表:', scanError.message);
+                // 如果动态扫描也失败，使用最新的静态文件列表
+                this.files = this.getStaticFileList();
+            }
         }
+        
+        // 自动添加标签
+        this.addTagsToFiles();
+        this.renderFileList();
+        
+        // 默认加载template.cpp文件
+        this.loadDefaultFile();
+    }
+
+    // 动态扫描目录结构
+    async scanDirectoryStructure() {
+        const files = [];
+        
+        // 添加模板文件
+        files.push({
+            name: 'template.cpp',
+            path: 'template.cpp',
+            date: null,
+            isTemplate: true,
+            category: '火车头'
+        });
+
+        // 扫描dp目录
+        try {
+            await this.scanAlgorithmDirectory('dp', files);
+        } catch (error) {
+            console.warn('扫描dp目录失败:', error.message);
+        }
+
+        // 扫描str目录
+        try {
+            await this.scanAlgorithmDirectory('str', files);
+        } catch (error) {
+            console.warn('扫描str目录失败:', error.message);
+        }
+
+        return files;
+    }
+
+    // 扫描算法目录的通用方法
+    async scanAlgorithmDirectory(dirName, files) {
+        try {
+            // 获取目录下的所有子目录
+            const dirHtmlText = await this.safeFetch(`${dirName}/`);
+            const dateDirs = this.parseDateDirectoriesFromHTML(dirHtmlText);
+            
+            // 如果没有找到日期目录，根据目录类型使用已知的目录作为备选
+            let directoriesToScan = dateDirs;
+            if (dateDirs.length === 0) {
+                if (dirName === 'dp') {
+                    directoriesToScan = ['2025-12-30', '2025-12-31'];
+                } else if (dirName === 'str') {
+                    directoriesToScan = ['2026-01-01'];
+                }
+            }
+            
+            for (const dateDir of directoriesToScan) {
+                try {
+                    const htmlText = await this.safeFetch(`${dirName}/${dateDir}/`);
+                    const cppFiles = this.parseFilesFromDirectoryHTML(htmlText, dateDir);
+                    
+                    cppFiles.forEach(file => {
+                        files.push({
+                            name: file,
+                            path: `${dirName}/${dateDir}/${file}`,
+                            date: dateDir,
+                            category: dirName // 记录文件所属类别
+                        });
+                    });
+                } catch (error) {
+                    console.warn(`无法扫描目录 ${dirName}/${dateDir}:`, error.message);
+                }
+            }
+        } catch (error) {
+            console.warn(`扫描${dirName}目录失败:`, error.message);
+            throw error;
+        }
+    }
+
+    // 从dp目录HTML页面解析日期目录
+    parseDateDirectoriesFromHTML(htmlText) {
+        const dateDirs = [];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+        
+        // 查找所有链接，过滤出日期目录（格式：YYYY-MM-DD）
+        const links = doc.querySelectorAll('a[href]');
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && href.match(/^\d{4}-\d{2}-\d{2}\/?$/)) {
+                const dirName = href.replace(/\/$/, '');
+                if (!dateDirs.includes(dirName)) {
+                    dateDirs.push(dirName);
+                }
+            }
+        });
+        
+        // 按日期排序（最新的在前）
+        dateDirs.sort((a, b) => new Date(b) - new Date(a));
+        
+        return dateDirs;
+    }
+
+    // 从目录HTML页面解析文件列表
+    parseFilesFromDirectoryHTML(htmlText, dateDir) {
+        const files = [];
+        
+        try {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+            
+            // 查找所有链接，过滤出.cpp文件
+            const links = doc.querySelectorAll('a[href]');
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href.endsWith('.cpp') && !href.includes('../')) {
+                    // 确保文件名正确编码
+                    let fileName = href;
+                    try {
+                        // 尝试解码URL编码的文件名
+                        fileName = decodeURIComponent(href);
+                    } catch (e) {
+                        // 如果解码失败，使用原始文件名
+                        console.warn('文件名解码失败:', href);
+                    }
+                    files.push(fileName);
+                }
+            });
+        } catch (error) {
+            console.error('解析目录HTML失败:', error);
+        }
+        
+        return files;
+    }
+
+    // 获取最新的静态文件列表（作为备选方案）
+    getStaticFileList() {
+        return [
+            // 模板文件
+            { name: 'template.cpp', path: 'template.cpp', date: null, isTemplate: true, category: '火车头' },
+            // 2025-12-30 的题目
+            { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30', category: 'dp' },
+            { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30', category: 'dp' },
+            { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30', category: 'dp' },
+            { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30', category: 'dp' },
+            // 2025-12-31 的题目
+            { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31', category: 'dp' },
+            { name: 'P1048采药-优化空间.cpp', path: 'dp/2025-12-31/P1048采药-优化空间.cpp', date: '2025-12-31', category: 'dp' },
+            { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31', category: 'dp' },
+            { name: 'P2834纸币问题3-优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3-优化空间.cpp', date: '2025-12-31', category: 'dp' },
+            { name: 'P2196挖地雷.cpp', path: 'dp/2025-12-31/P2196挖地雷.cpp', date: '2025-12-31', category: 'dp' },
+            { name: 'P1434滑雪.cpp', path: 'dp/2025-12-31/P1434滑雪.cpp', date: '2025-12-31', category: 'dp' },
+            // 2026-01-01 的题目
+            { name: '迎新字符串.cpp', path: 'str/2026-01-01/迎新字符串.cpp', date: '2026-01-01', category: 'str' }
+        ];
+    }
+
+    // 自动为文件添加标签
+    addTagsToFiles() {
+        this.files.forEach(file => {
+            // 如果不是模板文件，根据路径添加相应的标签
+            if (!file.isTemplate && file.path) {
+                if (file.path.includes('dp/')) {
+                    file.tag = 'dp';
+                } else if (file.path.includes('str/')) {
+                    file.tag = 'str';
+                }
+            }
+            
+            // 如果文件名包含"-优化"，添加plus标签
+            if (file.name && file.name.includes('-优化')) {
+                file.plus = true;
+            }
+        });
+    }
+
+    // 处理文件名显示，去掉"-优化空间"和前面的序号
+    getDisplayName(fileName) {
+        // 去掉文件扩展名
+        let name = fileName.replace(/\.cpp$/, '');
+        
+        // 去掉"-优化空间"或"-优化"
+        name = name.replace(/-优化空间$/, '').replace(/-优化$/, '');
+        
+        // 去掉前面的序号（如P1048、P2834等）
+        name = name.replace(/^[A-Z]+\d+/, '');
+        
+        return name;
     }
 
     renderFileList() {
@@ -112,47 +315,113 @@ class AlgorithmBlog {
         });
 
         // 渲染每个日期组
-        sortedDates.forEach(date => {
+        sortedDates.forEach((date, index) => {
             // 创建日期标题
             const dateHeader = document.createElement('div');
             dateHeader.className = 'date-header';
             dateHeader.innerHTML = `
-                <i class="fas fa-calendar-day"></i>
+                <i class="fas fa-chevron-right"></i>
                 ${date}
             `;
+            
+            // 为所有日期添加点击事件
+            dateHeader.style.cursor = 'pointer';
+            dateHeader.addEventListener('click', () => {
+                const isCollapsed = dateHeader.classList.contains('collapsed');
+                const icon = dateHeader.querySelector('i');
+                
+                if (isCollapsed) {
+                    // 展开
+                    dateFiles.style.display = 'block';
+                    dateHeader.classList.remove('collapsed');
+                    icon.className = 'fas fa-chevron-down';
+                } else {
+                    // 收起
+                    dateFiles.style.display = 'none';
+                    dateHeader.classList.add('collapsed');
+                    icon.className = 'fas fa-chevron-right';
+                }
+            });
+            
             fileList.appendChild(dateHeader);
 
             // 创建该日期下的文件列表
             const dateFiles = document.createElement('div');
             dateFiles.className = 'date-files';
             
+            // 第一天（最新日期）默认展开，其他日期收起
+            if (index === 0) {
+                dateFiles.style.display = 'block';
+                dateHeader.classList.remove('collapsed');
+                const icon = dateHeader.querySelector('i');
+                icon.className = 'fas fa-chevron-down';
+            } else {
+                dateFiles.style.display = 'none';
+                dateHeader.classList.add('collapsed');
+            }
+            
+            // 按文件名分组，让PLUS版本排在后面
+            const fileGroups = {};
             regularFiles[date].forEach(file => {
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
-                
-                // 检查文件类型
-                const isOptimized = file.name.includes('_优化空间');
-                const hasDpTag = file.tag === 'dp';
-                
-                let iconClass = 'fa-file-code';
-                let specialBadges = [];
-                
-                if (hasDpTag) {
-                    specialBadges.push('<span class="dp-badge">DP</span>');
+                const baseName = this.getDisplayName(file.name);
+                if (!fileGroups[baseName]) {
+                    fileGroups[baseName] = [];
                 }
+                fileGroups[baseName].push(file);
+            });
+            
+            // 对每个分组内的文件进行排序，PLUS版本排在后面
+            Object.keys(fileGroups).forEach(baseName => {
+                const group = fileGroups[baseName];
+                group.sort((a, b) => {
+                    // 确保PLUS标签正确识别
+                    const aIsPlus = a.name.includes('-优化空间') || a.name.includes('-优化');
+                    const bIsPlus = b.name.includes('-优化空间') || b.name.includes('-优化');
+                    
+                    // PLUS版本排在后面
+                    if (aIsPlus && !bIsPlus) return 1;
+                    if (!aIsPlus && bIsPlus) return -1;
+                    return 0;
+                });
                 
-                if (isOptimized) {
-                    iconClass = 'fa-rocket';
-                    specialBadges.push('<span class="optimized-badge">plus</span>');
-                }
-                
-                fileItem.innerHTML = `
-                    <i class="fas ${iconClass} file-icon"></i>
-                    ${file.name}
-                    ${specialBadges.join('')}
-                `;
-                fileItem.addEventListener('click', () => this.loadFile(file));
-                dateFiles.appendChild(fileItem);
+                // 渲染分组内的文件
+                group.forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    
+                    // 检查文件类型和标签
+                    const hasDpTag = file.tag === 'dp';
+                    const hasStrTag = file.tag === 'str';
+                    // 统一使用文件名判断PLUS标签
+                    const hasPlusTag = file.name.includes('-优化空间') || file.name.includes('-优化');
+                    
+                    let iconClass = 'fa-file-code';
+                    let specialBadges = [];
+                    
+                    if (hasDpTag) {
+                        specialBadges.push('<span class="dp-badge">DP</span>');
+                    }
+                    
+                    if (hasStrTag) {
+                        specialBadges.push('<span class="str-badge">STR</span>');
+                    }
+                    
+                    if (hasPlusTag) {
+                        iconClass = 'fa-rocket';
+                        specialBadges.push('<span class="optimized-badge">plus</span>');
+                    }
+                    
+                    // 使用处理后的显示名称
+                    const displayName = this.getDisplayName(file.name);
+                    
+                    fileItem.innerHTML = `
+                        <i class="fas ${iconClass} file-icon"></i>
+                        ${displayName}
+                        ${specialBadges.join('')}
+                    `;
+                    fileItem.addEventListener('click', () => this.loadFile(file));
+                    dateFiles.appendChild(fileItem);
+                });
             });
             
             fileList.appendChild(dateFiles);
@@ -170,30 +439,24 @@ class AlgorithmBlog {
         const codeDisplay = document.getElementById('codeDisplay');
         const currentFile = document.getElementById('currentFile');
         codeDisplay.textContent = '加载中...';
-        currentFile.textContent = file.name;
+        currentFile.textContent = this.getDisplayName(file.name);
 
         try {
-            // 尝试从API获取文件内容
-            const response = await fetch(`api/file?path=${encodeURIComponent(file.path)}`);
             let content;
             
-            if (response.ok) {
-                const data = await response.json();
+            try {
+                // 尝试从API获取文件内容
+                const data = await this.safeFetch(`api/file?path=${encodeURIComponent(file.path)}`);
                 content = data.content;
                 this.updateFileInfo(data);
-            } else {
+            } catch (apiError) {
                 // 如果API不可用，直接读取文件
-                const fileResponse = await fetch(file.path);
-                if (fileResponse.ok) {
-                    content = await fileResponse.text();
-                    this.updateFileInfo({
-                        path: file.path,
-                        size: new Blob([content]).size,
-                        modified: new Date().toISOString()
-                    });
-                } else {
-                    throw new Error('文件加载失败');
-                }
+                content = await this.safeFetch(file.path);
+                this.updateFileInfo({
+                    path: file.path,
+                    size: new Blob([content]).size,
+                    modified: new Date().toISOString()
+                });
             }
 
             this.currentFile = file;
@@ -206,9 +469,123 @@ class AlgorithmBlog {
         }
     }
 
+    displayProblemLink(problemUrl) {
+        // 移除已存在的链接区域
+        const existingLink = document.querySelector('.problem-link-container');
+        if (existingLink) {
+            existingLink.remove();
+        }
+        
+        if (!problemUrl) return;
+        
+        // 创建链接容器
+        const linkContainer = document.createElement('div');
+        linkContainer.className = 'problem-link-container';
+        
+        // 提取题目名称
+        let problemName = '题目链接';
+        try {
+            const url = new URL(problemUrl);
+            if (url.hostname.includes('luogu.com.cn')) {
+                // 洛谷题目格式: /problem/P1216
+                problemName = '洛谷';
+            } else if (url.hostname.includes('nowcoder.com')) {
+                // 牛客题目格式
+                problemName = '牛客';
+            }
+        } catch (e) {
+            // URL解析失败，使用默认名称
+        }
+        
+        linkContainer.innerHTML = `
+            <div class="problem-link">
+                <i class="fas fa-external-link-alt"></i>
+                <span class="problem-name">${problemName}</span>
+                <a href="${problemUrl}" target="_blank" class="problem-url" rel="noopener noreferrer">
+                    ${problemUrl}
+                </a>
+                <button class="copy-link-btn" title="复制链接">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        `;
+        
+        // 插入到代码容器之前
+        const codeContainer = document.querySelector('.code-container');
+        codeContainer.parentNode.insertBefore(linkContainer, codeContainer);
+        
+        // 添加复制链接事件
+        const copyBtn = linkContainer.querySelector('.copy-link-btn');
+        copyBtn.addEventListener('click', () => {
+            this.copyLink(problemUrl);
+        });
+    }
+
+    async copyLink(url) {
+        const copyBtn = document.querySelector('.copy-link-btn');
+        const originalIcon = copyBtn.innerHTML;
+        
+        try {
+            await navigator.clipboard.writeText(url);
+            
+            // 添加成功样式
+            copyBtn.classList.add('copied');
+            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+            
+            this.showToast('题目链接已复制到剪贴板', 'success');
+            
+            // 2秒后恢复原始样式
+            setTimeout(() => {
+                copyBtn.classList.remove('copied');
+                copyBtn.innerHTML = originalIcon;
+            }, 2000);
+            
+        } catch (error) {
+            // 降级方案
+            const textArea = document.createElement('textarea');
+            textArea.value = url;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            // 添加成功样式
+            copyBtn.classList.add('copied');
+            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+            
+            this.showToast('题目链接已复制到剪贴板', 'success');
+            
+            // 2秒后恢复原始样式
+            setTimeout(() => {
+                copyBtn.classList.remove('copied');
+                copyBtn.innerHTML = originalIcon;
+            }, 2000);
+        }
+    }
+
     displayCode(content) {
         const codeDisplay = document.getElementById('codeDisplay');
-        codeDisplay.textContent = content;
+        
+        // 解析第一行的URL链接
+        const lines = content.split('\n');
+        let problemUrl = null;
+        let codeWithoutUrl = content;
+        
+        if (lines.length > 0) {
+            const firstLine = lines[0].trim();
+            // 匹配注释中的URL格式: // https://...
+            const urlMatch = firstLine.match(/^\/\/\s*(https?:\/\/[^\s]+)/);
+            if (urlMatch) {
+                problemUrl = urlMatch[1];
+                // 移除第一行的URL注释，只显示代码
+                codeWithoutUrl = lines.slice(1).join('\n');
+            }
+        }
+        
+        // 显示题目链接
+        this.displayProblemLink(problemUrl);
+        
+        codeDisplay.textContent = codeWithoutUrl;
         
         // 重新高亮代码
         if (typeof Prism !== 'undefined') {
@@ -237,15 +614,52 @@ class AlgorithmBlog {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
+    // 默认加载template.cpp文件
+    async loadDefaultFile() {
+        // 查找template.cpp文件
+        const templateFile = this.files.find(file => file.name === 'template.cpp');
+        
+        if (templateFile) {
+            // 延迟一点时间确保DOM已经完全渲染
+            setTimeout(() => {
+                // 模拟点击template.cpp文件
+                const templateFileElement = document.querySelector('.file-item.template-file');
+                if (templateFileElement) {
+                    templateFileElement.click();
+                } else {
+                    // 如果找不到DOM元素，直接调用loadFile方法
+                    this.loadFile(templateFile);
+                }
+            }, 100);
+        }
+    }
+
     setupEventListeners() {
-        // 主题切换
+        // 复制代码
+        document.getElementById('copyCode').addEventListener('click', () => {
+            this.copyCode();
+        });
+
+        // 刷新文件列表
+        document.getElementById('refreshFiles').addEventListener('click', () => {
+            this.refreshFileList();
+        });
+
+        // 切换主题
         document.getElementById('toggleTheme').addEventListener('click', () => {
             this.toggleTheme();
         });
 
-        // 复制代码
-        document.getElementById('copyCode').addEventListener('click', () => {
-            this.copyCode();
+        
+
+        // 切换侧边栏
+        document.getElementById('toggleSidebar').addEventListener('click', () => {
+            this.toggleSidebar();
+        });
+
+        // 下载代码
+        document.getElementById('downloadCode').addEventListener('click', () => {
+            this.downloadCurrentCode();
         });
 
         // 键盘快捷键
@@ -262,32 +676,20 @@ class AlgorithmBlog {
                         e.preventDefault();
                         this.toggleTheme();
                         break;
+                    case 'r':
+                        e.preventDefault();
+                        this.refreshFileList();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        this.downloadCurrentCode();
+                        break;
                 }
             }
         });
     }
 
-    toggleTheme() {
-        const html = document.documentElement;
-        const currentTheme = html.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        html.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        
-        const themeIcon = document.querySelector('#toggleTheme i');
-        themeIcon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        
-        this.showToast(`已切换到${newTheme === 'dark' ? '深色' : '浅色'}主题`, 'info');
-    }
-
-    loadTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        
-        const themeIcon = document.querySelector('#toggleTheme i');
-        themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-    }
+    
 
     async copyCode() {
         const codeDisplay = document.getElementById('codeDisplay');
@@ -306,6 +708,262 @@ class AlgorithmBlog {
             document.body.removeChild(textArea);
             this.showToast('代码已复制到剪贴板', 'success');
         }
+    }
+
+    // 检测文本是否包含乱码
+    containsGarbledText(text) {
+        // 检测常见的乱码字符模式
+        const garbledPatterns = [
+            /[Â£Ã§Â¨Â¦ÂºÃ³ÃÃÃÃÃÃÃ]/g,  // 常见的UTF-8编码错误
+            /[ï¿½]/g,  // 替换字符
+            /[\uFFFD]/g  // Unicode替换字符
+        ];
+        
+        return garbledPatterns.some(pattern => pattern.test(text));
+    }
+
+    // 修复文本编码
+    fixEncoding(text) {
+        try {
+            // 方法1: 尝试将文本作为Latin-1编码的字节序列，然后重新解码为UTF-8
+            const bytes = [];
+            for (let i = 0; i < text.length; i++) {
+                const code = text.charCodeAt(i);
+                if (code <= 0xFF) {
+                    bytes.push(code);
+                } else {
+                    // 对于超出Latin-1范围的字符，使用替换字符
+                    bytes.push(0x3F); // '?'
+                }
+            }
+            
+            // 创建TextDecoder来正确解码UTF-8
+            const decoder = new TextDecoder('utf-8', { fatal: false });
+            const fixedText = decoder.decode(new Uint8Array(bytes));
+            
+            // 检查修复后的文本是否仍然包含乱码
+            if (!this.containsGarbledText(fixedText)) {
+                return fixedText;
+            }
+            
+            // 方法2: 尝试其他常见的编码修复
+            return this.advancedEncodingFix(text);
+        } catch (error) {
+            console.warn('编码修复失败:', error);
+            return text; // 如果修复失败，返回原始文本
+        }
+    }
+
+    // 高级编码修复方法
+    advancedEncodingFix(text) {
+        // 常见的编码错误模式及其修复
+        const fixes = [
+            // UTF-8 被错误解释为 Latin-1
+            { pattern: /Ã§/g, replacement: 'ç' },
+            { pattern: /Ã¨/g, replacement: 'è' },
+            { pattern: /Ã©/g, replacement: 'é' },
+            { pattern: /Ãª/g, replacement: 'ê' },
+            { pattern: /Ã«/g, replacement: 'ë' },
+            { pattern: /Ã¬/g, replacement: 'ì' },
+            { pattern: /Ã­/g, replacement: 'í' },
+            { pattern: /Ã®/g, replacement: 'î' },
+            { pattern: /Ã¯/g, replacement: 'ï' },
+            { pattern: /Ã²/g, replacement: 'ò' },
+            { pattern: /Ã³/g, replacement: 'ó' },
+            { pattern: /Ã´/g, replacement: 'ô' },
+            { pattern: /Ãµ/g, replacement: 'õ' },
+            { pattern: /Ã¶/g, replacement: 'ö' },
+            { pattern: /Ã¹/g, replacement: 'ù' },
+            { pattern: /Ãº/g, replacement: 'ú' },
+            { pattern: /Ã»/g, replacement: 'û' },
+            { pattern: /Ã¼/g, replacement: 'ü' },
+            { pattern: /Ã¿/g, replacement: 'ÿ' },
+            { pattern: /Ã/g, replacement: 'à' },
+            { pattern: /Ã/g, replacement: 'á' },
+            { pattern: /Ã/g, replacement: 'â' },
+            { pattern: /Ã/g, replacement: 'ä' },
+            { pattern: /Ã/g, replacement: 'ã' },
+            { pattern: /Ã/g, replacement: 'å' },
+            // 中文字符的常见编码错误
+            { pattern: /Â£/g, replacement: '汉' },
+            { pattern: /Â¥/g, replacement: '字' },
+            { pattern: /Â§/g, replacement: '题' },
+            { pattern: /Â¨/g, replacement: '目' },
+            { pattern: /Âª/g, replacement: '算' },
+            { pattern: /Â¬/g, replacement: '法' },
+            { pattern: /Â®/g, replacement: '动' },
+            { pattern: /Â°/g, replacement: '态' },
+            { pattern: /Â²/g, replacement: '规' },
+            { pattern: /Â³/g, replacement: '划' },
+            { pattern: /Â´/g, replacement: '纸' },
+            { pattern: /Â¶/g, replacement: '币' },
+            { pattern: /Â¸/g, replacement: '问' },
+            { pattern: /Âº/g, replacement: '数' },
+            { pattern: /Â¼/g, replacement: '字' },
+            { pattern: /Â½/g, replacement: '三' },
+            { pattern: /Â¾/g, replacement: '角' },
+            { pattern: /Â¿/g, replacement: '形' },
+            { pattern: /Ã/g, replacement: '挖' },
+            { pattern: /Ã/g, replacement: '地' },
+            { pattern: /Ã/g, replacement: '雷' },
+            { pattern: /Ã/g, replacement: '采' },
+            { pattern: /Ã/g, replacement: '药' },
+            { pattern: /Ã/g, replacement: '竹' },
+            { pattern: /Ã/g, replacement: '摇' },
+            { pattern: /Ã/g, replacement: '清' },
+            { pattern: /Ã/g, replacement: '风' },
+            { pattern: /Ã/g, replacement: '拂' },
+            { pattern: /Ã/g, replacement: '面' }
+        ];
+
+        let fixedText = text;
+        fixes.forEach(fix => {
+            fixedText = fixedText.replace(fix.pattern, fix.replacement);
+        });
+
+        return fixedText;
+    }
+
+    // 刷新文件列表
+    async refreshFileList() {
+        const refreshBtn = document.getElementById('refreshFiles');
+        refreshBtn.querySelector('i').classList.add('fa-spin');
+        
+        try {
+            await this.loadFileList();
+            this.showToast('文件列表已刷新', 'success');
+        } catch (error) {
+            this.showToast('刷新失败', 'error');
+        } finally {
+            refreshBtn.querySelector('i').classList.remove('fa-spin');
+        }
+    }
+
+    // 切换主题
+    toggleTheme() {
+        const root = document.documentElement;
+        const currentTheme = root.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        root.setAttribute('data-theme', newTheme);
+        
+        // 更新按钮状态
+        const themeBtn = document.getElementById('toggleTheme');
+        themeBtn.classList.toggle('active', newTheme === 'light');
+        
+        // 保存主题偏好
+        localStorage.setItem('theme', newTheme);
+        
+        this.showToast(`已切换到${newTheme === 'dark' ? '深色' : '浅色'}主题`, 'info');
+    }
+
+    
+
+    // 切换侧边栏
+    toggleSidebar() {
+        const layout = document.querySelector('.layout');
+        const sidebarBtn = document.getElementById('toggleSidebar');
+        const isHidden = layout.classList.contains('sidebar-hidden');
+        
+        if (isHidden) {
+            layout.classList.remove('sidebar-hidden');
+            sidebarBtn.classList.remove('active');
+            localStorage.setItem('sidebarVisible', 'true');
+            this.showToast('侧边栏已显示', 'info');
+        } else {
+            layout.classList.add('sidebar-hidden');
+            sidebarBtn.classList.add('active');
+            localStorage.setItem('sidebarVisible', 'false');
+            this.showToast('侧边栏已隐藏，代码区域已扩大', 'info');
+        }
+    }
+
+    // 下载当前代码
+    downloadCurrentCode() {
+        if (!this.currentFile) {
+            this.showToast('请先选择一个文件', 'warning');
+            return;
+        }
+
+        const codeDisplay = document.getElementById('codeDisplay');
+        const code = codeDisplay.textContent;
+        const fileName = this.currentFile.name;
+        
+        // 创建下载链接
+        const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showToast(`已下载 ${fileName}`, 'success');
+    }
+
+    // 恢复用户偏好设置
+    restoreUserPreferences() {
+        // 恢复主题设置
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        const themeBtn = document.getElementById('toggleTheme');
+        if (themeBtn) {
+            themeBtn.classList.toggle('active', savedTheme === 'light');
+        }
+        
+        
+        
+        // 恢复侧边栏设置
+        const sidebarVisible = localStorage.getItem('sidebarVisible') !== 'false';
+        const layout = document.querySelector('.layout');
+        const sidebarBtn = document.getElementById('toggleSidebar');
+        
+        if (layout) {
+            if (!sidebarVisible) {
+                layout.classList.add('sidebar-hidden');
+            }
+        }
+        
+        if (sidebarBtn) {
+            sidebarBtn.classList.toggle('active', !sidebarVisible);
+        }
+    }
+
+    // 更新统计信息
+    updateStats() {
+        // 计算题目总数（包括dp和str目录下的所有题目）
+        const totalProblems = this.files.filter(file => 
+            !file.isTemplate && 
+            file.name.endsWith('.cpp') && 
+            !file.name.includes('template') &&
+            (file.path.includes('dp/') || file.path.includes('str/'))
+        ).length;
+        
+        // 计算优化版本数量
+        const optimizedCount = this.files.filter(file => 
+            file.name.includes('-优化空间')
+        ).length;
+        
+        // 计算str目录下的题目数量
+        const strCount = this.files.filter(file => 
+            file.path.includes('str/') && file.name.endsWith('.cpp')
+        ).length;
+        
+        // 更新DOM
+        document.getElementById('totalProblems').textContent = totalProblems;
+        document.getElementById('optimizedCount').textContent = optimizedCount;
+        
+        // 如果有str题目数量的元素，更新它
+        const strCountElement = document.getElementById('strCount');
+        if (strCountElement) {
+            strCountElement.textContent = strCount;
+        }
+        
+        // 活跃天数和代码行数是静态值，可以从配置中获取
+        document.getElementById('activeDays').textContent = '3';
+        document.getElementById('totalLines').textContent = '495';
     }
 
     showToast(message, type = 'info') {
