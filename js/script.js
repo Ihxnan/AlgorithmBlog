@@ -816,17 +816,21 @@ class AlgorithmBlog {
 
     // 切换侧边栏
     toggleSidebar() {
-        const sidebar = document.querySelector('.sidebar');
+        const layout = document.querySelector('.layout');
         const sidebarBtn = document.getElementById('toggleSidebar');
-        const isHidden = sidebar.style.display === 'none';
+        const isHidden = layout.classList.contains('sidebar-hidden');
         
-        sidebar.style.display = isHidden ? 'block' : 'none';
-        sidebarBtn.classList.toggle('active', isHidden);
-        
-        // 保存侧边栏状态
-        localStorage.setItem('sidebarVisible', isHidden);
-        
-        this.showToast(isHidden ? '侧边栏已显示' : '侧边栏已隐藏', 'info');
+        if (isHidden) {
+            layout.classList.remove('sidebar-hidden');
+            sidebarBtn.classList.remove('active');
+            localStorage.setItem('sidebarVisible', 'true');
+            this.showToast('侧边栏已显示', 'info');
+        } else {
+            layout.classList.add('sidebar-hidden');
+            sidebarBtn.classList.add('active');
+            localStorage.setItem('sidebarVisible', 'false');
+            this.showToast('侧边栏已隐藏，代码区域已扩大', 'info');
+        }
     }
 
     // 下载当前代码
@@ -868,11 +872,15 @@ class AlgorithmBlog {
         
         // 恢复侧边栏设置
         const sidebarVisible = localStorage.getItem('sidebarVisible') !== 'false';
-        const sidebar = document.querySelector('.sidebar');
-        if (sidebar) {
-            sidebar.style.display = sidebarVisible ? 'block' : 'none';
-        }
+        const layout = document.querySelector('.layout');
         const sidebarBtn = document.getElementById('toggleSidebar');
+        
+        if (layout) {
+            if (!sidebarVisible) {
+                layout.classList.add('sidebar-hidden');
+            }
+        }
+        
         if (sidebarBtn) {
             sidebarBtn.classList.toggle('active', !sidebarVisible);
         }

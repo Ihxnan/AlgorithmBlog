@@ -252,6 +252,12 @@ body {
     grid-template-columns: 300px 1fr;
     gap: 2rem;
     align-items: start;
+    transition: grid-template-columns 0.3s ease;
+}
+
+/* 侧边栏隐藏时的布局 */
+.layout.sidebar-hidden {
+    grid-template-columns: 0 1fr;
 }
 
 /* Sidebar */
@@ -263,6 +269,14 @@ body {
     position: sticky;
     top: 2rem;
     max-height: calc(100vh - 4rem);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* 侧边栏隐藏时的样式 */
+.layout.sidebar-hidden .sidebar {
+    opacity: 0;
+    transform: translateX(-20px);
+    pointer-events: none;
 }
 
 .sidebar-header {
