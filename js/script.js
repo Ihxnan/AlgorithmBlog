@@ -90,35 +90,61 @@ class AlgorithmBlog {
             category: '火车头'
         });
 
+        // 扫描dp目录
         try {
-            // 获取dp目录下的所有子目录
-            const dpHtmlText = await this.safeFetch('dp/');
-            const dateDirs = this.parseDateDirectoriesFromHTML(dpHtmlText);
+            await this.scanAlgorithmDirectory('dp', files);
+        } catch (error) {
+            console.warn('扫描dp目录失败:', error.message);
+        }
+
+        // 扫描str目录
+        try {
+            await this.scanAlgorithmDirectory('str', files);
+        } catch (error) {
+            console.warn('扫描str目录失败:', error.message);
+        }
+
+        return files;
+    }
+
+    // 扫描算法目录的通用方法
+    async scanAlgorithmDirectory(dirName, files) {
+        try {
+            // 获取目录下的所有子目录
+            const dirHtmlText = await this.safeFetch(`${dirName}/`);
+            const dateDirs = this.parseDateDirectoriesFromHTML(dirHtmlText);
             
-            // 如果没有找到日期目录，使用已知的目录作为备选
-            const directoriesToScan = dateDirs.length > 0 ? dateDirs : ['2025-12-30', '2025-12-31'];
+            // 如果没有找到日期目录，根据目录类型使用已知的目录作为备选
+            let directoriesToScan = dateDirs;
+            if (dateDirs.length === 0) {
+                if (dirName === 'dp') {
+                    directoriesToScan = ['2025-12-30', '2025-12-31'];
+                } else if (dirName === 'str') {
+                    directoriesToScan = ['2026-01-01'];
+                }
+            }
             
             for (const dateDir of directoriesToScan) {
                 try {
-                    const htmlText = await this.safeFetch(`dp/${dateDir}/`);
+                    const htmlText = await this.safeFetch(`${dirName}/${dateDir}/`);
                     const cppFiles = this.parseFilesFromDirectoryHTML(htmlText, dateDir);
                     
                     cppFiles.forEach(file => {
                         files.push({
                             name: file,
-                            path: `dp/${dateDir}/${file}`,
-                            date: dateDir
+                            path: `${dirName}/${dateDir}/${file}`,
+                            date: dateDir,
+                            category: dirName // 记录文件所属类别
                         });
                     });
                 } catch (error) {
-                    console.warn(`无法扫描目录 dp/${dateDir}:`, error.message);
+                    console.warn(`无法扫描目录 ${dirName}/${dateDir}:`, error.message);
                 }
             }
         } catch (error) {
-            console.warn('扫描dp目录失败:', error.message);
+            console.warn(`扫描${dirName}目录失败:`, error.message);
+            throw error;
         }
-
-        return files;
     }
 
     // 从dp目录HTML页面解析日期目录
@@ -183,25 +209,32 @@ class AlgorithmBlog {
             // 模板文件
             { name: 'template.cpp', path: 'template.cpp', date: null, isTemplate: true, category: '火车头' },
             // 2025-12-30 的题目
-            { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30' },
-            { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30' },
-            { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30' },
-            { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30' },
+            { name: 'P1216数字三角形.cpp', path: 'dp/2025-12-30/P1216数字三角形.cpp', date: '2025-12-30', category: 'dp' },
+            { name: 'P2842纸币问题1.cpp', path: 'dp/2025-12-30/P2842纸币问题1.cpp', date: '2025-12-30', category: 'dp' },
+            { name: 'P2840纸币问题2.cpp', path: 'dp/2025-12-30/P2840纸币问题2.cpp', date: '2025-12-30', category: 'dp' },
+            { name: '竹摇清风拂面.cpp', path: 'dp/2025-12-30/竹摇清风拂面.cpp', date: '2025-12-30', category: 'dp' },
             // 2025-12-31 的题目
-            { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31' },
-            { name: 'P1048采药-优化空间.cpp', path: 'dp/2025-12-31/P1048采药-优化空间.cpp', date: '2025-12-31' },
-            { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31' },
-            { name: 'P2834纸币问题3-优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3-优化空间.cpp', date: '2025-12-31' },
-            { name: 'P2196挖地雷.cpp', path: 'dp/2025-12-31/P2196挖地雷.cpp', date: '2025-12-31' }
+            { name: 'P1048采药.cpp', path: 'dp/2025-12-31/P1048采药.cpp', date: '2025-12-31', category: 'dp' },
+            { name: 'P1048采药-优化空间.cpp', path: 'dp/2025-12-31/P1048采药-优化空间.cpp', date: '2025-12-31', category: 'dp' },
+            { name: 'P2834纸币问题3.cpp', path: 'dp/2025-12-31/P2834纸币问题3.cpp', date: '2025-12-31', category: 'dp' },
+            { name: 'P2834纸币问题3-优化空间.cpp', path: 'dp/2025-12-31/P2834纸币问题3-优化空间.cpp', date: '2025-12-31', category: 'dp' },
+            { name: 'P2196挖地雷.cpp', path: 'dp/2025-12-31/P2196挖地雷.cpp', date: '2025-12-31', category: 'dp' },
+            { name: 'P1434滑雪.cpp', path: 'dp/2025-12-31/P1434滑雪.cpp', date: '2025-12-31', category: 'dp' },
+            // 2026-01-01 的题目
+            { name: '迎新字符串.cpp', path: 'str/2026-01-01/迎新字符串.cpp', date: '2026-01-01', category: 'str' }
         ];
     }
 
     // 自动为文件添加标签
     addTagsToFiles() {
         this.files.forEach(file => {
-            // 如果不是模板文件，且路径包含dp目录，自动添加dp标签
-            if (!file.isTemplate && file.path && file.path.includes('dp/')) {
-                file.tag = 'dp';
+            // 如果不是模板文件，根据路径添加相应的标签
+            if (!file.isTemplate && file.path) {
+                if (file.path.includes('dp/')) {
+                    file.tag = 'dp';
+                } else if (file.path.includes('str/')) {
+                    file.tag = 'str';
+                }
             }
             
             // 如果文件名包含"-优化"，添加plus标签
@@ -316,9 +349,16 @@ class AlgorithmBlog {
             const dateFiles = document.createElement('div');
             dateFiles.className = 'date-files';
             
-            // 所有日期都默认收起
-            dateFiles.style.display = 'none';
-            dateHeader.classList.add('collapsed');
+            // 第一天（最新日期）默认展开，其他日期收起
+            if (index === 0) {
+                dateFiles.style.display = 'block';
+                dateHeader.classList.remove('collapsed');
+                const icon = dateHeader.querySelector('i');
+                icon.className = 'fas fa-chevron-down';
+            } else {
+                dateFiles.style.display = 'none';
+                dateHeader.classList.add('collapsed');
+            }
             
             // 按文件名分组，让PLUS版本排在后面
             const fileGroups = {};
@@ -351,6 +391,7 @@ class AlgorithmBlog {
                     
                     // 检查文件类型和标签
                     const hasDpTag = file.tag === 'dp';
+                    const hasStrTag = file.tag === 'str';
                     // 统一使用文件名判断PLUS标签
                     const hasPlusTag = file.name.includes('-优化空间') || file.name.includes('-优化');
                     
@@ -359,6 +400,10 @@ class AlgorithmBlog {
                     
                     if (hasDpTag) {
                         specialBadges.push('<span class="dp-badge">DP</span>');
+                    }
+                    
+                    if (hasStrTag) {
+                        specialBadges.push('<span class="str-badge">STR</span>');
                     }
                     
                     if (hasPlusTag) {
@@ -888,9 +933,12 @@ class AlgorithmBlog {
 
     // 更新统计信息
     updateStats() {
-        // 计算题目总数
+        // 计算题目总数（包括dp和str目录下的所有题目）
         const totalProblems = this.files.filter(file => 
-            file.path.includes('dp/') && file.name.endsWith('.cpp') && !file.name.includes('template')
+            !file.isTemplate && 
+            file.name.endsWith('.cpp') && 
+            !file.name.includes('template') &&
+            (file.path.includes('dp/') || file.path.includes('str/'))
         ).length;
         
         // 计算优化版本数量
@@ -898,13 +946,24 @@ class AlgorithmBlog {
             file.name.includes('-优化空间')
         ).length;
         
+        // 计算str目录下的题目数量
+        const strCount = this.files.filter(file => 
+            file.path.includes('str/') && file.name.endsWith('.cpp')
+        ).length;
+        
         // 更新DOM
         document.getElementById('totalProblems').textContent = totalProblems;
         document.getElementById('optimizedCount').textContent = optimizedCount;
         
+        // 如果有str题目数量的元素，更新它
+        const strCountElement = document.getElementById('strCount');
+        if (strCountElement) {
+            strCountElement.textContent = strCount;
+        }
+        
         // 活跃天数和代码行数是静态值，可以从配置中获取
         document.getElementById('activeDays').textContent = '3';
-        document.getElementById('totalLines').textContent = '451';
+        document.getElementById('totalLines').textContent = '495';
     }
 
     showToast(message, type = 'info') {
