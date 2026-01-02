@@ -3,7 +3,7 @@
 
 void init()
 {
-    t = 1;
+    t = 1; // 只有一组测试数据
 }
 
 void solve()
@@ -18,12 +18,14 @@ void solve()
     for (int i = 0; i < n; ++i)
     {
         cin >> op;
+        // 1. 查找子串
         if (op == 1)
         {
             cin >> a;
             int idx = str.find(a);
             cout << (idx != string::npos ? idx : -1) << endl;
         }
+        // 2. 替换第一次出现的子串
         else if (op == 2)
         {
             cin >> a >> b;
@@ -32,6 +34,7 @@ void solve()
                 str.replace(idx, a.size(), b);
             cout << str << endl;
         }
+        // 3. 在c1c2子串前插入a
         else
         {
             cin >> c1 >> c2 >> a;

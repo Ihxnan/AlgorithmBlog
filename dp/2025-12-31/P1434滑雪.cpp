@@ -1,4 +1,4 @@
-// https://www.luogu.com.cn/problem/P2196
+// https://www.luogu.com.cn/problem/P1434
 #include "../../template.cpp"
 
 void init()
