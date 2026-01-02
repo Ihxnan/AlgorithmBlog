@@ -203,6 +203,40 @@ body {
     background: rgba(255, 255, 255, 0.25);
     border-color: rgba(255, 255, 255, 0.4);
 }
+
+/* 按钮点击效果 */
+.btn.clicked, .action-btn.clicked {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+}
+
+/* 涟漪效果 */
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(0);
+    animation: ripple-animation 0.6s ease-out;
+    pointer-events: none;
+}
+
+@keyframes ripple-animation {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* 为按钮添加相对定位，以便放置涟漪效果 */
+.btn, .action-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+/* 按钮图标颜色过渡效果 */
+.btn i, .action-btn i {
+    transition: color 0.3s ease;
+}
     object-fit: cover;
     overflow: hidden !important;
     display: block;

@@ -638,7 +638,8 @@ class AlgorithmBlog {
 
     setupEventListeners() {
         // 复制代码
-        document.getElementById('copyCode').addEventListener('click', () => {
+        document.getElementById('copyCode').addEventListener('click', (e) => {
+            this.addButtonClickEffect(e.target);
             this.copyCode();
         });
 
@@ -660,7 +661,8 @@ class AlgorithmBlog {
         });
 
         // 下载代码
-        document.getElementById('downloadCode').addEventListener('click', () => {
+        document.getElementById('downloadCode').addEventListener('click', (e) => {
+            this.addButtonClickEffect(e.target);
             this.downloadCurrentCode();
         });
 
@@ -722,10 +724,21 @@ class AlgorithmBlog {
     async copyCode() {
         const codeDisplay = document.getElementById('codeDisplay');
         const code = codeDisplay.textContent;
+        const copyBtn = document.getElementById('copyCode');
+        const originalIcon = copyBtn.innerHTML;
         
         try {
             await navigator.clipboard.writeText(code);
+            // 改变按钮图标为成功状态
+            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+            copyBtn.style.color = '#4ade80';
             this.showToast('代码已复制到剪贴板', 'success');
+            
+            // 1秒后恢复原始图标
+            setTimeout(() => {
+                copyBtn.innerHTML = originalIcon;
+                copyBtn.style.color = '';
+            }, 1000);
         } catch (error) {
             // 降级方案
             const textArea = document.createElement('textarea');
@@ -734,7 +747,17 @@ class AlgorithmBlog {
             textArea.select();
             document.execCommand('copy');
             document.body.removeChild(textArea);
+            
+            // 改变按钮图标为成功状态
+            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+            copyBtn.style.color = '#4ade80';
             this.showToast('代码已复制到剪贴板', 'success');
+            
+            // 1秒后恢复原始图标
+            setTimeout(() => {
+                copyBtn.innerHTML = originalIcon;
+                copyBtn.style.color = '';
+            }, 1000);
         }
     }
 
@@ -916,6 +939,8 @@ class AlgorithmBlog {
         const codeDisplay = document.getElementById('codeDisplay');
         const code = codeDisplay.textContent;
         const fileName = this.currentFile.name;
+        const downloadBtn = document.getElementById('downloadCode');
+        const originalIcon = downloadBtn.innerHTML;
         
         // 创建下载链接
         const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
@@ -928,7 +953,16 @@ class AlgorithmBlog {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
+        // 改变按钮图标为成功状态
+        downloadBtn.innerHTML = '<i class="fas fa-check"></i>';
+        downloadBtn.style.color = '#4ade80';
         this.showToast(`已下载 ${fileName}`, 'success');
+        
+        // 1秒后恢复原始图标
+        setTimeout(() => {
+            downloadBtn.innerHTML = originalIcon;
+            downloadBtn.style.color = '';
+        }, 1000);
     }
 
     // 恢复用户偏好设置
@@ -1183,6 +1217,36 @@ class AlgorithmBlog {
             // 如果失败，显示默认值
             document.getElementById('totalLines').textContent = '600';
         }
+    }
+
+    // 添加按钮点击效果
+    addButtonClickEffect(button) {
+        // 添加点击动画类
+        button.classList.add('clicked');
+        
+        // 创建涟漪效果
+        const ripple = document.createElement('span');
+        ripple.className = 'ripple';
+        button.appendChild(ripple);
+        
+        // 获取按钮位置和大小
+        const rect = button.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = event.clientX - rect.left - size / 2;
+        const y = event.clientY - rect.top - size / 2;
+        
+        // 设置涟漪样式
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        
+        // 移除动画类和涟漪元素
+        setTimeout(() => {
+            button.classList.remove('clicked');
+            if (button.contains(ripple)) {
+                button.removeChild(ripple);
+            }
+        }, 600);
     }
 
     showToast(message, type = 'info') {
