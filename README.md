@@ -57,3 +57,26 @@ g++ filename.cpp && ./a.out && rm a.out
 - 代码复制和下载功能
 
 打开 `index.html` 即可查看完整的题目列表和代码展示。
+
+### 缓存问题解决方案
+
+当更新CSS或JS文件后，浏览器可能仍使用缓存的旧版本。以下是几种解决方案：
+
+#### 方法1：使用开发工具脚本（推荐）
+```bash
+# 每次更新文件后运行此脚本自动更新版本号
+./scripts/dev-tools.sh
+
+# 同时打开浏览器
+./scripts/dev-tools.sh --open
+```
+
+#### 方法2：手动刷新
+- **Chrome/Firefox**: `Ctrl + Shift + R` (Windows/Linux) 或 `Cmd + Shift + R` (Mac)
+- **Edge**: `Ctrl + F5`
+
+#### 方法3：强制更新版本号
+在网页中按 `Ctrl + Shift + U` 或在控制台执行 `updateVersion()` 强制更新版本号。
+
+#### 方法4：开发者模式访问
+在URL后添加 `?dev=true` 参数，启用开发者模式自动检测文件更新。
