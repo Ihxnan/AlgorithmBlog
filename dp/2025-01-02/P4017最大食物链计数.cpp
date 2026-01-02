@@ -6,7 +6,6 @@ void init()
     t = 1; // 只有一组测试数据
 }
 
-
 // 通过拓扑排序确保所有节点处理时，其食物链低端都已被处理过
 void solve()
 {
@@ -14,7 +13,7 @@ void solve()
 
     int n, m;
     cin >> n >> m;
-    vi du(n + 1); // 记录每个节点的入度
+    vi du(n + 1);  // 记录每个节点的入度
     vvi mp(n + 1); // 有向图的邻接表
     for (int i = 0, a, b; i < m; ++i)
     {
@@ -23,12 +22,13 @@ void solve()
         mp[a].pb(b);
     }
 
-    vi stk; // 存放待处理节点
+    vi stk;       // 存放待处理节点
     vi dp(n + 1); // 记录每个节点的食物链数量
     for (int i = 1; i <= n; ++i)
         if (!du[i])
             stk.pb(i), dp[i] = 1;
 
+    // 状态转移：dp[y] = dp[x] + dp[y] (x -> y)
     while (stk.size())
     {
         auto x = stk.back();
