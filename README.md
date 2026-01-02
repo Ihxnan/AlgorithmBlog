@@ -31,7 +31,7 @@
 ### 基本编译命令
 ```bash
 # 编译单个文件
-g++ filename.cpp && a.out
+g++ filename.cpp
 ```
 
 ### 推荐编译选项

@@ -39,20 +39,7 @@
                             <span class="stat-label">题目总数</span>
                         </div>
                     </div>
-                    <div class="stat-item">
-                        <i class="fas fa-rocket"></i>
-                        <div class="stat-info">
-                            <span class="stat-value" id="optimizedCount">2</span>
-                            <span class="stat-label">空间优化</span>
-                        </div>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-font"></i>
-                        <div class="stat-info">
-                            <span class="stat-value" id="strCount">0</span>
-                            <span class="stat-label">字符串题</span>
-                        </div>
-                    </div>
+                    
                     <div class="stat-item">
                         <i class="fas fa-calendar-alt"></i>
                         <div class="stat-info">
@@ -90,6 +77,28 @@
                 <aside class="sidebar">
                     <div class="sidebar-header">
                         <h2><i class="fas fa-folder"></i> 题目列表</h2>
+                    </div>
+                    
+                    <!-- 搜索和筛选控件 -->
+                    <div class="search-filter-container">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchInput" placeholder="搜索题目名称..." />
+                            <button id="clearSearch" class="clear-btn" title="清除搜索">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="filter-controls">
+                            <div class="filter-group">
+                                <label for="typeFilter">算法类型:</label>
+                                <select id="typeFilter">
+                                    <option value="">全部</option>
+                                    <option value="dp">dp</option>
+                                    <option value="str">str</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="file-list" id="fileList">
                         <!-- 文件列表将通过JavaScript动态生成 -->

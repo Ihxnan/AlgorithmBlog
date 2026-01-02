@@ -244,6 +244,8 @@ class AlgorithmBlog {
         });
     }
 
+    
+
     // 处理文件名显示，去掉"-优化空间"和前面的序号
     getDisplayName(fileName) {
         // 去掉文件扩展名
@@ -662,6 +664,23 @@ class AlgorithmBlog {
             this.downloadCurrentCode();
         });
 
+        // 搜索功能
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', () => {
+            this.filterFiles();
+        });
+
+        // 清除搜索
+        document.getElementById('clearSearch').addEventListener('click', () => {
+            searchInput.value = '';
+            this.filterFiles();
+        });
+
+        // 筛选功能
+        document.getElementById('typeFilter').addEventListener('change', () => {
+            this.filterFiles();
+        });
+
         // 键盘快捷键
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey || e.metaKey) {
@@ -684,7 +703,16 @@ class AlgorithmBlog {
                         e.preventDefault();
                         this.downloadCurrentCode();
                         break;
+                    case 'f':
+                        e.preventDefault();
+                        document.getElementById('searchInput').focus();
+                        break;
                 }
+            } else if (e.key === 'Escape') {
+                // ESC键清除搜索
+                document.getElementById('searchInput').value = '';
+                this.filterFiles();
+                document.getElementById('searchInput').blur();
             }
         });
     }
@@ -941,29 +969,220 @@ class AlgorithmBlog {
             (file.path.includes('dp/') || file.path.includes('str/'))
         ).length;
         
-        // 计算优化版本数量
-        const optimizedCount = this.files.filter(file => 
-            file.name.includes('-优化空间')
-        ).length;
+        // 计算活跃天数（基于题目列表中的不同日期数量）
+        const uniqueDates = new Set();
+        this.files.forEach(file => {
+            if (file.date && !file.isTemplate) {
+                uniqueDates.add(file.date);
+            }
+        });
+        const activeDays = uniqueDates.size;
         
-        // 计算str目录下的题目数量
-        const strCount = this.files.filter(file => 
-            file.path.includes('str/') && file.name.endsWith('.cpp')
-        ).length;
+        // 动态获取代码行数
+        this.updateTotalLines();
         
         // 更新DOM
         document.getElementById('totalProblems').textContent = totalProblems;
-        document.getElementById('optimizedCount').textContent = optimizedCount;
+        document.getElementById('activeDays').textContent = activeDays;
+    }
+
+    // 搜索和筛选文件
+    filterFiles() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const typeFilter = document.getElementById('typeFilter').value;
         
-        // 如果有str题目数量的元素，更新它
-        const strCountElement = document.getElementById('strCount');
-        if (strCountElement) {
-            strCountElement.textContent = strCount;
+        // 筛选文件
+        const filteredFiles = this.files.filter(file => {
+            // 搜索过滤
+            if (searchTerm && !file.name.toLowerCase().includes(searchTerm)) {
+                return false;
+            }
+            
+            // 算法类型过滤（使用原有的tag属性）
+            if (typeFilter && file.tag !== typeFilter) {
+                return false;
+            }
+            
+            return true;
+        });
+        
+        // 重新渲染文件列表
+        this.renderFilteredList(filteredFiles);
+    }
+
+    // 渲染筛选后的文件列表
+    renderFilteredList(filteredFiles) {
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';
+
+        // 分离模板文件和普通文件
+        const templateFiles = [];
+        const regularFiles = {};
+        
+        filteredFiles.forEach(file => {
+            if (file.isTemplate) {
+                templateFiles.push(file);
+            } else {
+                const date = file.date || '未知日期';
+                if (!regularFiles[date]) {
+                    regularFiles[date] = [];
+                }
+                regularFiles[date].push(file);
+            }
+        });
+
+        // 创建火车头文件列表
+        if (templateFiles.length > 0) {
+            const templateHeader = document.createElement('div');
+            templateHeader.className = 'template-header';
+            templateHeader.innerHTML = '<i class="fas fa-layer-group"></i> 模板文件';
+            fileList.appendChild(templateHeader);
+
+            const templateFilesContainer = document.createElement('div');
+            templateFilesContainer.className = 'date-files';
+            
+            templateFiles.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item template-file';
+                
+                fileItem.innerHTML = `
+                    <i class="fas fa-layer-group file-icon"></i>
+                    ${file.name}
+                    <span class="template-badge">火车头</span>
+                `;
+                fileItem.addEventListener('click', () => this.loadFile(file));
+                templateFilesContainer.appendChild(fileItem);
+            });
+            
+            fileList.appendChild(templateFilesContainer);
         }
+
+        // 按日期排序普通文件
+        const sortedDates = Object.keys(regularFiles).sort((a, b) => {
+            return new Date(b) - new Date(a);
+        });
+
+        // 渲染每个日期组
+        sortedDates.forEach((date, index) => {
+            // 创建日期标题
+            const dateHeader = document.createElement('div');
+            dateHeader.className = 'date-header';
+            dateHeader.innerHTML = `
+                <i class="fas fa-chevron-right"></i>
+                ${date}
+            `;
+            
+            // 为所有日期添加点击事件
+            dateHeader.style.cursor = 'pointer';
+            dateHeader.addEventListener('click', () => {
+                const isCollapsed = dateHeader.classList.contains('collapsed');
+                const icon = dateHeader.querySelector('i');
+                const dateFiles = dateHeader.nextElementSibling;
+                
+                if (isCollapsed) {
+                    // 展开
+                    dateFiles.style.display = 'block';
+                    dateHeader.classList.remove('collapsed');
+                    icon.className = 'fas fa-chevron-down';
+                } else {
+                    // 收起
+                    dateFiles.style.display = 'none';
+                    dateHeader.classList.add('collapsed');
+                    icon.className = 'fas fa-chevron-right';
+                }
+            });
+            
+            fileList.appendChild(dateHeader);
+            
+            // 创建该日期下的文件列表
+            const dateFiles = document.createElement('div');
+            dateFiles.className = 'date-files';
+            
+            // 默认展开最新日期
+            if (index === 0) {
+                const icon = dateHeader.querySelector('i');
+                icon.className = 'fas fa-chevron-down';
+            } else {
+                dateFiles.style.display = 'none';
+                dateHeader.classList.add('collapsed');
+            }
+            
+            regularFiles[date].forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                
+                // 添加算法类型标签（只显示dp和str）
+                let tagsHtml = '';
+                if (file.tag) {
+                    tagsHtml += `<span class="algorithm-tag">${file.tag}</span>`;
+                }
+                if (file.plus) {
+                    tagsHtml += `<span class="optimized-badge">PLUS</span>`;
+                }
+                
+                fileItem.innerHTML = `
+                    <i class="fas fa-file-code file-icon"></i>
+                    ${this.getDisplayName(file.name)}
+                    ${tagsHtml}
+                `;
+                
+                fileItem.addEventListener('click', () => this.loadFile(file));
+                dateFiles.appendChild(fileItem);
+            });
+            
+            fileList.appendChild(dateFiles);
+        });
         
-        // 活跃天数和代码行数是静态值，可以从配置中获取
-        document.getElementById('activeDays').textContent = '3';
-        document.getElementById('totalLines').textContent = '495';
+        // 如果没有筛选结果，显示提示
+        if (filteredFiles.length === 0) {
+            const noResults = document.createElement('div');
+            noResults.className = 'no-results';
+            noResults.innerHTML = `
+                <i class="fas fa-search"></i>
+                <p>没有找到匹配的题目</p>
+                <p>请尝试调整搜索条件或筛选器</p>
+            `;
+            fileList.appendChild(noResults);
+        }
+    }
+
+    // 动态获取代码行数
+    async updateTotalLines() {
+        try {
+            let totalLines = 0;
+            
+            // 获取所有C++文件
+            const cppFiles = this.files.filter(file => 
+                file.name.endsWith('.cpp') && !file.isTemplate
+            );
+            
+            // 计算每个文件的行数
+            for (const file of cppFiles) {
+                try {
+                    const content = await this.safeFetch(file.path);
+                    const lines = content.split('\n').length;
+                    totalLines += lines;
+                } catch (error) {
+                    console.warn(`无法读取文件 ${file.name}:`, error);
+                }
+            }
+            
+            // 添加模板文件的行数
+            try {
+                const templateContent = await this.safeFetch('template.cpp');
+                const templateLines = templateContent.split('\n').length;
+                totalLines += templateLines;
+            } catch (error) {
+                console.warn('无法读取模板文件:', error);
+            }
+            
+            // 更新DOM
+            document.getElementById('totalLines').textContent = totalLines;
+        } catch (error) {
+            console.error('获取代码行数失败:', error);
+            // 如果失败，显示默认值
+            document.getElementById('totalLines').textContent = '600';
+        }
     }
 
     showToast(message, type = 'info') {
