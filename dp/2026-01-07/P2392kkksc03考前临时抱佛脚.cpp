@@ -15,11 +15,14 @@ void solve()
     vi v;
 
     int t;
+
+    // 一个数组分成两份的最小的差值
     auto func = [&](auto &&self, int pos, int l, int r) -> void
     {
         if (pos == v.size())
         {
             t = min(t, abs(r - l));
+            return;
         }
         self(self, pos + 1, l + v[pos], r);
         self(self, pos + 1, l, r + v[pos]);
