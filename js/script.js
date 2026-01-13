@@ -104,6 +104,13 @@ class AlgorithmBlog {
             console.warn('扫描str目录失败:', error.message);
         }
 
+        // 扫描ccpc目录
+        try {
+            await this.scanAlgorithmDirectory('ccpc', files);
+        } catch (error) {
+            console.warn('扫描ccpc目录失败:', error.message);
+        }
+
         return files;
     }
 
@@ -121,6 +128,8 @@ class AlgorithmBlog {
                     directoriesToScan = ['2025-12-30', '2025-12-31'];
                 } else if (dirName === 'str') {
                     directoriesToScan = ['2026-01-01'];
+                } else if (dirName === 'ccpc') {
+                    directoriesToScan = ['2026-01-13'];
                 }
             }
             
@@ -221,7 +230,9 @@ class AlgorithmBlog {
             { name: 'P2196挖地雷.cpp', path: 'dp/2025-12-31/P2196挖地雷.cpp', date: '2025-12-31', category: 'dp' },
             { name: 'P1434滑雪.cpp', path: 'dp/2025-12-31/P1434滑雪.cpp', date: '2025-12-31', category: 'dp' },
             // 2026-01-01 的题目
-            { name: '迎新字符串.cpp', path: 'str/2026-01-01/迎新字符串.cpp', date: '2026-01-01', category: 'str' }
+            { name: '迎新字符串.cpp', path: 'str/2026-01-01/迎新字符串.cpp', date: '2026-01-01', category: 'str' },
+            // 2026-01-13 的题目
+            { name: 'L1-001.cpp', path: 'ccpc/2026-01-13/L1-001.cpp', date: '2026-01-13', category: 'ccpc' }
         ];
     }
 
@@ -234,9 +245,11 @@ class AlgorithmBlog {
                     file.tag = 'dp';
                 } else if (file.path.includes('str/')) {
                     file.tag = 'str';
+                } else if (file.path.includes('ccpc/')) {
+                    file.tag = 'ccpc';
                 }
             }
-            
+
             // 如果文件名包含"-优化"，添加plus标签
             if (file.name && file.name.includes('-优化')) {
                 file.plus = true;
@@ -254,8 +267,8 @@ class AlgorithmBlog {
         // 去掉"-优化空间"或"-优化"
         name = name.replace(/-优化空间$/, '').replace(/-优化$/, '');
         
-        // 去掉前面的序号（如P1048、P2834等）
-        name = name.replace(/^[A-Z]+\d+/, '');
+        // 去掉前面的洛谷题目编号（如P1048、P2834等）
+        name = name.replace(/^P\d+/, '');
         
         return name;
     }
@@ -394,20 +407,25 @@ class AlgorithmBlog {
                     // 检查文件类型和标签
                     const hasDpTag = file.tag === 'dp';
                     const hasStrTag = file.tag === 'str';
+                    const hasCcpcTag = file.tag === 'ccpc';
                     // 统一使用文件名判断PLUS标签
                     const hasPlusTag = file.name.includes('-优化空间') || file.name.includes('-优化');
-                    
+
                     let iconClass = 'fa-file-code';
                     let specialBadges = [];
-                    
+
                     if (hasDpTag) {
                         specialBadges.push('<span class="dp-badge">DP</span>');
                     }
-                    
+
                     if (hasStrTag) {
                         specialBadges.push('<span class="str-badge">STR</span>');
                     }
-                    
+
+                    if (hasCcpcTag) {
+                        specialBadges.push('<span class="ccpc-badge">CCPC</span>');
+                    }
+
                     if (hasPlusTag) {
                         iconClass = 'fa-rocket';
                         specialBadges.push('<span class="optimized-badge">plus</span>');
@@ -494,6 +512,9 @@ class AlgorithmBlog {
             } else if (url.hostname.includes('nowcoder.com')) {
                 // 牛客题目格式
                 problemName = '牛客';
+            } else if (url.hostname.includes('pintia.cn')) {
+                // PTA题目格式
+                problemName = 'pta';
             }
         } catch (e) {
             // URL解析失败，使用默认名称

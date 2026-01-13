@@ -624,6 +624,21 @@ body {
     box-shadow: 0 2px 4px rgba(237, 137, 54, 0.3);
 }
 
+/* CCPC tag badge */
+.ccpc-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #e53e3e, #c53030);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(229, 62, 62, 0.3);
+}
+
 /* Template file badge */
 .template-badge {
     display: inline-block;
