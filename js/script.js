@@ -299,8 +299,8 @@ class AlgorithmBlog {
             const templateHeader = document.createElement('div');
             templateHeader.className = 'date-header template-header';
             templateHeader.innerHTML = `
-                <i class="fas fa-train"></i>
-                header
+                <i class="fas fa-layer-group"></i>
+                模板文件
             `;
             fileList.appendChild(templateHeader);
 
