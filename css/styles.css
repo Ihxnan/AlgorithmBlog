@@ -107,11 +107,29 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.author-info a {
+    display: inline-block;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.author-info a:hover {
+    transform: scale(1.1);
+}
+
+.author-info a:hover .author-avatar {
+    border-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
 .author-avatar {
     width: 40px;
     height: 40px;
     border-radius: 50% !important;
     border: 2px solid rgba(255, 255, 255, 0.8);
+    display: block;
+    cursor: pointer;
+    transition: var(--transition);
 }
 
 /* 顶部功能区域 */

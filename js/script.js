@@ -1339,19 +1339,39 @@ class AlgorithmBlog {
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
                 
-                // 添加算法类型标签（只显示dp和str）
-                let tagsHtml = '';
-                if (file.tag) {
-                    tagsHtml += `<span class="algorithm-tag">${file.tag}</span>`;
+                // 检查文件类型和标签
+                const hasDpTag = file.tag === 'dp';
+                const hasStrTag = file.tag === 'str';
+                const hasCcpcTag = file.tag === 'ccpc';
+                const hasPlusTag = file.name.includes('-优化空间') || file.name.includes('-优化');
+
+                let iconClass = 'fa-file-code';
+                let specialBadges = [];
+
+                if (hasDpTag) {
+                    specialBadges.push('<span class="dp-badge">DP</span>');
                 }
-                if (file.plus) {
-                    tagsHtml += `<span class="optimized-badge">PLUS</span>`;
+
+                if (hasStrTag) {
+                    specialBadges.push('<span class="str-badge">STR</span>');
+                }
+
+                if (hasCcpcTag) {
+                    specialBadges.push('<span class="ccpc-badge">CCPC</span>');
+                }
+
+                if (hasPlusTag) {
+                    iconClass = 'fa-rocket';
+                    specialBadges.push('<span class="optimized-badge">plus</span>');
                 }
                 
+                // 使用处理后的显示名称
+                const displayName = this.getDisplayName(file.name);
+                
                 fileItem.innerHTML = `
-                    <i class="fas fa-file-code file-icon"></i>
-                    ${this.getDisplayName(file.name)}
-                    ${tagsHtml}
+                    <i class="fas ${iconClass} file-icon"></i>
+                    ${displayName}
+                    ${specialBadges.join('')}
                 `;
                 
                 fileItem.addEventListener('click', () => this.loadFile(file));
