@@ -90,6 +90,13 @@ class AlgorithmBlog {
             category: '火车头'
         });
 
+        // 扫描template目录
+        try {
+            await this.scanTemplateDirectory(files);
+        } catch (error) {
+            console.warn('扫描template目录失败:', error.message);
+        }
+
         // 扫描dp目录
         try {
             await this.scanAlgorithmDirectory('dp', files);
@@ -112,6 +119,27 @@ class AlgorithmBlog {
         }
 
         return files;
+    }
+
+    // 扫描template目录
+    async scanTemplateDirectory(files) {
+        try {
+            const htmlText = await this.safeFetch('template/');
+            const templateFiles = this.parseFilesFromDirectoryHTML(htmlText, 'template');
+            
+            templateFiles.forEach(file => {
+                files.push({
+                    name: file,
+                    path: `template/${file}`,
+                    date: null,
+                    isTemplateFile: true,
+                    category: 'template'
+                });
+            });
+        } catch (error) {
+            console.warn('扫描template目录失败:', error.message);
+            throw error;
+        }
     }
 
     // 扫描算法目录的通用方法
@@ -240,7 +268,7 @@ class AlgorithmBlog {
     addTagsToFiles() {
         this.files.forEach(file => {
             // 如果不是模板文件，根据路径添加相应的标签
-            if (!file.isTemplate && file.path) {
+            if (!file.isTemplate && !file.isTemplateFile && file.path) {
                 if (file.path.includes('dp/')) {
                     file.tag = 'dp';
                 } else if (file.path.includes('str/')) {
@@ -248,6 +276,11 @@ class AlgorithmBlog {
                 } else if (file.path.includes('ccpc/')) {
                     file.tag = 'ccpc';
                 }
+            }
+
+            // 为template目录下的文件添加tmpl标签
+            if (file.isTemplateFile) {
+                file.tag = 'tmpl';
             }
 
             // 如果文件名包含"-优化"，添加plus标签
@@ -260,16 +293,21 @@ class AlgorithmBlog {
     
 
     // 处理文件名显示，去掉"-优化空间"和前面的序号
-    getDisplayName(fileName) {
+    getDisplayName(fileName, isTemplateFile = false) {
         // 去掉文件扩展名
         let name = fileName.replace(/\.cpp$/, '');
-        
+
+        // 如果是template目录下的文件，只返回去掉扩展名的文件名
+        if (isTemplateFile) {
+            return name;
+        }
+
         // 去掉"-优化空间"或"-优化"
         name = name.replace(/-优化空间$/, '').replace(/-优化$/, '');
-        
+
         // 去掉前面的洛谷题目编号（如P1048、P2834等）
         name = name.replace(/^P\d+/, '');
-        
+
         return name;
     }
 
@@ -277,13 +315,16 @@ class AlgorithmBlog {
         const fileList = document.getElementById('fileList');
         fileList.innerHTML = '';
 
-        // 分离模板文件和普通文件
+        // 分离模板文件、template目录文件和普通文件
         const templateFiles = [];
+        const templateDirFiles = [];
         const regularFiles = {};
         
         this.files.forEach(file => {
             if (file.isTemplate) {
                 templateFiles.push(file);
+            } else if (file.isTemplateFile) {
+                templateDirFiles.push(file);
             } else {
                 const date = file.date || '未知日期';
                 if (!regularFiles[date]) {
@@ -300,7 +341,7 @@ class AlgorithmBlog {
             templateHeader.className = 'date-header template-header';
             templateHeader.innerHTML = `
                 <i class="fas fa-layer-group"></i>
-                模板文件
+                头文件
             `;
             fileList.appendChild(templateHeader);
 
@@ -322,6 +363,59 @@ class AlgorithmBlog {
             });
             
             fileList.appendChild(templateFilesContainer);
+        }
+
+        // 渲染template目录（默认不展开）
+        if (templateDirFiles.length > 0) {
+            const templateDirHeader = document.createElement('div');
+            templateDirHeader.className = 'date-header template-dir-header';
+            templateDirHeader.innerHTML = `
+                <i class="fas fa-chevron-right"></i>
+                <i class="fas fa-folder"></i>
+                template
+            `;
+            
+            const templateDirContainer = document.createElement('div');
+            templateDirContainer.className = 'date-files';
+            templateDirContainer.style.display = 'none'; // 默认不展开
+            templateDirHeader.classList.add('collapsed');
+
+            // 添加点击事件
+            templateDirHeader.style.cursor = 'pointer';
+            templateDirHeader.addEventListener('click', () => {
+                const isCollapsed = templateDirHeader.classList.contains('collapsed');
+                const icon = templateDirHeader.querySelector('.fa-chevron-right, .fa-chevron-down');
+                
+                if (isCollapsed) {
+                    templateDirContainer.style.display = 'block';
+                    templateDirHeader.classList.remove('collapsed');
+                    icon.className = 'fas fa-chevron-down';
+                } else {
+                    templateDirContainer.style.display = 'none';
+                    templateDirHeader.classList.add('collapsed');
+                    icon.className = 'fas fa-chevron-right';
+                }
+            });
+
+            fileList.appendChild(templateDirHeader);
+
+            // 渲染template目录下的文件
+            templateDirFiles.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item template-dir-file';
+
+                const displayName = this.getDisplayName(file.name, true);
+
+                fileItem.innerHTML = `
+                    <i class="fas fa-file-code file-icon"></i>
+                    ${displayName}
+                    <span class="tmpl-badge">tmpl</span>
+                `;
+                fileItem.addEventListener('click', () => this.loadFile(file));
+                templateDirContainer.appendChild(fileItem);
+            });
+
+            fileList.appendChild(templateDirContainer);
         }
 
         // 按日期排序普通文件（最新的在前）
@@ -1263,7 +1357,7 @@ class AlgorithmBlog {
         if (templateFiles.length > 0) {
             const templateHeader = document.createElement('div');
             templateHeader.className = 'template-header';
-            templateHeader.innerHTML = '<i class="fas fa-layer-group"></i> 模板文件';
+            templateHeader.innerHTML = '<i class="fas fa-layer-group"></i> 头文件';
             fileList.appendChild(templateHeader);
 
             const templateFilesContainer = document.createElement('div');

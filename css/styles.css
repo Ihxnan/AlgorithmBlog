@@ -730,6 +730,68 @@ body {
     color: white;
 }
 
+/* Template directory header */
+.template-dir-header {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+    color: var(--text-primary);
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    transition: var(--transition);
+}
+
+.template-dir-header:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.25), rgba(118, 75, 162, 0.25));
+    border-color: rgba(102, 126, 234, 0.4);
+}
+
+.template-dir-header i {
+    margin-right: 0.5rem;
+}
+
+.template-dir-header .fa-folder {
+    color: #ffd700;
+    margin-right: 0.3rem;
+}
+
+/* Template directory file styling */
+.template-dir-file {
+    background: rgba(102, 126, 234, 0.05);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    position: relative;
+    transition: var(--transition);
+}
+
+.template-dir-file:hover {
+    background: rgba(102, 126, 234, 0.15);
+    border-color: rgba(102, 126, 234, 0.4);
+    transform: translateX(2px);
+}
+
+.template-dir-file .file-icon {
+    color: var(--primary-color);
+}
+
+/* TMPL tag badge */
+.tmpl-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #9f7aea, #805ad5);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(159, 122, 234, 0.3);
+}
+
 /* Optimized version badge */
 .optimized-badge {
     display: inline-block;
