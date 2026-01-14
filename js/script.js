@@ -1337,13 +1337,16 @@ class AlgorithmBlog {
         const fileList = document.getElementById('fileList');
         fileList.innerHTML = '';
 
-        // 分离模板文件和普通文件
+        // 分离模板文件、template目录文件和普通文件
         const templateFiles = [];
+        const templateDirFiles = [];
         const regularFiles = {};
         
         filteredFiles.forEach(file => {
             if (file.isTemplate) {
                 templateFiles.push(file);
+            } else if (file.isTemplateFile) {
+                templateDirFiles.push(file);
             } else {
                 const date = file.date || '未知日期';
                 if (!regularFiles[date]) {
@@ -1377,6 +1380,58 @@ class AlgorithmBlog {
             });
             
             fileList.appendChild(templateFilesContainer);
+        }
+
+        // 创建template目录文件列表
+        if (templateDirFiles.length > 0) {
+            const templateDirHeader = document.createElement('div');
+            templateDirHeader.className = 'date-header template-dir-header';
+            templateDirHeader.innerHTML = `
+                <i class="fas fa-chevron-right"></i>
+                <i class="fas fa-folder"></i>
+                template
+            `;
+            
+            const templateDirFilesContainer = document.createElement('div');
+            templateDirFilesContainer.className = 'date-files';
+            templateDirFilesContainer.style.display = 'none'; // 默认收起
+            templateDirHeader.classList.add('collapsed');
+
+            // 添加点击事件
+            templateDirHeader.style.cursor = 'pointer';
+            templateDirHeader.addEventListener('click', () => {
+                const isCollapsed = templateDirHeader.classList.contains('collapsed');
+                const icon = templateDirHeader.querySelector('.fa-chevron-right, .fa-chevron-down');
+                
+                if (isCollapsed) {
+                    templateDirFilesContainer.style.display = 'block';
+                    templateDirHeader.classList.remove('collapsed');
+                    icon.className = 'fas fa-chevron-down';
+                } else {
+                    templateDirFilesContainer.style.display = 'none';
+                    templateDirHeader.classList.add('collapsed');
+                    icon.className = 'fas fa-chevron-right';
+                }
+            });
+
+            fileList.appendChild(templateDirHeader);
+            
+            templateDirFiles.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item template-dir-file';
+                
+                const displayName = this.getDisplayName(file.name, true);
+                
+                fileItem.innerHTML = `
+                    <i class="fas fa-file-code file-icon"></i>
+                    ${displayName}
+                    <span class="tmpl-badge">tmpl</span>
+                `;
+                fileItem.addEventListener('click', () => this.loadFile(file));
+                templateDirFilesContainer.appendChild(fileItem);
+            });
+            
+            fileList.appendChild(templateDirFilesContainer);
         }
 
         // 按日期排序普通文件
@@ -1437,6 +1492,7 @@ class AlgorithmBlog {
                 const hasDpTag = file.tag === 'dp';
                 const hasStrTag = file.tag === 'str';
                 const hasCcpcTag = file.tag === 'ccpc';
+                const hasTmplTag = file.tag === 'tmpl';
                 const hasPlusTag = file.name.includes('-优化空间') || file.name.includes('-优化');
 
                 let iconClass = 'fa-file-code';
@@ -1452,6 +1508,10 @@ class AlgorithmBlog {
 
                 if (hasCcpcTag) {
                     specialBadges.push('<span class="ccpc-badge">CCPC</span>');
+                }
+
+                if (hasTmplTag) {
+                    specialBadges.push('<span class="tmpl-badge">tmpl</span>');
                 }
 
                 if (hasPlusTag) {
