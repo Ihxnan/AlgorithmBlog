@@ -3,7 +3,7 @@
 
 void init()
 {
-    t = 1;
+    t = 1; // 只有一组测试数据
 }
 
 void solve()
@@ -11,7 +11,7 @@ void solve()
     int m;
     cin >> m;
     int op;
-    Trie trie(20);
+    Trie trie(200000);
     string str;
     for (int i = 0; i < m; ++i)
     {
@@ -26,5 +26,3 @@ void solve()
             cout << trie.prefix(str) << endl;
     }
 }
-
-

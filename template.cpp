@@ -24,8 +24,8 @@
 #define ls(x) ((x) << 1)
 #define rs(x) ((x) << 1 | 1)
 #define lowbit(x) ((x) & -(x))
-#define yn(ans) cout << ((ans) ? "Yes" : "No") << endl;
-#define YN(ans) cout << ((ans) ? "YES" : "NO") << endl;
+#define yn(ans) cout << ((ans) ? "Yes" : "No") << endl
+#define YN(ans) cout << ((ans) ? "YES" : "NO") << endl
 #define pb push_back
 #define qb pop_back
 #define pf push_front
