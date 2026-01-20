@@ -90,6 +90,13 @@ class AlgorithmBlog {
             category: '火车头'
         });
 
+        // 扫描template目录
+        try {
+            await this.scanTemplateDirectory(files);
+        } catch (error) {
+            console.warn('扫描template目录失败:', error.message);
+        }
+
         // 扫描dp目录
         try {
             await this.scanAlgorithmDirectory('dp', files);
@@ -104,7 +111,35 @@ class AlgorithmBlog {
             console.warn('扫描str目录失败:', error.message);
         }
 
+        // 扫描ccpc目录
+        try {
+            await this.scanAlgorithmDirectory('ccpc', files);
+        } catch (error) {
+            console.warn('扫描ccpc目录失败:', error.message);
+        }
+
         return files;
+    }
+
+    // 扫描template目录
+    async scanTemplateDirectory(files) {
+        try {
+            const htmlText = await this.safeFetch('template/');
+            const templateFiles = this.parseFilesFromDirectoryHTML(htmlText, 'template');
+            
+            templateFiles.forEach(file => {
+                files.push({
+                    name: file,
+                    path: `template/${file}`,
+                    date: null,
+                    isTemplateFile: true,
+                    category: 'template'
+                });
+            });
+        } catch (error) {
+            console.warn('扫描template目录失败:', error.message);
+            throw error;
+        }
     }
 
     // 扫描算法目录的通用方法
@@ -121,6 +156,8 @@ class AlgorithmBlog {
                     directoriesToScan = ['2025-12-30', '2025-12-31'];
                 } else if (dirName === 'str') {
                     directoriesToScan = ['2026-01-01'];
+                } else if (dirName === 'ccpc') {
+                    directoriesToScan = ['2026-01-13'];
                 }
             }
             
@@ -221,7 +258,9 @@ class AlgorithmBlog {
             { name: 'P2196挖地雷.cpp', path: 'dp/2025-12-31/P2196挖地雷.cpp', date: '2025-12-31', category: 'dp' },
             { name: 'P1434滑雪.cpp', path: 'dp/2025-12-31/P1434滑雪.cpp', date: '2025-12-31', category: 'dp' },
             // 2026-01-01 的题目
-            { name: '迎新字符串.cpp', path: 'str/2026-01-01/迎新字符串.cpp', date: '2026-01-01', category: 'str' }
+            { name: '迎新字符串.cpp', path: 'str/2026-01-01/迎新字符串.cpp', date: '2026-01-01', category: 'str' },
+            // 2026-01-13 的题目
+            { name: 'L1-001.cpp', path: 'ccpc/2026-01-13/L1-001.cpp', date: '2026-01-13', category: 'ccpc' }
         ];
     }
 
@@ -229,14 +268,21 @@ class AlgorithmBlog {
     addTagsToFiles() {
         this.files.forEach(file => {
             // 如果不是模板文件，根据路径添加相应的标签
-            if (!file.isTemplate && file.path) {
+            if (!file.isTemplate && !file.isTemplateFile && file.path) {
                 if (file.path.includes('dp/')) {
                     file.tag = 'dp';
                 } else if (file.path.includes('str/')) {
                     file.tag = 'str';
+                } else if (file.path.includes('ccpc/')) {
+                    file.tag = 'ccpc';
                 }
             }
-            
+
+            // 为template目录下的文件添加tmpl标签
+            if (file.isTemplateFile) {
+                file.tag = 'tmpl';
+            }
+
             // 如果文件名包含"-优化"，添加plus标签
             if (file.name && file.name.includes('-优化')) {
                 file.plus = true;
@@ -244,17 +290,24 @@ class AlgorithmBlog {
         });
     }
 
+    
+
     // 处理文件名显示，去掉"-优化空间"和前面的序号
-    getDisplayName(fileName) {
+    getDisplayName(fileName, isTemplateFile = false) {
         // 去掉文件扩展名
         let name = fileName.replace(/\.cpp$/, '');
-        
+
+        // 如果是template目录下的文件，只返回去掉扩展名的文件名
+        if (isTemplateFile) {
+            return name;
+        }
+
         // 去掉"-优化空间"或"-优化"
         name = name.replace(/-优化空间$/, '').replace(/-优化$/, '');
-        
-        // 去掉前面的序号（如P1048、P2834等）
-        name = name.replace(/^[A-Z]+\d+/, '');
-        
+
+        // 去掉前面的洛谷题目编号（如P1048、P2834等）
+        name = name.replace(/^P\d+/, '');
+
         return name;
     }
 
@@ -262,13 +315,16 @@ class AlgorithmBlog {
         const fileList = document.getElementById('fileList');
         fileList.innerHTML = '';
 
-        // 分离模板文件和普通文件
+        // 分离模板文件、template目录文件和普通文件
         const templateFiles = [];
+        const templateDirFiles = [];
         const regularFiles = {};
         
         this.files.forEach(file => {
             if (file.isTemplate) {
                 templateFiles.push(file);
+            } else if (file.isTemplateFile) {
+                templateDirFiles.push(file);
             } else {
                 const date = file.date || '未知日期';
                 if (!regularFiles[date]) {
@@ -284,8 +340,8 @@ class AlgorithmBlog {
             const templateHeader = document.createElement('div');
             templateHeader.className = 'date-header template-header';
             templateHeader.innerHTML = `
-                <i class="fas fa-train"></i>
-                header
+                <i class="fas fa-layer-group"></i>
+                头文件
             `;
             fileList.appendChild(templateHeader);
 
@@ -309,122 +365,353 @@ class AlgorithmBlog {
             fileList.appendChild(templateFilesContainer);
         }
 
-        // 按日期排序普通文件
+        // 渲染template目录（默认不展开）
+        if (templateDirFiles.length > 0) {
+            const templateDirHeader = document.createElement('div');
+            templateDirHeader.className = 'date-header template-dir-header';
+            templateDirHeader.innerHTML = `
+                <i class="fas fa-chevron-right"></i>
+                <i class="fas fa-folder"></i>
+                template
+            `;
+            
+            const templateDirContainer = document.createElement('div');
+            templateDirContainer.className = 'date-files';
+            templateDirContainer.style.display = 'none'; // 默认不展开
+            templateDirHeader.classList.add('collapsed');
+
+            // 添加点击事件
+            templateDirHeader.style.cursor = 'pointer';
+            templateDirHeader.addEventListener('click', () => {
+                const isCollapsed = templateDirHeader.classList.contains('collapsed');
+                const icon = templateDirHeader.querySelector('.fa-chevron-right, .fa-chevron-down');
+                
+                if (isCollapsed) {
+                    templateDirContainer.style.display = 'block';
+                    templateDirHeader.classList.remove('collapsed');
+                    icon.className = 'fas fa-chevron-down';
+                } else {
+                    templateDirContainer.style.display = 'none';
+                    templateDirHeader.classList.add('collapsed');
+                    icon.className = 'fas fa-chevron-right';
+                }
+            });
+
+            fileList.appendChild(templateDirHeader);
+
+            // 渲染template目录下的文件
+            templateDirFiles.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item template-dir-file';
+
+                const displayName = this.getDisplayName(file.name, true);
+
+                fileItem.innerHTML = `
+                    <i class="fas fa-file-code file-icon"></i>
+                    ${displayName}
+                    <span class="tmpl-badge">tmpl</span>
+                `;
+                fileItem.addEventListener('click', () => this.loadFile(file));
+                templateDirContainer.appendChild(fileItem);
+            });
+
+            fileList.appendChild(templateDirContainer);
+        }
+
+        // 按日期排序普通文件（最新的在前）
         const sortedDates = Object.keys(regularFiles).sort((a, b) => {
             return new Date(b) - new Date(a);
         });
 
-        // 渲染每个日期组
-        sortedDates.forEach((date, index) => {
-            // 创建日期标题
-            const dateHeader = document.createElement('div');
-            dateHeader.className = 'date-header';
-            dateHeader.innerHTML = `
-                <i class="fas fa-chevron-right"></i>
-                ${date}
-            `;
-            
-            // 为所有日期添加点击事件
-            dateHeader.style.cursor = 'pointer';
-            dateHeader.addEventListener('click', () => {
-                const isCollapsed = dateHeader.classList.contains('collapsed');
-                const icon = dateHeader.querySelector('i');
-                
-                if (isCollapsed) {
-                    // 展开
-                    dateFiles.style.display = 'block';
-                    dateHeader.classList.remove('collapsed');
-                    icon.className = 'fas fa-chevron-down';
-                } else {
-                    // 收起
-                    dateFiles.style.display = 'none';
-                    dateHeader.classList.add('collapsed');
-                    icon.className = 'fas fa-chevron-right';
-                }
-            });
-            
-            fileList.appendChild(dateHeader);
+        // 如果没有日期数据，直接返回
+        if (sortedDates.length === 0) {
+            return;
+        }
 
-            // 创建该日期下的文件列表
-            const dateFiles = document.createElement('div');
-            dateFiles.className = 'date-files';
+        // 获取最新一天的日期
+        const latestDate = sortedDates[0];
+        const latestDateObj = new Date(latestDate);
+        const latestYear = latestDateObj.getFullYear();
+        const latestMonth = latestDateObj.getMonth();
+
+        // 分组逻辑：
+        // 1. 最新一天：完全展开
+        // 2. 最新月的其他日期：显示到日，默认收起
+        // 3. 同年其他月份：显示到月，默认收起
+        // 4. 其他年份：显示到年，默认收起
+
+        const latestDayFiles = regularFiles[latestDate];
+        const currentMonthOtherDays = [];
+        const sameYearOtherMonths = {};
+        const otherYears = {};
+
+        sortedDates.slice(1).forEach(date => {
+            const dateObj = new Date(date);
+            const year = dateObj.getFullYear();
+            const month = dateObj.getMonth();
+
+            if (year === latestYear && month === latestMonth) {
+                // 最新月的其他日期
+                currentMonthOtherDays.push(date);
+            } else if (year === latestYear) {
+                // 同年其他月份：按月份分组
+                const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+                if (!sameYearOtherMonths[monthKey]) {
+                    sameYearOtherMonths[monthKey] = [];
+                }
+                sameYearOtherMonths[monthKey].push(date);
+            } else {
+                // 其他年份：按年份分组
+                const yearKey = `${year}`;
+                if (!otherYears[yearKey]) {
+                    otherYears[yearKey] = [];
+                }
+                otherYears[yearKey].push(date);
+            }
+        });
+
+        // 渲染最新一天（完全展开）
+        this.renderDateGroup(fileList, latestDate, latestDayFiles, true, true);
+
+        // 渲染最新月的其他日期（显示到日，默认收起）
+        currentMonthOtherDays.forEach(date => {
+            this.renderDateGroup(fileList, date, regularFiles[date], false, false);
+        });
+
+        // 渲染同年其他月份（显示到月，默认收起）
+        const sortedSameYearMonths = Object.keys(sameYearOtherMonths).sort((a, b) => new Date(b) - new Date(a));
+        sortedSameYearMonths.forEach(month => {
+            this.renderMonthGroup(fileList, month, sameYearOtherMonths[month]);
+        });
+
+        // 渲染其他年份（显示到年，默认收起）
+        const sortedOtherYears = Object.keys(otherYears).sort((a, b) => new Date(b) - new Date(a));
+        sortedOtherYears.forEach(year => {
+            this.renderYearGroup(fileList, year, otherYears[year]);
+        });
+    }
+
+    // 渲染单个日期组
+    renderDateGroup(container, date, files, expanded, isLatest) {
+        const dateHeader = document.createElement('div');
+        dateHeader.className = 'date-header';
+        dateHeader.innerHTML = `
+            <i class="fas fa-chevron-right"></i>
+            ${date}
+        `;
+        
+        const dateFiles = document.createElement('div');
+        dateFiles.className = 'date-files';
+        
+        // 设置展开/收起状态
+        if (expanded) {
+            dateFiles.style.display = 'block';
+            dateHeader.classList.remove('collapsed');
+            const icon = dateHeader.querySelector('i');
+            icon.className = 'fas fa-chevron-down';
+        } else {
+            dateFiles.style.display = 'none';
+            dateHeader.classList.add('collapsed');
+        }
+
+        // 添加点击事件
+        dateHeader.style.cursor = 'pointer';
+        dateHeader.addEventListener('click', () => {
+            const isCollapsed = dateHeader.classList.contains('collapsed');
+            const icon = dateHeader.querySelector('i');
             
-            // 第一天（最新日期）默认展开，其他日期收起
-            if (index === 0) {
+            if (isCollapsed) {
                 dateFiles.style.display = 'block';
                 dateHeader.classList.remove('collapsed');
-                const icon = dateHeader.querySelector('i');
                 icon.className = 'fas fa-chevron-down';
             } else {
                 dateFiles.style.display = 'none';
                 dateHeader.classList.add('collapsed');
+                icon.className = 'fas fa-chevron-right';
             }
+        });
+
+        container.appendChild(dateHeader);
+        
+        // 渲染文件
+        this.renderFilesInGroup(dateFiles, files);
+        container.appendChild(dateFiles);
+    }
+
+    // 渲染月份分组
+    renderMonthGroup(container, month, dates) {
+        const monthHeader = document.createElement('div');
+        monthHeader.className = 'date-header month-group';
+        monthHeader.innerHTML = `
+            <i class="fas fa-chevron-right"></i>
+            ${month}
+        `;
+        
+        const monthFiles = document.createElement('div');
+        monthFiles.className = 'date-files';
+        monthFiles.style.display = 'none';
+        monthHeader.classList.add('collapsed');
+
+        // 添加点击事件
+        monthHeader.style.cursor = 'pointer';
+        monthHeader.addEventListener('click', () => {
+            const isCollapsed = monthHeader.classList.contains('collapsed');
+            const icon = monthHeader.querySelector('i');
             
-            // 按文件名分组，让PLUS版本排在后面
-            const fileGroups = {};
-            regularFiles[date].forEach(file => {
-                const baseName = this.getDisplayName(file.name);
-                if (!fileGroups[baseName]) {
-                    fileGroups[baseName] = [];
-                }
-                fileGroups[baseName].push(file);
-            });
+            if (isCollapsed) {
+                monthFiles.style.display = 'block';
+                monthHeader.classList.remove('collapsed');
+                icon.className = 'fas fa-chevron-down';
+            } else {
+                monthFiles.style.display = 'none';
+                monthHeader.classList.add('collapsed');
+                icon.className = 'fas fa-chevron-right';
+            }
+        });
+
+        container.appendChild(monthHeader);
+        
+        // 按日期排序（最新的在前）
+        const sortedDates = dates.sort((a, b) => new Date(b) - new Date(a));
+        
+        // 渲染该月份下的所有日期
+        sortedDates.forEach(date => {
+            const files = this.getFilesForDate(date);
+            if (files.length > 0) {
+                this.renderDateGroup(monthFiles, date, files, false, false);
+            }
+        });
+
+        container.appendChild(monthFiles);
+    }
+
+    // 渲染年份分组
+    renderYearGroup(container, year, dates) {
+        const yearHeader = document.createElement('div');
+        yearHeader.className = 'date-header year-group';
+        yearHeader.innerHTML = `
+            <i class="fas fa-chevron-right"></i>
+            ${year}
+        `;
+        
+        const yearFiles = document.createElement('div');
+        yearFiles.className = 'date-files';
+        yearFiles.style.display = 'none';
+        yearHeader.classList.add('collapsed');
+
+        // 添加点击事件
+        yearHeader.style.cursor = 'pointer';
+        yearHeader.addEventListener('click', () => {
+            const isCollapsed = yearHeader.classList.contains('collapsed');
+            const icon = yearHeader.querySelector('i');
             
-            // 对每个分组内的文件进行排序，PLUS版本排在后面
-            Object.keys(fileGroups).forEach(baseName => {
-                const group = fileGroups[baseName];
-                group.sort((a, b) => {
-                    // 确保PLUS标签正确识别
-                    const aIsPlus = a.name.includes('-优化空间') || a.name.includes('-优化');
-                    const bIsPlus = b.name.includes('-优化空间') || b.name.includes('-优化');
-                    
-                    // PLUS版本排在后面
-                    if (aIsPlus && !bIsPlus) return 1;
-                    if (!aIsPlus && bIsPlus) return -1;
-                    return 0;
-                });
+            if (isCollapsed) {
+                yearFiles.style.display = 'block';
+                yearHeader.classList.remove('collapsed');
+                icon.className = 'fas fa-chevron-down';
+            } else {
+                yearFiles.style.display = 'none';
+                yearHeader.classList.add('collapsed');
+                icon.className = 'fas fa-chevron-right';
+            }
+        });
+
+        container.appendChild(yearHeader);
+        
+        // 按月份分组该年份下的日期
+        const monthGroups = {};
+        dates.forEach(date => {
+            const dateObj = new Date(date);
+            const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+            if (!monthGroups[monthKey]) {
+                monthGroups[monthKey] = [];
+            }
+            monthGroups[monthKey].push(date);
+        });
+
+        // 渲染该年份下的月份组
+        const sortedMonths = Object.keys(monthGroups).sort((a, b) => new Date(b) - new Date(a));
+        sortedMonths.forEach(month => {
+            this.renderMonthGroup(yearFiles, month, monthGroups[month]);
+        });
+
+        container.appendChild(yearFiles);
+    }
+
+    // 获取指定日期的文件
+    getFilesForDate(date) {
+        return this.files.filter(file => file.date === date);
+    }
+
+    // 在分组中渲染文件
+    renderFilesInGroup(container, files) {
+        // 按文件名分组，让PLUS版本排在后面
+        const fileGroups = {};
+        files.forEach(file => {
+            const baseName = this.getDisplayName(file.name);
+            if (!fileGroups[baseName]) {
+                fileGroups[baseName] = [];
+            }
+            fileGroups[baseName].push(file);
+        });
+        
+        // 对每个分组内的文件进行排序，PLUS版本排在后面
+        Object.keys(fileGroups).forEach(baseName => {
+            const group = fileGroups[baseName];
+            group.sort((a, b) => {
+                // 确保PLUS标签正确识别
+                const aIsPlus = a.name.includes('-优化空间') || a.name.includes('-优化');
+                const bIsPlus = b.name.includes('-优化空间') || b.name.includes('-优化');
                 
-                // 渲染分组内的文件
-                group.forEach(file => {
-                    const fileItem = document.createElement('div');
-                    fileItem.className = 'file-item';
-                    
-                    // 检查文件类型和标签
-                    const hasDpTag = file.tag === 'dp';
-                    const hasStrTag = file.tag === 'str';
-                    // 统一使用文件名判断PLUS标签
-                    const hasPlusTag = file.name.includes('-优化空间') || file.name.includes('-优化');
-                    
-                    let iconClass = 'fa-file-code';
-                    let specialBadges = [];
-                    
-                    if (hasDpTag) {
-                        specialBadges.push('<span class="dp-badge">DP</span>');
-                    }
-                    
-                    if (hasStrTag) {
-                        specialBadges.push('<span class="str-badge">STR</span>');
-                    }
-                    
-                    if (hasPlusTag) {
-                        iconClass = 'fa-rocket';
-                        specialBadges.push('<span class="optimized-badge">plus</span>');
-                    }
-                    
-                    // 使用处理后的显示名称
-                    const displayName = this.getDisplayName(file.name);
-                    
-                    fileItem.innerHTML = `
-                        <i class="fas ${iconClass} file-icon"></i>
-                        ${displayName}
-                        ${specialBadges.join('')}
-                    `;
-                    fileItem.addEventListener('click', () => this.loadFile(file));
-                    dateFiles.appendChild(fileItem);
-                });
+                // PLUS版本排在后面
+                if (aIsPlus && !bIsPlus) return 1;
+                if (!aIsPlus && bIsPlus) return -1;
+                return 0;
             });
             
-            fileList.appendChild(dateFiles);
+            // 渲染分组内的文件
+            group.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                
+                // 检查文件类型和标签
+                const hasDpTag = file.tag === 'dp';
+                const hasStrTag = file.tag === 'str';
+                const hasCcpcTag = file.tag === 'ccpc';
+                // 统一使用文件名判断PLUS标签
+                const hasPlusTag = file.name.includes('-优化空间') || file.name.includes('-优化');
+
+                let iconClass = 'fa-file-code';
+                let specialBadges = [];
+
+                if (hasDpTag) {
+                    specialBadges.push('<span class="dp-badge">DP</span>');
+                }
+
+                if (hasStrTag) {
+                    specialBadges.push('<span class="str-badge">STR</span>');
+                }
+
+                if (hasCcpcTag) {
+                    specialBadges.push('<span class="ccpc-badge">CCPC</span>');
+                }
+
+                if (hasPlusTag) {
+                    iconClass = 'fa-rocket';
+                    specialBadges.push('<span class="optimized-badge">plus</span>');
+                }
+                
+                // 使用处理后的显示名称
+                const displayName = this.getDisplayName(file.name);
+                
+                fileItem.innerHTML = `
+                    <i class="fas ${iconClass} file-icon"></i>
+                    ${displayName}
+                    ${specialBadges.join('')}
+                `;
+                fileItem.addEventListener('click', () => this.loadFile(file));
+                container.appendChild(fileItem);
+            });
         });
     }
 
@@ -492,6 +779,9 @@ class AlgorithmBlog {
             } else if (url.hostname.includes('nowcoder.com')) {
                 // 牛客题目格式
                 problemName = '牛客';
+            } else if (url.hostname.includes('pintia.cn')) {
+                // PTA题目格式
+                problemName = 'pta';
             }
         } catch (e) {
             // URL解析失败，使用默认名称
@@ -636,7 +926,8 @@ class AlgorithmBlog {
 
     setupEventListeners() {
         // 复制代码
-        document.getElementById('copyCode').addEventListener('click', () => {
+        document.getElementById('copyCode').addEventListener('click', (e) => {
+            this.addButtonClickEffect(e.target);
             this.copyCode();
         });
 
@@ -650,7 +941,10 @@ class AlgorithmBlog {
             this.toggleTheme();
         });
 
-        
+        // 打开不务正业笔记
+        document.getElementById('openMemo').addEventListener('click', () => {
+            this.openMemoPanel();
+        });
 
         // 切换侧边栏
         document.getElementById('toggleSidebar').addEventListener('click', () => {
@@ -658,8 +952,26 @@ class AlgorithmBlog {
         });
 
         // 下载代码
-        document.getElementById('downloadCode').addEventListener('click', () => {
+        document.getElementById('downloadCode').addEventListener('click', (e) => {
+            this.addButtonClickEffect(e.target);
             this.downloadCurrentCode();
+        });
+
+        // 搜索功能
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', () => {
+            this.filterFiles();
+        });
+
+        // 清除搜索
+        document.getElementById('clearSearch').addEventListener('click', () => {
+            searchInput.value = '';
+            this.filterFiles();
+        });
+
+        // 筛选功能
+        document.getElementById('typeFilter').addEventListener('change', () => {
+            this.filterFiles();
         });
 
         // 键盘快捷键
@@ -684,7 +996,16 @@ class AlgorithmBlog {
                         e.preventDefault();
                         this.downloadCurrentCode();
                         break;
+                    case 'f':
+                        e.preventDefault();
+                        document.getElementById('searchInput').focus();
+                        break;
                 }
+            } else if (e.key === 'Escape') {
+                // ESC键清除搜索
+                document.getElementById('searchInput').value = '';
+                this.filterFiles();
+                document.getElementById('searchInput').blur();
             }
         });
     }
@@ -694,10 +1015,21 @@ class AlgorithmBlog {
     async copyCode() {
         const codeDisplay = document.getElementById('codeDisplay');
         const code = codeDisplay.textContent;
+        const copyBtn = document.getElementById('copyCode');
+        const originalIcon = copyBtn.innerHTML;
         
         try {
             await navigator.clipboard.writeText(code);
+            // 改变按钮图标为成功状态
+            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+            copyBtn.style.color = '#4ade80';
             this.showToast('代码已复制到剪贴板', 'success');
+            
+            // 1秒后恢复原始图标
+            setTimeout(() => {
+                copyBtn.innerHTML = originalIcon;
+                copyBtn.style.color = '';
+            }, 1000);
         } catch (error) {
             // 降级方案
             const textArea = document.createElement('textarea');
@@ -706,7 +1038,17 @@ class AlgorithmBlog {
             textArea.select();
             document.execCommand('copy');
             document.body.removeChild(textArea);
+            
+            // 改变按钮图标为成功状态
+            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+            copyBtn.style.color = '#4ade80';
             this.showToast('代码已复制到剪贴板', 'success');
+            
+            // 1秒后恢复原始图标
+            setTimeout(() => {
+                copyBtn.innerHTML = originalIcon;
+                copyBtn.style.color = '';
+            }, 1000);
         }
     }
 
@@ -888,6 +1230,8 @@ class AlgorithmBlog {
         const codeDisplay = document.getElementById('codeDisplay');
         const code = codeDisplay.textContent;
         const fileName = this.currentFile.name;
+        const downloadBtn = document.getElementById('downloadCode');
+        const originalIcon = downloadBtn.innerHTML;
         
         // 创建下载链接
         const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
@@ -900,7 +1244,16 @@ class AlgorithmBlog {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
+        // 改变按钮图标为成功状态
+        downloadBtn.innerHTML = '<i class="fas fa-check"></i>';
+        downloadBtn.style.color = '#4ade80';
         this.showToast(`已下载 ${fileName}`, 'success');
+        
+        // 1秒后恢复原始图标
+        setTimeout(() => {
+            downloadBtn.innerHTML = originalIcon;
+            downloadBtn.style.color = '';
+        }, 1000);
     }
 
     // 恢复用户偏好设置
@@ -941,29 +1294,330 @@ class AlgorithmBlog {
             (file.path.includes('dp/') || file.path.includes('str/'))
         ).length;
         
-        // 计算优化版本数量
-        const optimizedCount = this.files.filter(file => 
-            file.name.includes('-优化空间')
-        ).length;
+        // 计算活跃天数（基于题目列表中的不同日期数量）
+        const uniqueDates = new Set();
+        this.files.forEach(file => {
+            if (file.date && !file.isTemplate) {
+                uniqueDates.add(file.date);
+            }
+        });
+        const activeDays = uniqueDates.size;
         
-        // 计算str目录下的题目数量
-        const strCount = this.files.filter(file => 
-            file.path.includes('str/') && file.name.endsWith('.cpp')
-        ).length;
+        // 动态获取代码行数
+        this.updateTotalLines();
         
         // 更新DOM
         document.getElementById('totalProblems').textContent = totalProblems;
-        document.getElementById('optimizedCount').textContent = optimizedCount;
+        document.getElementById('activeDays').textContent = activeDays;
+    }
+
+    // 搜索和筛选文件
+    filterFiles() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const typeFilter = document.getElementById('typeFilter').value;
         
-        // 如果有str题目数量的元素，更新它
-        const strCountElement = document.getElementById('strCount');
-        if (strCountElement) {
-            strCountElement.textContent = strCount;
+        // 筛选文件
+        const filteredFiles = this.files.filter(file => {
+            // 搜索过滤
+            if (searchTerm && !file.name.toLowerCase().includes(searchTerm)) {
+                return false;
+            }
+            
+            // 算法类型过滤（使用原有的tag属性）
+            if (typeFilter && file.tag !== typeFilter) {
+                return false;
+            }
+            
+            return true;
+        });
+        
+        // 重新渲染文件列表
+        this.renderFilteredList(filteredFiles);
+    }
+
+    // 渲染筛选后的文件列表
+    renderFilteredList(filteredFiles) {
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';
+
+        // 分离模板文件、template目录文件和普通文件
+        const templateFiles = [];
+        const templateDirFiles = [];
+        const regularFiles = {};
+        
+        filteredFiles.forEach(file => {
+            if (file.isTemplate) {
+                templateFiles.push(file);
+            } else if (file.isTemplateFile) {
+                templateDirFiles.push(file);
+            } else {
+                const date = file.date || '未知日期';
+                if (!regularFiles[date]) {
+                    regularFiles[date] = [];
+                }
+                regularFiles[date].push(file);
+            }
+        });
+
+        // 创建火车头文件列表
+        if (templateFiles.length > 0) {
+            const templateHeader = document.createElement('div');
+            templateHeader.className = 'template-header';
+            templateHeader.innerHTML = '<i class="fas fa-layer-group"></i> 头文件';
+            fileList.appendChild(templateHeader);
+
+            const templateFilesContainer = document.createElement('div');
+            templateFilesContainer.className = 'date-files';
+            
+            templateFiles.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item template-file';
+                
+                fileItem.innerHTML = `
+                    <i class="fas fa-layer-group file-icon"></i>
+                    ${file.name}
+                    <span class="template-badge">火车头</span>
+                `;
+                fileItem.addEventListener('click', () => this.loadFile(file));
+                templateFilesContainer.appendChild(fileItem);
+            });
+            
+            fileList.appendChild(templateFilesContainer);
         }
+
+        // 创建template目录文件列表
+        if (templateDirFiles.length > 0) {
+            const templateDirHeader = document.createElement('div');
+            templateDirHeader.className = 'date-header template-dir-header';
+            templateDirHeader.innerHTML = `
+                <i class="fas fa-chevron-right"></i>
+                <i class="fas fa-folder"></i>
+                template
+            `;
+            
+            const templateDirFilesContainer = document.createElement('div');
+            templateDirFilesContainer.className = 'date-files';
+            templateDirFilesContainer.style.display = 'none'; // 默认收起
+            templateDirHeader.classList.add('collapsed');
+
+            // 添加点击事件
+            templateDirHeader.style.cursor = 'pointer';
+            templateDirHeader.addEventListener('click', () => {
+                const isCollapsed = templateDirHeader.classList.contains('collapsed');
+                const icon = templateDirHeader.querySelector('.fa-chevron-right, .fa-chevron-down');
+                
+                if (isCollapsed) {
+                    templateDirFilesContainer.style.display = 'block';
+                    templateDirHeader.classList.remove('collapsed');
+                    icon.className = 'fas fa-chevron-down';
+                } else {
+                    templateDirFilesContainer.style.display = 'none';
+                    templateDirHeader.classList.add('collapsed');
+                    icon.className = 'fas fa-chevron-right';
+                }
+            });
+
+            fileList.appendChild(templateDirHeader);
+            
+            templateDirFiles.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item template-dir-file';
+                
+                const displayName = this.getDisplayName(file.name, true);
+                
+                fileItem.innerHTML = `
+                    <i class="fas fa-file-code file-icon"></i>
+                    ${displayName}
+                    <span class="tmpl-badge">tmpl</span>
+                `;
+                fileItem.addEventListener('click', () => this.loadFile(file));
+                templateDirFilesContainer.appendChild(fileItem);
+            });
+            
+            fileList.appendChild(templateDirFilesContainer);
+        }
+
+        // 按日期排序普通文件
+        const sortedDates = Object.keys(regularFiles).sort((a, b) => {
+            return new Date(b) - new Date(a);
+        });
+
+        // 渲染每个日期组
+        sortedDates.forEach((date, index) => {
+            // 创建日期标题
+            const dateHeader = document.createElement('div');
+            dateHeader.className = 'date-header';
+            dateHeader.innerHTML = `
+                <i class="fas fa-chevron-right"></i>
+                ${date}
+            `;
+            
+            // 为所有日期添加点击事件
+            dateHeader.style.cursor = 'pointer';
+            dateHeader.addEventListener('click', () => {
+                const isCollapsed = dateHeader.classList.contains('collapsed');
+                const icon = dateHeader.querySelector('i');
+                const dateFiles = dateHeader.nextElementSibling;
+                
+                if (isCollapsed) {
+                    // 展开
+                    dateFiles.style.display = 'block';
+                    dateHeader.classList.remove('collapsed');
+                    icon.className = 'fas fa-chevron-down';
+                } else {
+                    // 收起
+                    dateFiles.style.display = 'none';
+                    dateHeader.classList.add('collapsed');
+                    icon.className = 'fas fa-chevron-right';
+                }
+            });
+            
+            fileList.appendChild(dateHeader);
+            
+            // 创建该日期下的文件列表
+            const dateFiles = document.createElement('div');
+            dateFiles.className = 'date-files';
+            
+            // 默认展开最新日期
+            if (index === 0) {
+                const icon = dateHeader.querySelector('i');
+                icon.className = 'fas fa-chevron-down';
+            } else {
+                dateFiles.style.display = 'none';
+                dateHeader.classList.add('collapsed');
+            }
+            
+            regularFiles[date].forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                
+                // 检查文件类型和标签
+                const hasDpTag = file.tag === 'dp';
+                const hasStrTag = file.tag === 'str';
+                const hasCcpcTag = file.tag === 'ccpc';
+                const hasTmplTag = file.tag === 'tmpl';
+                const hasPlusTag = file.name.includes('-优化空间') || file.name.includes('-优化');
+
+                let iconClass = 'fa-file-code';
+                let specialBadges = [];
+
+                if (hasDpTag) {
+                    specialBadges.push('<span class="dp-badge">DP</span>');
+                }
+
+                if (hasStrTag) {
+                    specialBadges.push('<span class="str-badge">STR</span>');
+                }
+
+                if (hasCcpcTag) {
+                    specialBadges.push('<span class="ccpc-badge">CCPC</span>');
+                }
+
+                if (hasTmplTag) {
+                    specialBadges.push('<span class="tmpl-badge">tmpl</span>');
+                }
+
+                if (hasPlusTag) {
+                    iconClass = 'fa-rocket';
+                    specialBadges.push('<span class="optimized-badge">plus</span>');
+                }
+                
+                // 使用处理后的显示名称
+                const displayName = this.getDisplayName(file.name);
+                
+                fileItem.innerHTML = `
+                    <i class="fas ${iconClass} file-icon"></i>
+                    ${displayName}
+                    ${specialBadges.join('')}
+                `;
+                
+                fileItem.addEventListener('click', () => this.loadFile(file));
+                dateFiles.appendChild(fileItem);
+            });
+            
+            fileList.appendChild(dateFiles);
+        });
         
-        // 活跃天数和代码行数是静态值，可以从配置中获取
-        document.getElementById('activeDays').textContent = '3';
-        document.getElementById('totalLines').textContent = '495';
+        // 如果没有筛选结果，显示提示
+        if (filteredFiles.length === 0) {
+            const noResults = document.createElement('div');
+            noResults.className = 'no-results';
+            noResults.innerHTML = `
+                <i class="fas fa-search"></i>
+                <p>没有找到匹配的题目</p>
+                <p>请尝试调整搜索条件或筛选器</p>
+            `;
+            fileList.appendChild(noResults);
+        }
+    }
+
+    // 动态获取代码行数
+    async updateTotalLines() {
+        try {
+            let totalLines = 0;
+            
+            // 获取所有C++文件
+            const cppFiles = this.files.filter(file => 
+                file.name.endsWith('.cpp') && !file.isTemplate
+            );
+            
+            // 计算每个文件的行数
+            for (const file of cppFiles) {
+                try {
+                    const content = await this.safeFetch(file.path);
+                    const lines = content.split('\n').length;
+                    totalLines += lines;
+                } catch (error) {
+                    console.warn(`无法读取文件 ${file.name}:`, error);
+                }
+            }
+            
+            // 添加模板文件的行数
+            try {
+                const templateContent = await this.safeFetch('template.cpp');
+                const templateLines = templateContent.split('\n').length;
+                totalLines += templateLines;
+            } catch (error) {
+                console.warn('无法读取模板文件:', error);
+            }
+            
+            // 更新DOM
+            document.getElementById('totalLines').textContent = totalLines;
+        } catch (error) {
+            console.error('获取代码行数失败:', error);
+            // 如果失败，显示默认值
+            document.getElementById('totalLines').textContent = '600';
+        }
+    }
+
+    // 添加按钮点击效果
+    addButtonClickEffect(button) {
+        // 添加点击动画类
+        button.classList.add('clicked');
+        
+        // 创建涟漪效果
+        const ripple = document.createElement('span');
+        ripple.className = 'ripple';
+        button.appendChild(ripple);
+        
+        // 获取按钮位置和大小
+        const rect = button.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = event.clientX - rect.left - size / 2;
+        const y = event.clientY - rect.top - size / 2;
+        
+        // 设置涟漪样式
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        
+        // 移除动画类和涟漪元素
+        setTimeout(() => {
+            button.classList.remove('clicked');
+            if (button.contains(ripple)) {
+                button.removeChild(ripple);
+            }
+        }, 600);
     }
 
     showToast(message, type = 'info') {
@@ -1119,3 +1773,178 @@ function addLineNumbers() {
     }).join('\n');
     codeDisplay.innerHTML = numberedLines;
 }
+
+// ========== Markdown 相关功能 ==========
+
+// 打开不务正业笔记面板
+AlgorithmBlog.prototype.openMemoPanel = async function() {
+    try {
+        // 扫描不务正业目录下的 Markdown 文件
+        const memoFiles = await this.scanMemoDirectory();
+        
+        if (memoFiles.length === 0) {
+            this.showToast('不务正业目录中没有 Markdown 文件', 'warning');
+            return;
+        }
+        
+        // 如果只有一个文件，直接打开
+        if (memoFiles.length === 1) {
+            await this.loadAndRenderMarkdown(memoFiles[0]);
+            return;
+        }
+        
+        // 如果有多个文件，显示文件列表让用户选择
+        this.showMemoFileList(memoFiles);
+    } catch (error) {
+        console.error('打开笔记面板失败:', error);
+        this.showToast('加载笔记失败', 'error');
+    }
+};
+
+// 扫描不务正业目录
+AlgorithmBlog.prototype.scanMemoDirectory = async function() {
+    const memoFiles = [];
+    const memoDir = '不务正业/';
+    
+    try {
+        // 尝试获取文件列表
+        const response = await fetch(memoDir);
+        if (!response.ok) {
+            throw new Error('无法访问不务正业目录');
+        }
+        
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const links = doc.querySelectorAll('a[href]');
+        
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && href.endsWith('.md') && !href.startsWith('../')) {
+                memoFiles.push({
+                    name: href,
+                    path: memoDir + href
+                });
+            }
+        });
+    } catch (error) {
+        console.warn('扫描不务正业目录失败，使用静态列表:', error.message);
+        // 使用静态列表作为后备
+        memoFiles.push({
+            name: 'Arch-Memo.md',
+            path: '不务正业/Arch-Memo.md'
+        });
+    }
+    
+    return memoFiles;
+};
+
+// 显示笔记文件列表
+AlgorithmBlog.prototype.showMemoFileList = function(memoFiles) {
+    // 创建模态框
+    const modal = document.createElement('div');
+    modal.className = 'memo-modal';
+    modal.innerHTML = `
+        <div class="memo-modal-content">
+            <div class="memo-modal-header">
+                <h3><i class="fas fa-book-open"></i> 选择笔记文件</h3>
+                <button class="memo-modal-close" onclick="this.closest('.memo-modal').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="memo-file-list">
+                ${memoFiles.map(file => `
+                    <div class="memo-file-item" data-path="${file.path}">
+                        <i class="fas fa-file-alt"></i>
+                        <span>${file.name}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // 添加点击事件
+    modal.querySelectorAll('.memo-file-item').forEach(item => {
+        item.addEventListener('click', async () => {
+            const path = item.getAttribute('data-path');
+            modal.remove();
+            await this.loadAndRenderMarkdown({ path, name: item.querySelector('span').textContent });
+        });
+    });
+    
+    // 点击背景关闭
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+};
+
+// 加载并渲染 Markdown 文件
+AlgorithmBlog.prototype.loadAndRenderMarkdown = async function(file) {
+    try {
+        // 加载 Markdown 文件内容
+        const content = await this.safeFetch(file.path);
+        
+        // 渲染 Markdown
+        const html = marked.parse(content);
+        
+        // 创建或更新 Markdown 显示面板
+        this.showMarkdownPanel(file.name, html);
+        
+        this.showToast(`已加载: ${file.name}`, 'success');
+    } catch (error) {
+        console.error('加载 Markdown 文件失败:', error);
+        this.showToast('加载 Markdown 文件失败', 'error');
+    }
+};
+
+// 显示 Markdown 面板
+AlgorithmBlog.prototype.showMarkdownPanel = function(title, content) {
+    // 移除已存在的面板
+    const existingPanel = document.querySelector('.markdown-panel');
+    if (existingPanel) {
+        existingPanel.remove();
+    }
+    
+    // 创建 Markdown 面板
+    const panel = document.createElement('div');
+    panel.className = 'markdown-panel';
+    panel.innerHTML = `
+        <div class="markdown-panel-content">
+            <div class="markdown-panel-header">
+                <h3><i class="fas fa-book-open"></i> ${title}</h3>
+                <button class="markdown-panel-close" onclick="this.closest('.markdown-panel').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="markdown-body markdown-body-light">
+                ${content}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(panel);
+    
+    // 根据当前主题设置样式
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    panel.querySelector('.markdown-body').className = `markdown-body ${isDark ? 'markdown-body-dark' : 'markdown-body-light'}`;
+    
+    // 点击背景关闭
+    panel.addEventListener('click', (e) => {
+        if (e.target === panel) {
+            panel.remove();
+        }
+    });
+    
+    // ESC 键关闭
+    const escapeHandler = (e) => {
+        if (e.key === 'Escape') {
+            panel.remove();
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
+};
