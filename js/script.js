@@ -135,12 +135,14 @@ class AlgorithmBlog {
             const templateFiles = this.parseFilesFromDirectoryHTML(htmlText, 'template');
             
             templateFiles.forEach(file => {
+                const isMarkdown = file.endsWith('.md');
                 files.push({
                     name: file,
                     path: `template/${file}`,
                     date: null,
                     isTemplateFile: true,
-                    category: 'template'
+                    category: 'template',
+                    isMarkdown: isMarkdown
                 });
             });
         } catch (error) {
@@ -225,11 +227,11 @@ class AlgorithmBlog {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlText, 'text/html');
             
-            // 查找所有链接，过滤出.cpp文件
+            // 查找所有链接，过滤出.cpp和.md文件
             const links = doc.querySelectorAll('a[href]');
             links.forEach(link => {
                 const href = link.getAttribute('href');
-                if (href && href.endsWith('.cpp') && !href.includes('../')) {
+                if (href && (href.endsWith('.cpp') || href.endsWith('.md')) && !href.includes('../')) {
                     // 确保文件名正确编码
                     let fileName = href;
                     try {
@@ -308,7 +310,7 @@ class AlgorithmBlog {
     // 处理文件名显示，去掉"-优化空间"和前面的序号
     getDisplayName(fileName, isTemplateFile = false) {
         // 去掉文件扩展名
-        let name = fileName.replace(/\.cpp$/, '');
+        let name = fileName.replace(/\.cpp$/, '').replace(/\.md$/, '');
 
         // 如果是template目录下的文件，只返回去掉扩展名的文件名
         if (isTemplateFile) {
@@ -387,7 +389,7 @@ class AlgorithmBlog {
                 <i class="fas fa-folder"></i>
                 template
             `;
-            
+
             const templateDirContainer = document.createElement('div');
             templateDirContainer.className = 'date-files';
             templateDirContainer.style.display = 'none'; // 默认不展开
@@ -398,7 +400,7 @@ class AlgorithmBlog {
             templateDirHeader.addEventListener('click', () => {
                 const isCollapsed = templateDirHeader.classList.contains('collapsed');
                 const icon = templateDirHeader.querySelector('.fa-chevron-right, .fa-chevron-down');
-                
+
                 if (isCollapsed) {
                     templateDirContainer.style.display = 'block';
                     templateDirHeader.classList.remove('collapsed');
@@ -418,9 +420,11 @@ class AlgorithmBlog {
                 fileItem.className = 'file-item template-dir-file';
 
                 const displayName = this.getDisplayName(file.name, true);
+                const isMarkdown = file.isMarkdown || file.name.endsWith('.md');
+                const iconClass = isMarkdown ? 'fa-file-alt' : 'fa-file-code';
 
                 fileItem.innerHTML = `
-                    <i class="fas fa-file-code file-icon"></i>
+                    <i class="fas ${iconClass} file-icon"></i>
                     ${displayName}
                     <span class="tmpl-badge">tmpl</span>
                 `;
@@ -748,7 +752,7 @@ class AlgorithmBlog {
 
         try {
             let content;
-            
+
             try {
                 // 尝试从API获取文件内容
                 const data = await this.safeFetch(`api/file?path=${encodeURIComponent(file.path)}`);
@@ -765,7 +769,15 @@ class AlgorithmBlog {
             }
 
             this.currentFile = file;
-            this.displayCode(content);
+
+            // 检测是否为 Markdown 文件
+            const isMarkdown = file.isMarkdown || file.name.endsWith('.md');
+            if (isMarkdown) {
+                this.displayMarkdown(content);
+            } else {
+                this.displayCode(content);
+            }
+
             this.showToast(`已加载 ${file.name}`, 'success');
         } catch (error) {
             console.error('加载文件失败:', error);
@@ -873,12 +885,12 @@ class AlgorithmBlog {
 
     displayCode(content) {
         const codeDisplay = document.getElementById('codeDisplay');
-        
+
         // 解析第一行的URL链接
         const lines = content.split('\n');
         let problemUrl = null;
         let codeWithoutUrl = content;
-        
+
         if (lines.length > 0) {
             const firstLine = lines[0].trim();
             // 匹配注释中的URL格式: // https://...
@@ -889,15 +901,39 @@ class AlgorithmBlog {
                 codeWithoutUrl = lines.slice(1).join('\n');
             }
         }
-        
+
         // 显示题目链接
         this.displayProblemLink(problemUrl);
-        
+
         codeDisplay.textContent = codeWithoutUrl;
-        
+
         // 重新高亮代码
         if (typeof Prism !== 'undefined') {
             Prism.highlightElement(codeDisplay);
+        }
+    }
+
+    displayMarkdown(content) {
+        const codeDisplay = document.getElementById('codeDisplay');
+        const codeContainer = document.querySelector('.code-container');
+
+        // 移除题目链接区域（Markdown 文件不需要）
+        const existingLink = document.querySelector('.problem-link-container');
+        if (existingLink) {
+            existingLink.remove();
+        }
+
+        // 使用 marked.js 渲染 Markdown
+        if (typeof marked !== 'undefined') {
+            const htmlContent = marked.parse(content);
+
+            // 创建 Markdown 容器
+            codeDisplay.innerHTML = htmlContent;
+            codeDisplay.classList.add('markdown-body');
+        } else {
+            // 如果 marked.js 不可用，显示原始内容
+            codeDisplay.textContent = content;
+            console.warn('marked.js 不可用，无法渲染 Markdown');
         }
     }
 

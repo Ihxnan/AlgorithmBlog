@@ -1635,8 +1635,205 @@ body {
         width: 95%;
         max-height: 95vh;
     }
-    
+
     .markdown-body {
         padding: 20px;
     }
+}
+
+/* ========== 代码容器中的 Markdown 样式 ========== */
+
+/* 代码容器中的 Markdown 内容 */
+.code-container .markdown-body {
+    padding: 2rem;
+    background: var(--background-color);
+    overflow-x: auto;
+}
+
+/* 深色主题下的 Markdown */
+:root:not([data-theme="light"]) .code-container .markdown-body {
+    color-scheme: dark;
+    --color-canvas-default: var(--background-color);
+    --color-border-default: var(--border-color);
+    --color-fg-default: var(--text-primary);
+    --color-fg-muted: var(--text-secondary);
+    --color-accent-fg: var(--primary-color);
+    background-color: var(--background-color);
+    color: var(--text-primary);
+}
+
+:root:not([data-theme="light"]) .code-container .markdown-body a {
+    color: var(--primary-color);
+}
+
+:root:not([data-theme="light"]) .code-container .markdown-body h1,
+:root:not([data-theme="light"]) .code-container .markdown-body h2,
+:root:not([data-theme="light"]) .code-container .markdown-body h3,
+:root:not([data-theme="light"]) .code-container .markdown-body h4,
+:root:not([data-theme="light"]) .code-container .markdown-body h5,
+:root:not([data-theme="light"]) .code-container .markdown-body h6 {
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+:root:not([data-theme="light"]) .code-container .markdown-body code {
+    background-color: rgba(110, 118, 129, 0.4);
+    color: var(--text-primary);
+}
+
+:root:not([data-theme="light"]) .code-container .markdown-body pre {
+    background-color: var(--surface-color);
+}
+
+:root:not([data-theme="light"]) .code-container .markdown-body blockquote {
+    color: var(--text-secondary);
+    border-left-color: var(--border-color);
+}
+
+/* 浅色主题下的 Markdown */
+:root[data-theme="light"] .code-container .markdown-body {
+    color-scheme: light;
+    --color-canvas-default: var(--background-color);
+    --color-border-default: var(--border-color);
+    --color-fg-default: var(--text-primary);
+    --color-fg-muted: var(--text-secondary);
+    --color-accent-fg: var(--primary-color);
+    background-color: var(--background-color);
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .code-container .markdown-body a {
+    color: var(--primary-color);
+}
+
+:root[data-theme="light"] .code-container .markdown-body h1,
+:root[data-theme="light"] .code-container .markdown-body h2,
+:root[data-theme="light"] .code-container .markdown-body h3,
+:root[data-theme="light"] .code-container .markdown-body h4,
+:root[data-theme="light"] .code-container .markdown-body h5,
+:root[data-theme="light"] .code-container .markdown-body h6 {
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+:root[data-theme="light"] .code-container .markdown-body code {
+    background-color: rgba(175, 184, 193, 0.2);
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .code-container .markdown-body pre {
+    background-color: var(--surface-color);
+}
+
+:root[data-theme="light"] .code-container .markdown-body blockquote {
+    color: var(--text-secondary);
+    border-left-color: var(--border-color);
+}
+
+/* Markdown 基础样式（继承 github-markdown-css） */
+.code-container .markdown-body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.code-container .markdown-body h1,
+.code-container .markdown-body h2,
+.code-container .markdown-body h3,
+.code-container .markdown-body h4,
+.code-container .markdown-body h5,
+.code-container .markdown-body h6 {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.code-container .markdown-body h1 {
+    font-size: 2em;
+    padding-bottom: 0.3em;
+}
+
+.code-container .markdown-body h2 {
+    font-size: 1.5em;
+    padding-bottom: 0.3em;
+}
+
+.code-container .markdown-body h3 {
+    font-size: 1.25em;
+}
+
+.code-container .markdown-body p {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.code-container .markdown-body code {
+    padding: 0.2em 0.4em;
+    margin: 0;
+    font-size: 85%;
+    border-radius: 6px;
+}
+
+.code-container .markdown-body pre {
+    padding: 16px;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+.code-container .markdown-body pre code {
+    padding: 0;
+    margin: 0;
+    font-size: 100%;
+    background-color: transparent;
+    border-radius: 0;
+}
+
+.code-container .markdown-body blockquote {
+    padding: 0 1em;
+    color: var(--text-secondary);
+    border-left: 0.25em solid var(--border-color);
+    margin: 0 0 16px 0;
+}
+
+.code-container .markdown-body ul,
+.code-container .markdown-body ol {
+    padding-left: 2em;
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.code-container .markdown-body li {
+    margin-top: 0.25em;
+}
+
+.code-container .markdown-body table {
+    border-spacing: 0;
+    border-collapse: collapse;
+    margin-top: 0;
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+.code-container .markdown-body table th,
+.code-container .markdown-body table td {
+    padding: 6px 13px;
+    border: 1px solid var(--border-color);
+}
+
+.code-container .markdown-body table th {
+    font-weight: 600;
+}
+
+.code-container .markdown-body table tr {
+    background-color: var(--background-color);
+    border-top: 1px solid var(--border-color);
+}
+
+.code-container .markdown-body table tr:nth-child(2n) {
+    background-color: var(--surface-color);
 }
