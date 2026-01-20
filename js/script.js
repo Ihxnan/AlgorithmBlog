@@ -941,7 +941,10 @@ class AlgorithmBlog {
             this.toggleTheme();
         });
 
-        
+        // 打开不务正业笔记
+        document.getElementById('openMemo').addEventListener('click', () => {
+            this.openMemoPanel();
+        });
 
         // 切换侧边栏
         document.getElementById('toggleSidebar').addEventListener('click', () => {
@@ -1770,3 +1773,178 @@ function addLineNumbers() {
     }).join('\n');
     codeDisplay.innerHTML = numberedLines;
 }
+
+// ========== Markdown 相关功能 ==========
+
+// 打开不务正业笔记面板
+AlgorithmBlog.prototype.openMemoPanel = async function() {
+    try {
+        // 扫描不务正业目录下的 Markdown 文件
+        const memoFiles = await this.scanMemoDirectory();
+        
+        if (memoFiles.length === 0) {
+            this.showToast('不务正业目录中没有 Markdown 文件', 'warning');
+            return;
+        }
+        
+        // 如果只有一个文件，直接打开
+        if (memoFiles.length === 1) {
+            await this.loadAndRenderMarkdown(memoFiles[0]);
+            return;
+        }
+        
+        // 如果有多个文件，显示文件列表让用户选择
+        this.showMemoFileList(memoFiles);
+    } catch (error) {
+        console.error('打开笔记面板失败:', error);
+        this.showToast('加载笔记失败', 'error');
+    }
+};
+
+// 扫描不务正业目录
+AlgorithmBlog.prototype.scanMemoDirectory = async function() {
+    const memoFiles = [];
+    const memoDir = '不务正业/';
+    
+    try {
+        // 尝试获取文件列表
+        const response = await fetch(memoDir);
+        if (!response.ok) {
+            throw new Error('无法访问不务正业目录');
+        }
+        
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const links = doc.querySelectorAll('a[href]');
+        
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && href.endsWith('.md') && !href.startsWith('../')) {
+                memoFiles.push({
+                    name: href,
+                    path: memoDir + href
+                });
+            }
+        });
+    } catch (error) {
+        console.warn('扫描不务正业目录失败，使用静态列表:', error.message);
+        // 使用静态列表作为后备
+        memoFiles.push({
+            name: 'Arch-Memo.md',
+            path: '不务正业/Arch-Memo.md'
+        });
+    }
+    
+    return memoFiles;
+};
+
+// 显示笔记文件列表
+AlgorithmBlog.prototype.showMemoFileList = function(memoFiles) {
+    // 创建模态框
+    const modal = document.createElement('div');
+    modal.className = 'memo-modal';
+    modal.innerHTML = `
+        <div class="memo-modal-content">
+            <div class="memo-modal-header">
+                <h3><i class="fas fa-book-open"></i> 选择笔记文件</h3>
+                <button class="memo-modal-close" onclick="this.closest('.memo-modal').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="memo-file-list">
+                ${memoFiles.map(file => `
+                    <div class="memo-file-item" data-path="${file.path}">
+                        <i class="fas fa-file-alt"></i>
+                        <span>${file.name}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // 添加点击事件
+    modal.querySelectorAll('.memo-file-item').forEach(item => {
+        item.addEventListener('click', async () => {
+            const path = item.getAttribute('data-path');
+            modal.remove();
+            await this.loadAndRenderMarkdown({ path, name: item.querySelector('span').textContent });
+        });
+    });
+    
+    // 点击背景关闭
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+};
+
+// 加载并渲染 Markdown 文件
+AlgorithmBlog.prototype.loadAndRenderMarkdown = async function(file) {
+    try {
+        // 加载 Markdown 文件内容
+        const content = await this.safeFetch(file.path);
+        
+        // 渲染 Markdown
+        const html = marked.parse(content);
+        
+        // 创建或更新 Markdown 显示面板
+        this.showMarkdownPanel(file.name, html);
+        
+        this.showToast(`已加载: ${file.name}`, 'success');
+    } catch (error) {
+        console.error('加载 Markdown 文件失败:', error);
+        this.showToast('加载 Markdown 文件失败', 'error');
+    }
+};
+
+// 显示 Markdown 面板
+AlgorithmBlog.prototype.showMarkdownPanel = function(title, content) {
+    // 移除已存在的面板
+    const existingPanel = document.querySelector('.markdown-panel');
+    if (existingPanel) {
+        existingPanel.remove();
+    }
+    
+    // 创建 Markdown 面板
+    const panel = document.createElement('div');
+    panel.className = 'markdown-panel';
+    panel.innerHTML = `
+        <div class="markdown-panel-content">
+            <div class="markdown-panel-header">
+                <h3><i class="fas fa-book-open"></i> ${title}</h3>
+                <button class="markdown-panel-close" onclick="this.closest('.markdown-panel').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="markdown-body markdown-body-light">
+                ${content}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(panel);
+    
+    // 根据当前主题设置样式
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    panel.querySelector('.markdown-body').className = `markdown-body ${isDark ? 'markdown-body-dark' : 'markdown-body-light'}`;
+    
+    // 点击背景关闭
+    panel.addEventListener('click', (e) => {
+        if (e.target === panel) {
+            panel.remove();
+        }
+    });
+    
+    // ESC 键关闭
+    const escapeHandler = (e) => {
+        if (e.key === 'Escape') {
+            panel.remove();
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
+};
