@@ -708,6 +708,21 @@ body {
     box-shadow: 0 2px 4px rgba(229, 62, 62, 0.3);
 }
 
+/* TRIE tag badge */
+.trie-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #9f7aea, #805ad5);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(159, 122, 234, 0.3);
+}
+
 /* Template file badge */
 .template-badge {
     display: inline-block;

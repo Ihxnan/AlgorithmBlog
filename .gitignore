@@ -3,6 +3,6 @@
 *.json
 
 .vscode
-IFLOW.md
+*.md
 log.txt
 data

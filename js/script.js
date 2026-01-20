@@ -118,6 +118,13 @@ class AlgorithmBlog {
             console.warn('扫描ccpc目录失败:', error.message);
         }
 
+        // 扫描trie目录
+        try {
+            await this.scanAlgorithmDirectory('trie', files);
+        } catch (error) {
+            console.warn('扫描trie目录失败:', error.message);
+        }
+
         return files;
     }
 
@@ -158,6 +165,8 @@ class AlgorithmBlog {
                     directoriesToScan = ['2026-01-01'];
                 } else if (dirName === 'ccpc') {
                     directoriesToScan = ['2026-01-13'];
+                } else if (dirName === 'trie') {
+                    directoriesToScan = ['2026-01-14'];
                 }
             }
             
@@ -260,7 +269,9 @@ class AlgorithmBlog {
             // 2026-01-01 的题目
             { name: '迎新字符串.cpp', path: 'str/2026-01-01/迎新字符串.cpp', date: '2026-01-01', category: 'str' },
             // 2026-01-13 的题目
-            { name: 'L1-001.cpp', path: 'ccpc/2026-01-13/L1-001.cpp', date: '2026-01-13', category: 'ccpc' }
+            { name: 'L1-001.cpp', path: 'ccpc/2026-01-13/L1-001.cpp', date: '2026-01-13', category: 'ccpc' },
+            // 2026-01-14 的题目
+            { name: '字典树的实现.cpp', path: 'trie/2026-01-14/字典树的实现.cpp', date: '2026-01-14', category: 'trie' }
         ];
     }
 
@@ -275,6 +286,8 @@ class AlgorithmBlog {
                     file.tag = 'str';
                 } else if (file.path.includes('ccpc/')) {
                     file.tag = 'ccpc';
+                } else if (file.path.includes('trie/')) {
+                    file.tag = 'trie';
                 }
             }
 
@@ -678,6 +691,7 @@ class AlgorithmBlog {
                 const hasDpTag = file.tag === 'dp';
                 const hasStrTag = file.tag === 'str';
                 const hasCcpcTag = file.tag === 'ccpc';
+                const hasTrieTag = file.tag === 'trie';
                 // 统一使用文件名判断PLUS标签
                 const hasPlusTag = file.name.includes('-优化空间') || file.name.includes('-优化');
 
@@ -694,6 +708,10 @@ class AlgorithmBlog {
 
                 if (hasCcpcTag) {
                     specialBadges.push('<span class="ccpc-badge">CCPC</span>');
+                }
+
+                if (hasTrieTag) {
+                    specialBadges.push('<span class="trie-badge">TRIE</span>');
                 }
 
                 if (hasPlusTag) {
@@ -1495,6 +1513,7 @@ class AlgorithmBlog {
                 const hasDpTag = file.tag === 'dp';
                 const hasStrTag = file.tag === 'str';
                 const hasCcpcTag = file.tag === 'ccpc';
+                const hasTrieTag = file.tag === 'trie';
                 const hasTmplTag = file.tag === 'tmpl';
                 const hasPlusTag = file.name.includes('-优化空间') || file.name.includes('-优化');
 
@@ -1511,6 +1530,10 @@ class AlgorithmBlog {
 
                 if (hasCcpcTag) {
                     specialBadges.push('<span class="ccpc-badge">CCPC</span>');
+                }
+
+                if (hasTrieTag) {
+                    specialBadges.push('<span class="trie-badge">TRIE</span>');
                 }
 
                 if (hasTmplTag) {
