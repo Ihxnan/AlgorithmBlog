@@ -1072,6 +1072,8 @@ body {
     padding: 2rem;
     background: var(--background-color);
     overflow-x: auto;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .code-container pre {
@@ -1080,6 +1082,9 @@ body {
     border-radius: var(--border-radius);
     overflow-x: auto;
     box-shadow: var(--shadow-md);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .code-container code {
@@ -1087,6 +1092,9 @@ body {
     font-size: 0.9rem;
     line-height: 1.5;
     background: transparent !important;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 /* File Info */
@@ -1648,6 +1656,8 @@ body {
     padding: 2rem;
     background: var(--background-color);
     overflow-x: auto;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 /* 深色主题下的 Markdown */
@@ -1736,6 +1746,7 @@ body {
     font-size: 16px;
     line-height: 1.5;
     word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .code-container .markdown-body h1,
@@ -1748,6 +1759,8 @@ body {
     margin-bottom: 16px;
     font-weight: 600;
     line-height: 1.25;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .code-container .markdown-body h1 {
@@ -1767,6 +1780,8 @@ body {
 .code-container .markdown-body p {
     margin-top: 0;
     margin-bottom: 16px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .code-container .markdown-body code {
@@ -1774,6 +1789,8 @@ body {
     margin: 0;
     font-size: 85%;
     border-radius: 6px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .code-container .markdown-body pre {
@@ -1783,6 +1800,9 @@ body {
     line-height: 1.45;
     border-radius: 6px;
     margin-bottom: 16px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .code-container .markdown-body pre code {
@@ -1791,6 +1811,9 @@ body {
     font-size: 100%;
     background-color: transparent;
     border-radius: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .code-container .markdown-body blockquote {
@@ -1798,6 +1821,8 @@ body {
     color: var(--text-secondary);
     border-left: 0.25em solid var(--border-color);
     margin: 0 0 16px 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .code-container .markdown-body ul,
@@ -1809,6 +1834,8 @@ body {
 
 .code-container .markdown-body li {
     margin-top: 0.25em;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .code-container .markdown-body table {
@@ -1817,12 +1844,16 @@ body {
     margin-top: 0;
     margin-bottom: 16px;
     width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .code-container .markdown-body table th,
 .code-container .markdown-body table td {
     padding: 6px 13px;
     border: 1px solid var(--border-color);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .code-container .markdown-body table th {
