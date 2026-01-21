@@ -1727,7 +1727,8 @@ function createAPIEndpoints() {
 
 // 初始化应用
 document.addEventListener('DOMContentLoaded', () => {
-    new AlgorithmBlog();
+    window.blog = new AlgorithmBlog();
+    window.simpleMusicPlayer = new SimpleMusicPlayer();
 });
 
 // 添加一些实用工具函数
@@ -1990,20 +1991,137 @@ AlgorithmBlog.prototype.showMarkdownPanel = function(title, content) {
     // 根据当前主题设置样式
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     panel.querySelector('.markdown-body').className = `markdown-body ${isDark ? 'markdown-body-dark' : 'markdown-body-light'}`;
-    
+
     // 点击背景关闭
     panel.addEventListener('click', (e) => {
         if (e.target === panel) {
             panel.remove();
         }
     });
-    
-    // ESC 键关闭
-    const escapeHandler = (e) => {
-        if (e.key === 'Escape') {
-            panel.remove();
-            document.removeEventListener('keydown', escapeHandler);
-        }
-    };
-    document.addEventListener('keydown', escapeHandler);
 };
+
+// ===================== 简化的音乐播放器 =====================
+class SimpleMusicPlayer {
+    constructor() {
+        this.audio = document.getElementById('audioPlayer');
+        this.playlist = [];
+        this.currentIndex = 0;
+        this.isPlaying = false;
+
+        this.init();
+    }
+
+    async init() {
+        await this.loadPlaylist();
+        this.setupEventListeners();
+    }
+
+    async loadPlaylist() {
+        try {
+            // 动态扫描 music 目录
+            try {
+                const htmlText = await fetch('music/').then(r => r.text());
+                this.playlist = this.parseMusicFiles(htmlText);
+                console.log('扫描music目录成功，找到', this.playlist.length, '首歌曲');
+            } catch (scanError) {
+                console.warn('扫描music目录失败，使用静态列表:', scanError.message);
+                this.playlist = this.getStaticPlaylist();
+            }
+        } catch (error) {
+            console.error('加载播放列表失败:', error);
+        }
+    }
+
+    parseMusicFiles(htmlText) {
+        const files = [];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+
+        const links = doc.querySelectorAll('a[href]');
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && href.match(/\.(mp3|wav|ogg|m4a)$/i) && !href.includes('../')) {
+                files.push(`music/${href}`);
+            }
+        });
+
+        return files;
+    }
+
+    getStaticPlaylist() {
+        return [
+            'music/Dear Mr 「F」_ずっと真夜中でいいのに。_潜潜話_320kbps.mp3',
+            'music/あいつら全員同窓会_ずっと真夜中でいいのに。_Tunes That Stick Vol 18_320kbps.mp3',
+            'music/マイノリティ脈絡_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
+            'music/またね幻_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
+            'music/勘ぐれい_ずっと真夜中でいいのに。_ZUTOMAYO\'s Playlist for Mainland China_320kbps.mp3',
+            'music/暗く黒く_ずっと真夜中でいいのに。_ZUTOMAYO - 2024 中国特别版_320kbps.mp3',
+            'music/正義_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
+            'music/残機_ずっと真夜中でいいのに。_TOKYO - VIRAL 2023 -_320kbps.mp3',
+            'music/海馬成長痛_ずっと真夜中でいいのに。_海馬成長痛_320kbps.mp3'
+        ];
+    }
+
+    setupEventListeners() {
+        // 播放/暂停按钮
+        document.getElementById('musicPlayPause').addEventListener('click', () => {
+            this.togglePlay();
+        });
+
+        // 随机切换按钮
+        document.getElementById('musicNext').addEventListener('click', () => {
+            this.playRandom();
+        });
+
+        // 音频事件
+        this.audio.addEventListener('ended', () => {
+            this.playRandom();
+        });
+
+        this.audio.addEventListener('error', (e) => {
+            console.error('音频加载错误:', e);
+        });
+    }
+
+    togglePlay() {
+        if (this.playlist.length === 0) return;
+
+        if (this.isPlaying) {
+            this.audio.pause();
+            this.isPlaying = false;
+            this.updatePlayButton(false);
+        } else {
+            if (!this.audio.src) {
+                this.playRandom();
+            } else {
+                this.audio.play();
+                this.isPlaying = true;
+                this.updatePlayButton(true);
+            }
+        }
+    }
+
+    playRandom() {
+        if (this.playlist.length === 0) return;
+
+        // 随机选择一首歌曲
+        let newIndex;
+        do {
+            newIndex = Math.floor(Math.random() * this.playlist.length);
+        } while (newIndex === this.currentIndex && this.playlist.length > 1);
+
+        this.currentIndex = newIndex;
+        this.audio.src = this.playlist[newIndex];
+        this.audio.play().then(() => {
+            this.isPlaying = true;
+            this.updatePlayButton(true);
+        }).catch(error => {
+            console.error('播放失败:', error);
+        });
+    }
+
+    updatePlayButton(isPlaying) {
+        const btn = document.getElementById('musicPlayPause');
+        btn.innerHTML = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+    }
+}
