@@ -1032,6 +1032,21 @@ class AlgorithmBlog {
             this.openMemoPanel();
         });
 
+        // 点击活跃天数显示热度图
+        document.getElementById('activeDaysStat').addEventListener('click', () => {
+            this.showHeatmap();
+        });
+
+        // 关闭热度图
+        document.getElementById('closeHeatmap').addEventListener('click', () => {
+            this.hideHeatmap();
+        });
+
+        // 点击遮罩层关闭热度图
+        document.getElementById('heatmapOverlay').addEventListener('click', () => {
+            this.hideHeatmap();
+        });
+
         // 切换侧边栏
         document.getElementById('toggleSidebar').addEventListener('click', () => {
             this.toggleSidebar();
@@ -2589,3 +2604,149 @@ class MusicPlayer {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 }
+
+// 显示热度图面板
+AlgorithmBlog.prototype.showHeatmap = function() {
+    const heatmapPanel = document.getElementById('heatmapPanel');
+    const heatmapOverlay = document.getElementById('heatmapOverlay');
+    heatmapPanel.style.display = 'block';
+    heatmapOverlay.style.display = 'block';
+    this.renderHeatmap();
+};
+
+// 隐藏热度图面板
+AlgorithmBlog.prototype.hideHeatmap = function() {
+    const heatmapPanel = document.getElementById('heatmapPanel');
+    const heatmapOverlay = document.getElementById('heatmapOverlay');
+    heatmapPanel.style.display = 'none';
+    heatmapOverlay.style.display = 'none';
+};
+
+// 渲染热度图
+AlgorithmBlog.prototype.renderHeatmap = function() {
+    const heatmapContent = document.getElementById('heatmapContent');
+    heatmapContent.innerHTML = '';
+
+    // 统计每天提交的文件数量
+    const dateStats = {};
+    this.files.forEach(file => {
+        if (file.date && !file.isTemplate && !file.isTemplateFile) {
+            if (!dateStats[file.date]) {
+                dateStats[file.date] = 0;
+            }
+            dateStats[file.date]++;
+        }
+    });
+
+    // 获取所有日期并排序
+    const sortedDates = Object.keys(dateStats).sort((a, b) => new Date(a) - new Date(b));
+
+    if (sortedDates.length === 0) {
+        heatmapContent.innerHTML = '<div class="no-heatmap-data">暂无活跃数据</div>';
+        return;
+    }
+
+    // 计算最大文件数量用于热度颜色映射
+    const maxFiles = Math.max(...Object.values(dateStats));
+
+    // 获取最早的日期和今天的日期
+    const earliestDate = new Date(sortedDates[0]);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 计算显示的日期范围（最近6个月）
+    const sixMonthsAgo = new Date(today);
+    sixMonthsAgo.setMonth(today.getMonth() - 6);
+    sixMonthsAgo.setDate(1);
+
+    // 确保起始日期不早于最早的活跃日期
+    const startDate = earliestDate < sixMonthsAgo ? sixMonthsAgo : earliestDate;
+    startDate.setHours(0, 0, 0, 0);
+
+    // 创建日历网格容器
+    const calendarDiv = document.createElement('div');
+    calendarDiv.className = 'heatmap-calendar';
+
+    // 添加星期标签
+    const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+    const weekLabelsDiv = document.createElement('div');
+    weekLabelsDiv.className = 'heatmap-week-labels';
+    weekDays.forEach((day, index) => {
+        const label = document.createElement('div');
+        label.className = 'heatmap-week-label';
+        label.textContent = day;
+        if (index === 0 || index === 6) {
+            label.classList.add('weekend');
+        }
+        weekLabelsDiv.appendChild(label);
+    });
+    calendarDiv.appendChild(weekLabelsDiv);
+
+    // 按周分组数据
+    const weeks = [];
+    let currentWeek = [];
+    let currentDate = new Date(startDate);
+
+    // 找到第一个周日
+    const dayOfWeek = currentDate.getDay();
+    currentDate.setDate(currentDate.getDate() - dayOfWeek);
+
+    // 生成所有周的数据
+    while (currentDate <= today || currentWeek.length > 0) {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        const count = dateStats[dateStr] || 0;
+        const level = this.getHeatmapLevel(count, maxFiles);
+
+        currentWeek.push({
+            date: dateStr,
+            count: count,
+            level: level
+        });
+
+        // 如果是一周的最后一天，或者已经超过今天，则保存这一周
+        if (currentDate.getDay() === 6 || currentDate > today) {
+            weeks.push([...currentWeek]);
+            currentWeek = [];
+        }
+
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // 渲染周网格
+    const weeksDiv = document.createElement('div');
+    weeksDiv.className = 'heatmap-weeks';
+
+    weeks.forEach(week => {
+        const weekDiv = document.createElement('div');
+        weekDiv.className = 'heatmap-week';
+
+        week.forEach(day => {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'heatmap-day-cell';
+            dayDiv.classList.add(`level-${day.level}`);
+
+            if (day.count > 0) {
+                dayDiv.title = `${day.date}: ${day.count} 个文件`;
+            } else {
+                dayDiv.title = `${day.date}: 无活跃`;
+            }
+
+            weekDiv.appendChild(dayDiv);
+        });
+
+        weeksDiv.appendChild(weekDiv);
+    });
+
+    calendarDiv.appendChild(weeksDiv);
+    heatmapContent.appendChild(calendarDiv);
+};
+// 根据文件数量获取热度等级 (0-4)
+AlgorithmBlog.prototype.getHeatmapLevel = function(count, maxFiles) {
+    if (count === 0) return 0;
+    if (maxFiles <= 1) return 1;
+    const ratio = count / maxFiles;
+    if (ratio <= 0.25) return 1;
+    if (ratio <= 0.5) return 2;
+    if (ratio <= 0.75) return 3;
+    return 4;
+};

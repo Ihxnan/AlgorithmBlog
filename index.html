@@ -13,7 +13,7 @@
     <meta http-equiv="Expires" content="0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.4.0/github-markdown.min.css">
-    <link rel="stylesheet" href="css/styles.css?v=20260121231435">
+    <link rel="stylesheet" href="css/styles.css?v=20260121235251">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
@@ -51,7 +51,7 @@
                         </div>
                     </div>
                     
-                    <div class="stat-item">
+                    <div class="stat-item clickable-stat" id="activeDaysStat" title="点击查看活跃热度图">
                         <i class="fas fa-calendar-alt"></i>
                         <div class="stat-info">
                             <span class="stat-value" id="activeDays">3</span>
@@ -222,6 +222,7 @@
                             <!-- 播放列表将通过JavaScript动态生成 -->
                         </div>
                     </div>
+
                     <audio id="audioPlayer"></audio>
                 </div>
     <footer class="footer">
@@ -233,8 +234,35 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
-    <script src="js/particles.js?v=20260121231435"></script>
-    <script src="js/script.js?v=20260121231435"></script>
+    <script src="js/particles.js?v=20260121235251"></script>
+    <script src="js/script.js?v=20260121235251"></script>
     <script src="js/version-manager.js"></script>
+
+    <!-- 热度图遮罩层 -->
+    <div class="heatmap-overlay" id="heatmapOverlay"></div>
+
+    <!-- 热度图面板 -->
+    <div class="heatmap-panel" id="heatmapPanel">
+        <div class="heatmap-header">
+            <h3><i class="fas fa-fire"></i> 活跃热度图</h3>
+            <button class="close-btn" id="closeHeatmap">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="heatmap-content" id="heatmapContent">
+            <!-- 热度图将通过JavaScript动态生成 -->
+        </div>
+        <div class="heatmap-legend">
+            <span class="legend-label">少</span>
+            <div class="legend-colors">
+                <div class="legend-color level-0"></div>
+                <div class="legend-color level-1"></div>
+                <div class="legend-color level-2"></div>
+                <div class="legend-color level-3"></div>
+                <div class="legend-color level-4"></div>
+            </div>
+            <span class="legend-label">多</span>
+        </div>
+    </div>
 </body>
 </html>

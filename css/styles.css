@@ -2728,3 +2728,312 @@ body {
         bottom: 1.5rem;
     }
 }
+
+/* 可点击的统计项 */
+.clickable-stat {
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.clickable-stat:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.clickable-stat:active {
+    transform: translateY(0);
+}
+
+/* 热度图面板 */
+.heatmap-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    max-width: 90vw;
+    max-height: 80vh;
+    background: var(--surface-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    display: none;
+    overflow: hidden;
+    animation: fadeInScale 0.3s ease;
+}
+
+/* 添加遮罩层 */
+.heatmap-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.heatmap-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.heatmap-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.heatmap-header .close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.heatmap-header .close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+.heatmap-content {
+    padding: 1rem;
+    max-height: 380px;
+    overflow-y: auto;
+}
+
+.heatmap-calendar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.heatmap-week-labels {
+    display: flex;
+    gap: 3px;
+    padding-left: 30px;
+    margin-bottom: 0.25rem;
+}
+
+.heatmap-week-label {
+    width: 11px;
+    height: 11px;
+    font-size: 9px;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 11px;
+    font-weight: 500;
+}
+
+.heatmap-week-label.weekend {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.heatmap-weeks {
+    display: flex;
+    gap: 3px;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.heatmap-week {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.heatmap-day-cell {
+    width: 11px;
+    height: 11px;
+    border-radius: 2px;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.heatmap-day-cell:hover {
+    transform: scale(1.3);
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+}
+
+.heatmap-day-cell.level-0 {
+    background: #161b22;
+}
+
+.heatmap-day-cell.level-1 {
+    background: #0e4429;
+}
+
+.heatmap-day-cell.level-2 {
+    background: #006d32;
+}
+
+.heatmap-day-cell.level-3 {
+    background: #26a641;
+}
+
+.heatmap-day-cell.level-4 {
+    background: #39d353;
+}
+
+.no-heatmap-data {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.heatmap-legend {
+    padding: 0.75rem 1rem;
+    background: var(--background-color);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.legend-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.legend-colors {
+    display: flex;
+    gap: 2px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.legend-color.level-0 {
+    background: #161b22;
+}
+
+.legend-color.level-1 {
+    background: #0e4429;
+}
+
+.legend-color.level-2 {
+    background: #006d32;
+}
+
+.legend-color.level-3 {
+    background: #26a641;
+}
+
+.legend-color.level-4 {
+    background: #39d353;
+}
+
+/* 热度图面板响应式 */
+@media (max-width: 768px) {
+    .heatmap-panel {
+        width: 90vw;
+        max-height: 75vh;
+    }
+
+    .heatmap-content {
+        max-height: 300px;
+    }
+
+    .heatmap-week-label {
+        width: 10px;
+        height: 10px;
+        font-size: 8px;
+    }
+
+    .heatmap-day-cell {
+        width: 10px;
+        height: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .heatmap-panel {
+        width: 95vw;
+        max-height: 80vh;
+    }
+
+    .heatmap-content {
+        max-height: 260px;
+    }
+
+    .heatmap-week-label {
+        width: 9px;
+        height: 9px;
+        font-size: 7px;
+    }
+
+    .heatmap-day-cell {
+        width: 9px;
+        height: 9px;
+    }
+
+    .heatmap-legend {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .legend-label {
+        font-size: 0.7rem;
+    }
+
+    .legend-color {
+        width: 10px;
+        height: 10px;
+    }
+}
