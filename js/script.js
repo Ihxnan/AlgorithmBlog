@@ -2477,7 +2477,10 @@ class MusicPlayer {
             item.className = 'playlist-item';
 
             // 检查是否是当前播放的歌曲
-            const isCurrentPlaying = this.audio.src && this.audio.src.includes(song.name);
+            // 使用当前播放索引来判断，而不是通过 audio.src 匹配
+            const currentSong = this.playlist[this.currentIndex];
+            const isCurrentPlaying = currentSong && currentSong.path === song.path;
+
             if (isCurrentPlaying) {
                 item.classList.add('active');
                 if (this.isPlaying) {
