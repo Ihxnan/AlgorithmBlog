@@ -3,6 +3,6 @@
 *.json
 
 .vscode
-*.md
+AGENTS.md
 log.txt
 data
