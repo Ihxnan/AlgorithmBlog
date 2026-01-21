@@ -927,9 +927,12 @@ class AlgorithmBlog {
         if (typeof marked !== 'undefined') {
             const htmlContent = marked.parse(content);
 
-            // 创建 Markdown 容器
-            codeDisplay.innerHTML = htmlContent;
-            codeDisplay.classList.add('markdown-body');
+            // 清空 codeContainer 并创建新的 Markdown 容器
+            codeContainer.innerHTML = '';
+            const markdownDiv = document.createElement('div');
+            markdownDiv.className = 'markdown-body';
+            markdownDiv.innerHTML = htmlContent;
+            codeContainer.appendChild(markdownDiv);
         } else {
             // 如果 marked.js 不可用，显示原始内容
             codeDisplay.textContent = content;
@@ -1728,7 +1731,7 @@ function createAPIEndpoints() {
 // 初始化应用
 document.addEventListener('DOMContentLoaded', () => {
     window.blog = new AlgorithmBlog();
-    window.simpleMusicPlayer = new SimpleMusicPlayer();
+    window.musicPlayer = new MusicPlayer();
 });
 
 // 添加一些实用工具函数
@@ -1881,9 +1884,16 @@ AlgorithmBlog.prototype.scanMemoDirectory = async function() {
         links.forEach(link => {
             const href = link.getAttribute('href');
             if (href && href.endsWith('.md') && !href.startsWith('../')) {
+                // 解码 URL 编码的文件名用于显示
+                let fileName = href;
+                try {
+                    fileName = decodeURIComponent(href);
+                } catch (e) {
+                    console.warn('文件名解码失败:', href);
+                }
                 memoFiles.push({
-                    name: href,
-                    path: memoDir + href
+                    name: fileName,
+                    path: memoDir + href  // 使用原始的 href 构建路径
                 });
             }
         });
@@ -1904,31 +1914,52 @@ AlgorithmBlog.prototype.showMemoFileList = function(memoFiles) {
     // 创建模态框
     const modal = document.createElement('div');
     modal.className = 'memo-modal';
-    modal.innerHTML = `
-        <div class="memo-modal-content">
-            <div class="memo-modal-header">
-                <h3><i class="fas fa-book-open"></i> 选择笔记文件</h3>
-                <button class="memo-modal-close" onclick="this.closest('.memo-modal').remove()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="memo-file-list">
-                ${memoFiles.map(file => `
-                    <div class="memo-file-item" data-path="${file.path}">
-                        <i class="fas fa-file-alt"></i>
-                        <span>${file.name}</span>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
+
+    // 使用 document.createElement 和 appendChild 来安全地构建 DOM
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'memo-modal-content';
+
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'memo-modal-header';
+    headerDiv.innerHTML = `
+        <h3><i class="fas fa-book-open"></i> 选择笔记文件</h3>
+        <button class="memo-modal-close"><i class="fas fa-times"></i></button>
     `;
-    
+
+    const fileListDiv = document.createElement('div');
+    fileListDiv.className = 'memo-file-list';
+
+    memoFiles.forEach(file => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'memo-file-item';
+        fileItem.dataset.path = file.path;  // 使用 dataset 安全地设置路径
+
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-file-alt';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = file.name;
+
+        fileItem.appendChild(icon);
+        fileItem.appendChild(nameSpan);
+        fileListDiv.appendChild(fileItem);
+    });
+
+    contentDiv.appendChild(headerDiv);
+    contentDiv.appendChild(fileListDiv);
+    modal.appendChild(contentDiv);
+
     document.body.appendChild(modal);
-    
+
+    // 添加关闭按钮事件
+    headerDiv.querySelector('.memo-modal-close').addEventListener('click', () => {
+        modal.remove();
+    });
+
     // 添加点击事件
     modal.querySelectorAll('.memo-file-item').forEach(item => {
         item.addEventListener('click', async () => {
-            const path = item.getAttribute('data-path');
+            const path = item.dataset.path;
             modal.remove();
             await this.loadAndRenderMarkdown({ path, name: item.querySelector('span').textContent });
         });
@@ -1968,29 +1999,46 @@ AlgorithmBlog.prototype.showMarkdownPanel = function(title, content) {
     if (existingPanel) {
         existingPanel.remove();
     }
-    
+
     // 创建 Markdown 面板
     const panel = document.createElement('div');
     panel.className = 'markdown-panel';
-    panel.innerHTML = `
-        <div class="markdown-panel-content">
-            <div class="markdown-panel-header">
-                <h3><i class="fas fa-book-open"></i> ${title}</h3>
-                <button class="markdown-panel-close" onclick="this.closest('.markdown-panel').remove()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="markdown-body markdown-body-light">
-                ${content}
-            </div>
-        </div>
-    `;
-    
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'markdown-panel-content';
+
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'markdown-panel-header';
+
+    const titleH3 = document.createElement('h3');
+    titleH3.innerHTML = '<i class="fas fa-book-open"></i> ';
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = title;
+    titleH3.appendChild(titleSpan);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'markdown-panel-close';
+    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+    closeBtn.addEventListener('click', () => {
+        panel.remove();
+    });
+
+    headerDiv.appendChild(titleH3);
+    headerDiv.appendChild(closeBtn);
+
+    const bodyDiv = document.createElement('div');
+    bodyDiv.className = 'markdown-body markdown-body-light';
+    bodyDiv.innerHTML = content;
+
+    contentDiv.appendChild(headerDiv);
+    contentDiv.appendChild(bodyDiv);
+    panel.appendChild(contentDiv);
+
     document.body.appendChild(panel);
-    
+
     // 根据当前主题设置样式
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    panel.querySelector('.markdown-body').className = `markdown-body ${isDark ? 'markdown-body-dark' : 'markdown-body-light'}`;
+    bodyDiv.className = `markdown-body ${isDark ? 'markdown-body-dark' : 'markdown-body-light'}`;
 
     // 点击背景关闭
     panel.addEventListener('click', (e) => {
@@ -2000,13 +2048,17 @@ AlgorithmBlog.prototype.showMarkdownPanel = function(title, content) {
     });
 };
 
-// ===================== 简化的音乐播放器 =====================
-class SimpleMusicPlayer {
+// ===================== 完整的音乐播放器 =====================
+class MusicPlayer {
     constructor() {
         this.audio = document.getElementById('audioPlayer');
         this.playlist = [];
         this.currentIndex = 0;
         this.isPlaying = false;
+        this.isShuffle = false;
+        this.playerVisible = false;
+        this.hideTimeout = null;
+        this.playHistory = []; // 播放历史记录
 
         this.init();
     }
@@ -2014,6 +2066,7 @@ class SimpleMusicPlayer {
     async init() {
         await this.loadPlaylist();
         this.setupEventListeners();
+        this.setupPlayerVisibility();
     }
 
     async loadPlaylist() {
@@ -2041,46 +2094,264 @@ class SimpleMusicPlayer {
         links.forEach(link => {
             const href = link.getAttribute('href');
             if (href && href.match(/\.(mp3|wav|ogg|m4a)$/i) && !href.includes('../')) {
-                files.push(`music/${href}`);
+                const fileName = href;
+                const songInfo = this.parseFileName(fileName);
+                files.push({
+                    name: fileName,
+                    path: `music/${fileName}`,
+                    title: songInfo.title,
+                    artist: songInfo.artist
+                });
             }
         });
 
         return files;
     }
 
+    parseFileName(fileName) {
+        // 先尝试解码 URL 编码的文件名
+        let decodedName;
+        try {
+            decodedName = decodeURIComponent(fileName);
+        } catch (e) {
+            decodedName = fileName;
+        }
+
+        const nameWithoutExt = decodedName.replace(/\.(mp3|wav|ogg|m4a)$/i, '');
+
+        // 歌曲名从开头到第一个下划线
+        const firstUnderscoreIndex = nameWithoutExt.indexOf('_');
+        let title = firstUnderscoreIndex !== -1 ? nameWithoutExt.substring(0, firstUnderscoreIndex) : nameWithoutExt;
+
+        // 艺术家从第一个下划线到第二个下划线（如果有）
+        let artist = 'Unknown';
+        const secondUnderscoreIndex = nameWithoutExt.indexOf('_', firstUnderscoreIndex + 1);
+        if (secondUnderscoreIndex !== -1) {
+            artist = nameWithoutExt.substring(firstUnderscoreIndex + 1, secondUnderscoreIndex);
+        } else if (firstUnderscoreIndex !== -1) {
+            artist = nameWithoutExt.substring(firstUnderscoreIndex + 1);
+        }
+
+        // 清理标题中的质量标识
+        title = title.replace(/_\d+kbps$/i, '').trim();
+
+        return { title, artist };
+    }
+
     getStaticPlaylist() {
         return [
-            'music/Dear Mr 「F」_ずっと真夜中でいいのに。_潜潜話_320kbps.mp3',
-            'music/あいつら全員同窓会_ずっと真夜中でいいのに。_Tunes That Stick Vol 18_320kbps.mp3',
-            'music/マイノリティ脈絡_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
-            'music/またね幻_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
-            'music/勘ぐれい_ずっと真夜中でいいのに。_ZUTOMAYO\'s Playlist for Mainland China_320kbps.mp3',
-            'music/暗く黒く_ずっと真夜中でいいのに。_ZUTOMAYO - 2024 中国特别版_320kbps.mp3',
-            'music/正義_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
-            'music/残機_ずっと真夜中でいいのに。_TOKYO - VIRAL 2023 -_320kbps.mp3',
-            'music/海馬成長痛_ずっと真夜中でいいのに。_海馬成長痛_320kbps.mp3'
+            {
+                name: 'Dear Mr 「F」_ずっと真夜中でいいのに。_潜潜話_320kbps.mp3',
+                path: 'music/Dear Mr 「F」_ずっと真夜中でいいのに。_潜潜話_320kbps.mp3',
+                title: '潜潜話',
+                artist: 'ずっと真夜中でいいのに。'
+            },
+            {
+                name: 'あいつら全員同窓会_ずっと真夜中でいいのに。_Tunes That Stick Vol 18_320kbps.mp3',
+                path: 'music/あいつら全員同窓会_ずっと真夜中でいいのに。_Tunes That Stick Vol 18_320kbps.mp3',
+                title: 'あいつら全員同窓会',
+                artist: 'ずっと真夜中でいいのに。'
+            },
+            {
+                name: 'マイノリティ脈絡_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
+                path: 'music/マイノリティ脈絡_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
+                title: 'マイノリティ脈絡',
+                artist: 'ずっと真夜中でいいのに。'
+            },
+            {
+                name: 'またね幻_ずっと真夜中でいいのに。_今は今で誓い是笑みで_320kbps.mp3',
+                path: 'music/またね幻_ずっと真夜中でいいのに。_今は今で誓い是笑みで_320kbps.mp3',
+                title: 'またね幻',
+                artist: 'ずっと真夜中でいいのに。'
+            },
+            {
+                name: '勘ぐれい_ずっと真夜中でいいのに。_ZUTOMAYO\'s Playlist for Mainland China_320kbps.mp3',
+                path: 'music/勘ぐれい_ずっと真夜中でいいのに。_ZUTOMAYO\'s Playlist for Mainland China_320kbps.mp3',
+                title: '勘ぐれい',
+                artist: 'ずっと真夜中でいいのに。'
+            },
+            {
+                name: '暗く黒く_ずっと真夜中でいいのに。_ZUTOMAYO - 2024 中国特别版_320kbps.mp3',
+                path: 'music/暗く黒く_ずっと真夜中でいいのに。_ZUTOMAYO - 2024 中国特别版_320kbps.mp3',
+                title: '暗く黒く',
+                artist: 'ずっと真夜中でいいのに。'
+            },
+            {
+                name: '正義_ずっと真夜中でいいのに。_今は今で誓い是笑みで_320kbps.mp3',
+                path: 'music/正義_ずっと真夜中でいいのに。_今は今で誓い是笑みで_320kbps.mp3',
+                title: '正義',
+                artist: 'ずっと真夜中でいいのに。'
+            },
+            {
+                name: '残機_ずっと真夜中でいいのに。_TOKYO - VIRAL 2023 -_320kbps.mp3',
+                path: 'music/残機_ずっと真夜中でいいのに。_TOKYO - VIRAL 2023 -_320kbps.mp3',
+                title: '残機',
+                artist: 'ずっと真夜中でいいのに。'
+            },
+            {
+                name: '海馬成長痛_ずっと真夜中でいいのに。_海馬成長痛_320kbps.mp3',
+                path: 'music/海馬成長痛_ずっと真夜中でいいのに。_海馬成長痛_320kbps.mp3',
+                title: '海馬成長痛',
+                artist: 'ずっと真夜中でいいのに。'
+            }
         ];
     }
 
     setupEventListeners() {
-        // 播放/暂停按钮
+        // 顶部播放按钮
         document.getElementById('musicPlayPause').addEventListener('click', () => {
             this.togglePlay();
         });
 
-        // 随机切换按钮
-        document.getElementById('musicNext').addEventListener('click', () => {
-            this.playRandom();
+        // 底部播放器控制按钮
+        document.getElementById('playPauseBtn').addEventListener('click', () => {
+            this.togglePlay();
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            this.playPrevious();
+        });
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            this.playNext();
+        });
+
+        document.getElementById('shuffleBtn').addEventListener('click', () => {
+            this.toggleShuffle();
+        });
+
+        document.getElementById('playlistBtn').addEventListener('click', () => {
+            this.togglePlaylist();
+        });
+
+        document.getElementById('closePlaylist').addEventListener('click', () => {
+            this.hidePlaylist();
+        });
+
+        // 播放列表面板鼠标事件
+        const playlistPanel = document.getElementById('playlistPanel');
+        playlistPanel.addEventListener('mouseenter', () => {
+            if (this.hideTimeout) {
+                clearTimeout(this.hideTimeout);
+                this.hideTimeout = null;
+            }
+        });
+
+        // 音量滑块
+        document.getElementById('volumeSlider').addEventListener('input', (e) => {
+            this.setVolume(e.target.value);
+        });
+
+        // 进度条滑块
+        document.getElementById('progressSlider').addEventListener('input', (e) => {
+            this.seek(e.target.value);
         });
 
         // 音频事件
+        this.audio.addEventListener('timeupdate', () => {
+            this.updateProgress();
+        });
+
         this.audio.addEventListener('ended', () => {
-            this.playRandom();
+            this.onSongEnded();
+        });
+
+        this.audio.addEventListener('loadedmetadata', () => {
+            this.updateTotalTime();
         });
 
         this.audio.addEventListener('error', (e) => {
             console.error('音频加载错误:', e);
         });
+    }
+
+    setupPlayerVisibility() {
+        const player = document.getElementById('musicPlayer');
+        const playlistPanel = document.getElementById('playlistPanel');
+
+        // 监听鼠标移动到页面底部
+        document.addEventListener('mousemove', (e) => {
+            if (!this.isPlaying) return;
+
+            // 检查播放列表是否打开
+            const isPlaylistOpen = playlistPanel.classList.contains('show');
+
+            // 如果播放列表打开，不隐藏播放器
+            if (isPlaylistOpen) {
+                return;
+            }
+
+            const windowHeight = window.innerHeight;
+            const mouseY = e.clientY;
+
+            // 当鼠标接近底部 100px 时显示播放器
+            if (mouseY > windowHeight - 100) {
+                this.showPlayer();
+            } else {
+                // 检查鼠标是否在播放器区域
+                const playerRect = player.getBoundingClientRect();
+                const inPlayer = mouseY >= playerRect.top && mouseY <= playerRect.bottom &&
+                                 e.clientX >= playerRect.left && e.clientX <= playerRect.right;
+
+                if (!inPlayer) {
+                    this.scheduleHidePlayer();
+                }
+            }
+        });
+
+        // 鼠标进入播放器区域时保持显示
+        player.addEventListener('mouseenter', () => {
+            if (this.hideTimeout) {
+                clearTimeout(this.hideTimeout);
+                this.hideTimeout = null;
+            }
+        });
+
+        // 鼠标离开播放器区域时，检查播放列表是否打开
+        player.addEventListener('mouseleave', () => {
+            this.checkShouldHide();
+        });
+    }
+
+    checkShouldHide() {
+        const playlistPanel = document.getElementById('playlistPanel');
+        const isPlaylistVisible = playlistPanel.classList.contains('show');
+
+        if (isPlaylistVisible) {
+            // 播放列表显示时，不隐藏播放器
+            if (this.hideTimeout) {
+                clearTimeout(this.hideTimeout);
+                this.hideTimeout = null;
+            }
+        } else {
+            // 播放列表未显示，可以隐藏播放器
+            this.scheduleHidePlayer();
+        }
+    }
+
+    showPlayer() {
+        if (this.hideTimeout) {
+            clearTimeout(this.hideTimeout);
+            this.hideTimeout = null;
+        }
+        const player = document.getElementById('musicPlayer');
+        player.classList.add('visible');
+        this.playerVisible = true;
+    }
+
+    scheduleHidePlayer() {
+        if (this.hideTimeout) {
+            clearTimeout(this.hideTimeout);
+        }
+        this.hideTimeout = setTimeout(() => {
+            this.hidePlayer();
+        }, 100);
+    }
+
+    hidePlayer() {
+        const player = document.getElementById('musicPlayer');
+        player.classList.remove('visible');
+        this.playerVisible = false;
     }
 
     togglePlay() {
@@ -2089,39 +2360,200 @@ class SimpleMusicPlayer {
         if (this.isPlaying) {
             this.audio.pause();
             this.isPlaying = false;
-            this.updatePlayButton(false);
+            this.hidePlayer();
         } else {
             if (!this.audio.src) {
-                this.playRandom();
+                // 第一次播放，随机选择一首歌曲
+                const randomIndex = Math.floor(Math.random() * this.playlist.length);
+                this.playSong(randomIndex);
             } else {
                 this.audio.play();
                 this.isPlaying = true;
-                this.updatePlayButton(true);
+                this.showPlayer();
             }
         }
+
+        this.updateUI();
     }
 
-    playRandom() {
-        if (this.playlist.length === 0) return;
+    playSong(index) {
+        if (index < 0 || index >= this.playlist.length) return;
 
-        // 随机选择一首歌曲
-        let newIndex;
-        do {
-            newIndex = Math.floor(Math.random() * this.playlist.length);
-        } while (newIndex === this.currentIndex && this.playlist.length > 1);
+        this.currentIndex = index;
+        const song = this.playlist[index];
 
-        this.currentIndex = newIndex;
-        this.audio.src = this.playlist[newIndex];
+        // 添加到播放历史
+        this.addToHistory(song);
+
+        this.audio.src = song.path;
         this.audio.play().then(() => {
             this.isPlaying = true;
-            this.updatePlayButton(true);
+            this.showPlayer();
+            this.updateUI();
         }).catch(error => {
             console.error('播放失败:', error);
         });
+
+        // 更新歌曲信息
+        document.getElementById('songTitle').textContent = song.title;
+        document.getElementById('songArtist').textContent = song.artist;
     }
 
-    updatePlayButton(isPlaying) {
-        const btn = document.getElementById('musicPlayPause');
-        btn.innerHTML = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+    addToHistory(song) {
+        // 检查是否已经在历史记录中
+        const existingIndex = this.playHistory.findIndex(h => h.path === song.path);
+        if (existingIndex !== -1) {
+            // 如果已存在，移到最前面
+            this.playHistory.splice(existingIndex, 1);
+        }
+        // 添加到历史记录开头
+        this.playHistory.unshift(song);
+        // 限制历史记录数量为 20 首
+        if (this.playHistory.length > 20) {
+            this.playHistory.pop();
+        }
+        this.renderPlaylist();
+    }
+
+    togglePlaylist() {
+        const panel = document.getElementById('playlistPanel');
+        const isShowing = !panel.classList.contains('show');
+
+        panel.classList.toggle('show');
+
+        if (isShowing) {
+            // 打开播放列表时，保持播放器显示
+            this.showPlayer();
+        }
+    }
+
+    hidePlaylist() {
+        const panel = document.getElementById('playlistPanel');
+        panel.classList.remove('show');
+    }
+
+    renderPlaylist() {
+        const playlistContent = document.getElementById('playlistContent');
+        if (!playlistContent) return;
+
+        if (this.playHistory.length === 0) {
+            playlistContent.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">暂无播放记录</div>';
+            return;
+        }
+
+        playlistContent.innerHTML = '';
+
+        this.playHistory.forEach((song, index) => {
+            const item = document.createElement('div');
+            item.className = 'playlist-item';
+
+            // 检查是否是当前播放的歌曲
+            const isCurrentPlaying = this.audio.src && this.audio.src.includes(song.name);
+            if (isCurrentPlaying) {
+                item.classList.add('active');
+                if (this.isPlaying) {
+                    item.classList.add('playing');
+                }
+            }
+
+            item.innerHTML = `
+                <div class="playlist-item-index">${index + 1}</div>
+                <div class="playlist-item-icon">
+                    <i class="fas ${isCurrentPlaying && this.isPlaying ? 'fa-volume-up' : 'fa-music'}"></i>
+                </div>
+                <div class="playlist-item-info">
+                    <div class="playlist-item-title">${song.title}</div>
+                    <div class="playlist-item-artist">${song.artist}</div>
+                </div>
+            `;
+
+            item.addEventListener('click', () => {
+                // 在原始播放列表中找到这首歌的索引
+                const originalIndex = this.playlist.findIndex(p => p.path === song.path);
+                if (originalIndex !== -1) {
+                    this.playSong(originalIndex);
+                    // 隐藏播放列表
+                    this.hidePlaylist();
+                }
+            });
+
+            playlistContent.appendChild(item);
+        });
+    }
+
+    playPrevious() {
+        if (this.playlist.length === 0) return;
+
+        let newIndex = this.currentIndex - 1;
+        if (newIndex < 0) {
+            newIndex = this.playlist.length - 1;
+        }
+
+        this.playSong(newIndex);
+    }
+
+    playNext() {
+        if (this.playlist.length === 0) return;
+
+        let newIndex;
+        if (this.isShuffle) {
+            do {
+                newIndex = Math.floor(Math.random() * this.playlist.length);
+            } while (newIndex === this.currentIndex && this.playlist.length > 1);
+        } else {
+            newIndex = this.currentIndex + 1;
+            if (newIndex >= this.playlist.length) {
+                newIndex = 0;
+            }
+        }
+
+        this.playSong(newIndex);
+    }
+
+    onSongEnded() {
+        this.playNext();
+    }
+
+    toggleShuffle() {
+        this.isShuffle = !this.isShuffle;
+        const btn = document.getElementById('shuffleBtn');
+        btn.classList.toggle('active', this.isShuffle);
+    }
+
+    setVolume(value) {
+        this.audio.volume = value / 100;
+    }
+
+    seek(value) {
+        const time = (value / 100) * this.audio.duration;
+        this.audio.currentTime = time;
+    }
+
+    updateProgress() {
+        const progress = (this.audio.currentTime / this.audio.duration) * 100;
+        document.getElementById('progressFill').style.width = `${progress}%`;
+        document.getElementById('progressSlider').value = progress;
+        document.getElementById('currentTime').textContent = this.formatTime(this.audio.currentTime);
+    }
+
+    updateTotalTime() {
+        document.getElementById('totalTime').textContent = this.formatTime(this.audio.duration);
+    }
+
+    updateUI() {
+        const topBtn = document.getElementById('musicPlayPause');
+        const bottomBtn = document.getElementById('playPauseBtn');
+
+        const icon = this.isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+        topBtn.innerHTML = icon;
+        bottomBtn.innerHTML = icon;
+    }
+
+    formatTime(seconds) {
+        if (isNaN(seconds)) return '0:00';
+
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 }
