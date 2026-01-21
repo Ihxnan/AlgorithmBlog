@@ -45,6 +45,35 @@ class AlgorithmBlog {
         this.setupEventListeners();
         this.restoreUserPreferences();
         this.updateStats();
+        this.setupMobileOptimizations();
+    }
+
+    // 移动端优化设置
+    setupMobileOptimizations() {
+        // 防止双击缩放
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // 优化触摸响应
+        const touchElements = document.querySelectorAll('.file-item, .action-btn, .btn, .control-btn');
+        touchElements.forEach(el => {
+            el.addEventListener('touchstart', () => {
+                el.style.opacity = '0.7';
+            }, { passive: true });
+
+            el.addEventListener('touchend', () => {
+                el.style.opacity = '1';
+            }, { passive: true });
+        });
+
+        // 检测移动设备
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+            document.body.classList.add('mobile-device');
+        }
     }
 
     async loadFileList() {
