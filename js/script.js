@@ -359,6 +359,8 @@ class AlgorithmBlog {
         const fileList = document.getElementById('fileList');
         fileList.innerHTML = '';
 
+        console.log('renderFileList 调用，文件总数:', this.files.length);
+
         // 分离模板文件、template目录文件和普通文件
         const templateFiles = [];
         const templateDirFiles = [];
@@ -471,8 +473,11 @@ class AlgorithmBlog {
 
         // 如果没有日期数据，直接返回
         if (sortedDates.length === 0) {
+            console.log('没有日期数据');
             return;
         }
+
+        console.log('日期数据:', sortedDates);
 
         // 获取最新一天的日期
         const latestDate = sortedDates[0];
@@ -527,13 +532,13 @@ class AlgorithmBlog {
         // 渲染同年其他月份（显示到月，默认收起）
         const sortedSameYearMonths = Object.keys(sameYearOtherMonths).sort((a, b) => new Date(b) - new Date(a));
         sortedSameYearMonths.forEach(month => {
-            this.renderMonthGroup(fileList, month, sameYearOtherMonths[month]);
+            this.renderMonthGroup(fileList, month, sameYearOtherMonths[month], regularFiles);
         });
 
         // 渲染其他年份（显示到年，默认收起）
         const sortedOtherYears = Object.keys(otherYears).sort((a, b) => new Date(b) - new Date(a));
         sortedOtherYears.forEach(year => {
-            this.renderYearGroup(fileList, year, otherYears[year]);
+            this.renderYearGroup(fileList, year, otherYears[year], regularFiles);
         });
     }
 
@@ -585,14 +590,14 @@ class AlgorithmBlog {
     }
 
     // 渲染月份分组
-    renderMonthGroup(container, month, dates) {
+    renderMonthGroup(container, month, dates, regularFiles) {
         const monthHeader = document.createElement('div');
         monthHeader.className = 'date-header month-group';
         monthHeader.innerHTML = `
             <i class="fas fa-chevron-right"></i>
             ${month}
         `;
-        
+
         const monthFiles = document.createElement('div');
         monthFiles.className = 'date-files';
         monthFiles.style.display = 'none';
@@ -603,7 +608,7 @@ class AlgorithmBlog {
         monthHeader.addEventListener('click', () => {
             const isCollapsed = monthHeader.classList.contains('collapsed');
             const icon = monthHeader.querySelector('i');
-            
+
             if (isCollapsed) {
                 monthFiles.style.display = 'block';
                 monthHeader.classList.remove('collapsed');
@@ -616,13 +621,13 @@ class AlgorithmBlog {
         });
 
         container.appendChild(monthHeader);
-        
+
         // 按日期排序（最新的在前）
         const sortedDates = dates.sort((a, b) => new Date(b) - new Date(a));
-        
+
         // 渲染该月份下的所有日期
         sortedDates.forEach(date => {
-            const files = this.getFilesForDate(date);
+            const files = regularFiles[date] || [];
             if (files.length > 0) {
                 this.renderDateGroup(monthFiles, date, files, false, false);
             }
@@ -632,14 +637,14 @@ class AlgorithmBlog {
     }
 
     // 渲染年份分组
-    renderYearGroup(container, year, dates) {
+    renderYearGroup(container, year, dates, regularFiles) {
         const yearHeader = document.createElement('div');
         yearHeader.className = 'date-header year-group';
         yearHeader.innerHTML = `
             <i class="fas fa-chevron-right"></i>
             ${year}
         `;
-        
+
         const yearFiles = document.createElement('div');
         yearFiles.className = 'date-files';
         yearFiles.style.display = 'none';
@@ -650,7 +655,7 @@ class AlgorithmBlog {
         yearHeader.addEventListener('click', () => {
             const isCollapsed = yearHeader.classList.contains('collapsed');
             const icon = yearHeader.querySelector('i');
-            
+
             if (isCollapsed) {
                 yearFiles.style.display = 'block';
                 yearHeader.classList.remove('collapsed');
@@ -663,7 +668,7 @@ class AlgorithmBlog {
         });
 
         container.appendChild(yearHeader);
-        
+
         // 按月份分组该年份下的日期
         const monthGroups = {};
         dates.forEach(date => {
@@ -678,7 +683,7 @@ class AlgorithmBlog {
         // 渲染该年份下的月份组
         const sortedMonths = Object.keys(monthGroups).sort((a, b) => new Date(b) - new Date(a));
         sortedMonths.forEach(month => {
-            this.renderMonthGroup(yearFiles, month, monthGroups[month]);
+            this.renderMonthGroup(yearFiles, month, monthGroups[month], regularFiles);
         });
 
         container.appendChild(yearFiles);
@@ -691,6 +696,8 @@ class AlgorithmBlog {
 
     // 在分组中渲染文件
     renderFilesInGroup(container, files) {
+        console.log('renderFilesInGroup 调用，文件数量:', files.length);
+
         // 按文件名分组，让PLUS版本排在后面
         const fileGroups = {};
         files.forEach(file => {
@@ -1402,26 +1409,26 @@ class AlgorithmBlog {
 
     // 更新统计信息
     updateStats() {
-        // 计算题目总数（包括dp和str目录下的所有题目）
-        const totalProblems = this.files.filter(file => 
-            !file.isTemplate && 
-            file.name.endsWith('.cpp') && 
-            !file.name.includes('template') &&
-            (file.path.includes('dp/') || file.path.includes('str/'))
+        // 计算题目总数（统计所有有 tag 的题目）
+        const totalProblems = this.files.filter(file =>
+            !file.isTemplate &&
+            !file.isTemplateFile &&
+            file.name.endsWith('.cpp') &&
+            file.tag
         ).length;
-        
+
         // 计算活跃天数（基于题目列表中的不同日期数量）
         const uniqueDates = new Set();
         this.files.forEach(file => {
-            if (file.date && !file.isTemplate) {
+            if (file.date && !file.isTemplate && !file.isTemplateFile) {
                 uniqueDates.add(file.date);
             }
         });
         const activeDays = uniqueDates.size;
-        
+
         // 动态获取代码行数
         this.updateTotalLines();
-        
+
         // 更新DOM
         document.getElementById('totalProblems').textContent = totalProblems;
         document.getElementById('activeDays').textContent = activeDays;
@@ -1558,107 +1565,70 @@ class AlgorithmBlog {
             return new Date(b) - new Date(a);
         });
 
-        // 渲染每个日期组
-        sortedDates.forEach((date, index) => {
-            // 创建日期标题
-            const dateHeader = document.createElement('div');
-            dateHeader.className = 'date-header';
-            dateHeader.innerHTML = `
-                <i class="fas fa-chevron-right"></i>
-                ${date}
-            `;
-            
-            // 为所有日期添加点击事件
-            dateHeader.style.cursor = 'pointer';
-            dateHeader.addEventListener('click', () => {
-                const isCollapsed = dateHeader.classList.contains('collapsed');
-                const icon = dateHeader.querySelector('i');
-                const dateFiles = dateHeader.nextElementSibling;
-                
-                if (isCollapsed) {
-                    // 展开
-                    dateFiles.style.display = 'block';
-                    dateHeader.classList.remove('collapsed');
-                    icon.className = 'fas fa-chevron-down';
+        // 如果有普通文件，使用年份和月份分组逻辑
+        if (sortedDates.length > 0) {
+            const latestDate = sortedDates[0];
+            const latestDateObj = new Date(latestDate);
+            const latestYear = latestDateObj.getFullYear();
+            const latestMonth = latestDateObj.getMonth();
+
+            // 分组逻辑：
+            // 1. 最新一天：完全展开
+            // 2. 最新月的其他日期：显示到日，默认收起
+            // 3. 同年其他月份：显示到月，默认收起
+            // 4. 其他年份：显示到年，默认收起
+
+            const latestDayFiles = regularFiles[latestDate];
+            const currentMonthOtherDays = [];
+            const sameYearOtherMonths = {};
+            const otherYears = {};
+
+            sortedDates.slice(1).forEach(date => {
+                const dateObj = new Date(date);
+                const year = dateObj.getFullYear();
+                const month = dateObj.getMonth();
+
+                if (year === latestYear && month === latestMonth) {
+                    // 最新月的其他日期
+                    currentMonthOtherDays.push(date);
+                } else if (year === latestYear) {
+                    // 同年其他月份：按月份分组
+                    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+                    if (!sameYearOtherMonths[monthKey]) {
+                        sameYearOtherMonths[monthKey] = [];
+                    }
+                    sameYearOtherMonths[monthKey].push(date);
                 } else {
-                    // 收起
-                    dateFiles.style.display = 'none';
-                    dateHeader.classList.add('collapsed');
-                    icon.className = 'fas fa-chevron-right';
+                    // 其他年份：按年份分组
+                    const yearKey = `${year}`;
+                    if (!otherYears[yearKey]) {
+                        otherYears[yearKey] = [];
+                    }
+                    otherYears[yearKey].push(date);
                 }
             });
-            
-            fileList.appendChild(dateHeader);
-            
-            // 创建该日期下的文件列表
-            const dateFiles = document.createElement('div');
-            dateFiles.className = 'date-files';
-            
-            // 默认展开最新日期
-            if (index === 0) {
-                const icon = dateHeader.querySelector('i');
-                icon.className = 'fas fa-chevron-down';
-            } else {
-                dateFiles.style.display = 'none';
-                dateHeader.classList.add('collapsed');
-            }
-            
-            regularFiles[date].forEach(file => {
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
-                
-                // 检查文件类型和标签
-                const hasDpTag = file.tag === 'dp';
-                const hasStrTag = file.tag === 'str';
-                const hasCcpcTag = file.tag === 'ccpc';
-                const hasTrieTag = file.tag === 'trie';
-                const hasTmplTag = file.tag === 'tmpl';
-                const hasPlusTag = file.name.includes('-优化空间') || file.name.includes('-优化');
 
-                let iconClass = 'fa-file-code';
-                let specialBadges = [];
+            // 渲染最新一天（完全展开）
+            this.renderDateGroup(fileList, latestDate, latestDayFiles, true, true);
 
-                if (hasDpTag) {
-                    specialBadges.push('<span class="dp-badge">DP</span>');
-                }
-
-                if (hasStrTag) {
-                    specialBadges.push('<span class="str-badge">STR</span>');
-                }
-
-                if (hasCcpcTag) {
-                    specialBadges.push('<span class="ccpc-badge">CCPC</span>');
-                }
-
-                if (hasTrieTag) {
-                    specialBadges.push('<span class="trie-badge">TRIE</span>');
-                }
-
-                if (hasTmplTag) {
-                    specialBadges.push('<span class="tmpl-badge">tmpl</span>');
-                }
-
-                if (hasPlusTag) {
-                    iconClass = 'fa-rocket';
-                    specialBadges.push('<span class="optimized-badge">plus</span>');
-                }
-                
-                // 使用处理后的显示名称
-                const displayName = this.getDisplayName(file.name);
-                
-                fileItem.innerHTML = `
-                    <i class="fas ${iconClass} file-icon"></i>
-                    ${displayName}
-                    ${specialBadges.join('')}
-                `;
-                
-                fileItem.addEventListener('click', () => this.loadFile(file));
-                dateFiles.appendChild(fileItem);
+            // 渲染最新月的其他日期（显示到日，默认收起）
+            currentMonthOtherDays.forEach(date => {
+                this.renderDateGroup(fileList, date, regularFiles[date], false, false);
             });
-            
-            fileList.appendChild(dateFiles);
-        });
-        
+
+            // 渲染同年其他月份（显示到月，默认收起）
+            const sortedSameYearMonths = Object.keys(sameYearOtherMonths).sort((a, b) => new Date(b) - new Date(a));
+            sortedSameYearMonths.forEach(month => {
+                this.renderMonthGroup(fileList, month, sameYearOtherMonths[month], regularFiles);
+            });
+
+            // 渲染其他年份（显示到年，默认收起）
+            const sortedOtherYears = Object.keys(otherYears).sort((a, b) => new Date(b) - new Date(a));
+            sortedOtherYears.forEach(year => {
+                this.renderYearGroup(fileList, year, otherYears[year], regularFiles);
+            });
+        }
+
         // 如果没有筛选结果，显示提示
         if (filteredFiles.length === 0) {
             const noResults = document.createElement('div');
