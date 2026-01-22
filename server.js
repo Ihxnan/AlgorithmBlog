@@ -10,11 +10,14 @@ const PORT = process.env.PORT || 8000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // 中间件
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // 静态文件服务
 app.use(express.static(path.join(__dirname)));
+
+// avatars目录静态文件服务（用于头像）
+app.use('/avatars', express.static(path.join(__dirname, 'avatars')));
 
 // 初始化数据库
 const db = new Database(path.join(__dirname, 'database.sqlite'));
@@ -152,6 +155,164 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
         return res.status(404).json({ message: '用户不存在' });
     }
     res.json({ user });
+});
+
+// 修改密码
+app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        // 验证输入
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: '请填写所有必填字段' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ message: '新密码长度至少为6个字符' });
+        }
+
+        // 获取用户信息
+        const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: '用户不存在' });
+        }
+
+        // 验证当前密码
+        const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+        if (!isValidPassword) {
+            return res.status(401).json({ message: '当前密码错误' });
+        }
+
+        // 加密新密码
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // 更新密码
+        db.prepare('UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+            .run(hashedPassword, req.user.id);
+
+        res.json({ message: '密码修改成功' });
+    } catch (error) {
+        console.error('修改密码错误:', error);
+        res.status(500).json({ message: '服务器错误，请稍后重试' });
+    }
+});
+
+// 修改用户名
+app.post('/api/auth/change-username', authenticateToken, (req, res) => {
+    try {
+        const { newUsername } = req.body;
+
+        // 验证输入
+        if (!newUsername) {
+            return res.status(400).json({ message: '请填写新用户名' });
+        }
+
+        if (newUsername.length < 3 || newUsername.length > 20) {
+            return res.status(400).json({ message: '用户名长度必须在3-20个字符之间' });
+        }
+
+        // 检查新用户名是否已被使用
+        const existingUser = db.prepare('SELECT id FROM users WHERE username = ? AND id != ?')
+            .get(newUsername, req.user.id);
+        if (existingUser) {
+            return res.status(409).json({ message: '该用户名已被使用' });
+        }
+
+        // 更新用户名
+        db.prepare('UPDATE users SET username = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+            .run(newUsername, req.user.id);
+
+        // 生成新的 JWT token
+        const user = db.prepare('SELECT id, username, email FROM users WHERE id = ?').get(req.user.id);
+        const token = jwt.sign(
+            {
+                id: user.id,
+                username: user.username,
+                email: user.email
+            },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.json({
+            message: '用户名修改成功',
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email
+            }
+        });
+    } catch (error) {
+        console.error('修改用户名错误:', error);
+        res.status(500).json({ message: '服务器错误，请稍后重试' });
+    }
+});
+
+// 上传头像
+app.post('/api/auth/avatar', authenticateToken, (req, res) => {
+    try {
+        const { avatar } = req.body;
+
+        // 验证输入
+        if (!avatar) {
+            return res.status(400).json({ message: '请提供头像数据' });
+        }
+
+        // 验证是否是base64图片数据
+        if (!avatar.startsWith('data:image/')) {
+            return res.status(400).json({ message: '头像格式不正确' });
+        }
+
+        // 创建头像目录
+        const avatarDir = path.join(__dirname, 'avatars');
+        if (!fs.existsSync(avatarDir)) {
+            fs.mkdirSync(avatarDir, { recursive: true });
+        }
+
+        // 生成文件名（使用用户ID）
+        const ext = avatar.split(';')[0].split('/')[1];
+        const fileName = `user_${req.user.id}.${ext}`;
+        const filePath = path.join(avatarDir, fileName);
+
+        // 保存图片文件
+        const base64Data = avatar.replace(/^data:image\/\w+;base64,/, '');
+        fs.writeFileSync(filePath, base64Data, 'base64');
+
+        // 更新用户头像路径
+        db.prepare('UPDATE users SET avatar = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+            .run(`avatars/${fileName}`, req.user.id);
+
+        res.json({
+            message: '头像上传成功',
+            avatar: `avatars/${fileName}`
+        });
+    } catch (error) {
+        console.error('上传头像错误:', error);
+        res.status(500).json({ message: '服务器错误，请稍后重试' });
+    }
+});
+
+// 获取用户头像
+app.get('/api/auth/avatar/:userId', (req, res) => {
+    try {
+        const user = db.prepare('SELECT avatar FROM users WHERE id = ?').get(req.params.userId);
+
+        if (!user || !user.avatar) {
+            // 如果没有自定义头像，返回默认头像
+            return res.sendFile(path.join(__dirname, 'img', 'head.png'));
+        }
+
+        const avatarPath = path.join(__dirname, user.avatar);
+        if (!fs.existsSync(avatarPath)) {
+            return res.sendFile(path.join(__dirname, 'img', 'head.png'));
+        }
+
+        res.sendFile(avatarPath);
+    } catch (error) {
+        console.error('获取头像错误:', error);
+        res.status(500).json({ message: '服务器错误' });
+    }
 });
 
 // ==================== 文件相关 API ====================

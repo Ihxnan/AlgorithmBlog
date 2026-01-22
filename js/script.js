@@ -3122,6 +3122,32 @@ class AuthManager {
         document.getElementById('closeRegisterModal').addEventListener('click', () => this.closeModal());
         this.authOverlay.addEventListener('click', () => this.closeModal());
 
+        // 绑定用户菜单模态框
+        document.getElementById('closeUserMenuModal').addEventListener('click', () => this.closeUserMenuModal());
+        document.getElementById('userMenuOverlay').addEventListener('click', () => this.closeUserMenuModal());
+
+        // 绑定修改用户名模态框
+        document.getElementById('closeChangeUsernameModal').addEventListener('click', () => this.closeChangeUsernameModal());
+        document.getElementById('changeUsernameOverlay').addEventListener('click', () => this.closeChangeUsernameModal());
+
+        // 绑定修改密码模态框
+        document.getElementById('closeChangePasswordModal').addEventListener('click', () => this.closeChangePasswordModal());
+        document.getElementById('changePasswordOverlay').addEventListener('click', () => this.closeChangePasswordModal());
+
+        // 绑定用户菜单操作按钮
+        document.getElementById('changeUsernameBtn').addEventListener('click', () => this.openChangeUsernameModal());
+        document.getElementById('changePasswordBtn').addEventListener('click', () => this.openChangePasswordModal());
+        document.getElementById('logoutBtn').addEventListener('click', () => this.handleLogout());
+
+        // 绑定头像上传
+        document.getElementById('avatarUpload').addEventListener('change', (e) => this.handleAvatarUpload(e));
+
+        // 绑定修改用户名表单
+        document.getElementById('changeUsernameForm').addEventListener('submit', (e) => this.handleChangeUsername(e));
+
+        // 绑定修改密码表单
+        document.getElementById('changePasswordForm').addEventListener('submit', (e) => this.handleChangePassword(e));
+
         // 绑定切换按钮
         document.querySelector('.switch-to-register').addEventListener('click', (e) => {
             e.preventDefault();
@@ -3316,18 +3342,245 @@ class AuthManager {
 
     updateAuthUI(user) {
         const authSection = document.querySelector('.auth-section');
+        const savedAvatar = localStorage.getItem('userAvatar') || `/api/auth/avatar/${user.id}?t=${Date.now()}`;
+
         authSection.innerHTML = `
-            <div class="user-info">
-                <img src="img/head.png" alt="${user.username}" class="user-avatar">
+            <div class="user-info clickable" id="userProfileBtn" title="点击查看用户设置">
+                <img src="${savedAvatar}" alt="${user.username}" class="user-avatar">
                 <span class="user-name">${user.username}</span>
+                <i class="fas fa-chevron-down user-dropdown-icon"></i>
             </div>
-            <button class="auth-btn" id="logoutBtn">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>退出</span>
-            </button>
         `;
 
-        document.getElementById('logoutBtn').addEventListener('click', () => this.handleLogout());
+        document.getElementById('userProfileBtn').addEventListener('click', () => this.openUserMenu());
+    }
+
+    openUserMenu() {
+        this.showUserMenuModal();
+    }
+
+    showUserMenuModal() {
+        const userStr = localStorage.getItem('user');
+
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            const savedAvatar = localStorage.getItem('userAvatar') || `/api/auth/avatar/${user.id}?t=${Date.now()}`;
+
+            document.getElementById('currentUsername').textContent = user.username;
+            document.getElementById('currentEmail').textContent = user.email;
+            document.getElementById('currentAvatar').src = savedAvatar;
+        }
+
+        document.getElementById('userMenuModal').classList.add('active');
+        document.getElementById('userMenuOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeUserMenuModal() {
+        document.getElementById('userMenuModal').classList.remove('active');
+        document.getElementById('userMenuOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    openChangeUsernameModal() {
+        this.closeUserMenuModal();
+        setTimeout(() => {
+            document.getElementById('changeUsernameModal').classList.add('active');
+            document.getElementById('changeUsernameOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }, 100);
+    }
+
+    closeChangeUsernameModal() {
+        document.getElementById('changeUsernameModal').classList.remove('active');
+        document.getElementById('changeUsernameOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+        document.getElementById('changeUsernameForm').reset();
+    }
+
+    openChangePasswordModal() {
+        this.closeUserMenuModal();
+        setTimeout(() => {
+            document.getElementById('changePasswordModal').classList.add('active');
+            document.getElementById('changePasswordOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }, 100);
+    }
+
+    closeChangePasswordModal() {
+        document.getElementById('changePasswordModal').classList.remove('active');
+        document.getElementById('changePasswordOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+        document.getElementById('changePasswordForm').reset();
+    }
+
+    async handleAvatarUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // 验证文件类型
+        if (!file.type.startsWith('image/')) {
+            this.showNotification('请选择图片文件', 'error');
+            return;
+        }
+
+        // 验证文件大小（最大 2MB）
+        if (file.size > 2 * 1024 * 1024) {
+            this.showNotification('图片大小不能超过 2MB', 'error');
+            return;
+        }
+
+        try {
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const avatarData = event.target.result;
+
+                // 先在本地显示预览
+                document.getElementById('currentAvatar').src = avatarData;
+
+                // 上传到服务器
+                try {
+                    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                    const response = await fetch('/api/auth/avatar', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ avatar: avatarData })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        // 更新顶部导航栏的头像
+                        const userAvatar = document.querySelector('.user-avatar');
+                        if (userAvatar) {
+                            userAvatar.src = avatarData;
+                        }
+
+                        // 保存头像到localStorage作为缓存
+                        localStorage.setItem('userAvatar', avatarData);
+
+                        this.showNotification('头像已更新', 'success');
+                    } else {
+                        this.showNotification(result.message || '头像上传失败', 'error');
+                    }
+                } catch (uploadError) {
+                    console.error('上传头像到服务器失败:', uploadError);
+                    this.showNotification('头像上传失败', 'error');
+                }
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('上传头像失败:', error);
+            this.showNotification('上传头像失败', 'error');
+        }
+    }
+
+    async handleChangeUsername(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+
+        const newUsername = formData.get('newUsername');
+        const confirmNewUsername = formData.get('confirmNewUsername');
+
+        if (newUsername !== confirmNewUsername) {
+            this.showNotification('两次输入的用户名不一致', 'error');
+            return;
+        }
+
+        const submitBtn = form.querySelector('.auth-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 修改中...';
+
+        try {
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const response = await fetch('/api/auth/change-username', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ newUsername })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // 更新本地用户信息
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    user.username = newUsername;
+                    localStorage.setItem('user', JSON.stringify(user));
+                }
+
+                this.showNotification('用户名修改成功！', 'success');
+                this.closeChangeUsernameModal();
+                this.updateAuthUI(JSON.parse(localStorage.getItem('user')));
+            } else {
+                this.showNotification(result.message || '修改用户名失败', 'error');
+            }
+        } catch (error) {
+            console.error('修改用户名错误:', error);
+            this.showNotification('修改用户名失败，请稍后重试', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> 保存';
+        }
+    }
+
+    async handleChangePassword(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+
+        const currentPassword = formData.get('currentPassword');
+        const newPassword = formData.get('newPassword');
+        const confirmNewPassword = formData.get('confirmNewPassword');
+
+        if (newPassword !== confirmNewPassword) {
+            this.showNotification('两次输入的新密码不一致', 'error');
+            return;
+        }
+
+        if (currentPassword === newPassword) {
+            this.showNotification('新密码不能与当前密码相同', 'error');
+            return;
+        }
+
+        const submitBtn = form.querySelector('.auth-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 修改中...';
+
+        try {
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const response = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ currentPassword, newPassword })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                this.showNotification('密码修改成功！', 'success');
+                this.closeChangePasswordModal();
+            } else {
+                this.showNotification(result.message || '修改密码失败', 'error');
+            }
+        } catch (error) {
+            console.error('修改密码错误:', error);
+            this.showNotification('修改密码失败，请稍后重试', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> 保存';
+        }
     }
 
     handleLogout() {

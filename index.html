@@ -13,7 +13,7 @@
     <meta http-equiv="Expires" content="0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.4.0/github-markdown.min.css">
-    <link rel="stylesheet" href="css/styles.css?v=20260122202406">
+    <link rel="stylesheet" href="css/styles.css?v=20260122213311">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
@@ -246,8 +246,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
-    <script src="js/particles.js?v=20260122202406"></script>
-    <script src="js/script.js?v=20260122202406"></script>
+    <script src="js/particles.js?v=20260122213311"></script>
+    <script src="js/script.js?v=20260122213311"></script>
     <script src="js/version-manager.js"></script>
 
     <!-- 热度图遮罩层 -->
@@ -421,6 +421,138 @@
                 <span>已有账号？</span>
                 <a href="#" class="switch-to-login">立即登录</a>
             </div>
+        </div>
+    </div>
+
+    <!-- 用户设置模态框 -->
+    <div class="auth-overlay" id="userMenuOverlay"></div>
+
+    <div class="auth-modal user-menu-modal" id="userMenuModal">
+        <div class="auth-modal-header">
+            <h2><i class="fas fa-user-cog"></i> 用户设置</h2>
+            <button class="close-btn" id="closeUserMenuModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="auth-modal-body user-menu-body">
+            <div class="user-profile-section">
+                <div class="user-avatar-upload">
+                    <img src="img/head.png" alt="用户头像" class="current-avatar" id="currentAvatar">
+                    <label for="avatarUpload" class="avatar-upload-btn" title="更换头像">
+                        <i class="fas fa-camera"></i>
+                    </label>
+                    <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
+                </div>
+                <div class="user-profile-info">
+                    <h3 id="currentUsername">用户名</h3>
+                    <p id="currentEmail">user@example.com</p>
+                </div>
+            </div>
+
+            <div class="user-menu-actions">
+                <button class="user-menu-btn" id="changeUsernameBtn">
+                    <i class="fas fa-user-edit"></i>
+                    <span>修改用户名</span>
+                </button>
+                <button class="user-menu-btn" id="changePasswordBtn">
+                    <i class="fas fa-key"></i>
+                    <span>修改密码</span>
+                </button>
+                <button class="user-menu-btn user-menu-btn-danger" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>退出登录</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改用户名模态框 -->
+    <div class="auth-overlay" id="changeUsernameOverlay"></div>
+
+    <div class="auth-modal" id="changeUsernameModal">
+        <div class="auth-modal-header">
+            <h2><i class="fas fa-user-edit"></i> 修改用户名</h2>
+            <button class="close-btn" id="closeChangeUsernameModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="auth-modal-body">
+            <form id="changeUsernameForm">
+                <div class="form-group">
+                    <label for="newUsername">
+                        <i class="fas fa-user"></i>
+                        新用户名
+                    </label>
+                    <input type="text" id="newUsername" name="newUsername" placeholder="请输入新用户名（3-20个字符）" required autocomplete="username" minlength="3" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label for="confirmNewUsername">
+                        <i class="fas fa-user-check"></i>
+                        确认新用户名
+                    </label>
+                    <input type="text" id="confirmNewUsername" name="confirmNewUsername" placeholder="请再次输入新用户名" required autocomplete="username" minlength="3" maxlength="20">
+                </div>
+                <button type="submit" class="auth-submit-btn">
+                    <i class="fas fa-save"></i>
+                    保存
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 修改密码模态框 -->
+    <div class="auth-overlay" id="changePasswordOverlay"></div>
+
+    <div class="auth-modal" id="changePasswordModal">
+        <div class="auth-modal-header">
+            <h2><i class="fas fa-key"></i> 修改密码</h2>
+            <button class="close-btn" id="closeChangePasswordModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="auth-modal-body">
+            <form id="changePasswordForm">
+                <div class="form-group">
+                    <label for="currentPassword">
+                        <i class="fas fa-lock"></i>
+                        当前密码
+                    </label>
+                    <div class="password-input">
+                        <input type="password" id="currentPassword" name="currentPassword" placeholder="请输入当前密码" required autocomplete="current-password">
+                        <button type="button" class="toggle-password" data-target="currentPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">
+                        <i class="fas fa-lock"></i>
+                        新密码
+                    </label>
+                    <div class="password-input">
+                        <input type="password" id="newPassword" name="newPassword" placeholder="请输入新密码（至少6个字符）" required autocomplete="new-password" minlength="6">
+                        <button type="button" class="toggle-password" data-target="newPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="confirmNewPassword">
+                        <i class="fas fa-lock"></i>
+                        确认新密码
+                    </label>
+                    <div class="password-input">
+                        <input type="password" id="confirmNewPassword" name="confirmNewPassword" placeholder="请再次输入新密码" required autocomplete="new-password" minlength="6">
+                        <button type="button" class="toggle-password" data-target="confirmNewPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="auth-submit-btn">
+                    <i class="fas fa-save"></i>
+                    保存
+                </button>
+            </form>
         </div>
     </div>
 </body>
