@@ -1037,6 +1037,11 @@ class AlgorithmBlog {
             this.showHeatmap();
         });
 
+        // 点击题目总数显示标签统计
+        document.getElementById('totalProblemsStat').addEventListener('click', () => {
+            this.showStatsPanel();
+        });
+
         // 关闭热度图
         document.getElementById('closeHeatmap').addEventListener('click', () => {
             this.hideHeatmap();
@@ -1045,6 +1050,16 @@ class AlgorithmBlog {
         // 点击遮罩层关闭热度图
         document.getElementById('heatmapOverlay').addEventListener('click', () => {
             this.hideHeatmap();
+        });
+
+        // 关闭标签统计面板
+        document.getElementById('closeStats').addEventListener('click', () => {
+            this.hideStatsPanel();
+        });
+
+        // 点击遮罩层关闭标签统计面板
+        document.getElementById('statsOverlay').addEventListener('click', () => {
+            this.hideStatsPanel();
         });
 
         // 切换侧边栏
@@ -2749,4 +2764,104 @@ AlgorithmBlog.prototype.getHeatmapLevel = function(count, maxFiles) {
     if (ratio <= 0.5) return 2;
     if (ratio <= 0.75) return 3;
     return 4;
+};
+
+// 显示标签统计面板
+AlgorithmBlog.prototype.showStatsPanel = function() {
+    const statsPanel = document.getElementById('statsPanel');
+    const statsOverlay = document.getElementById('statsOverlay');
+    statsPanel.style.display = 'block';
+    statsOverlay.style.display = 'block';
+    this.renderStatsPanel();
+};
+
+// 隐藏标签统计面板
+AlgorithmBlog.prototype.hideStatsPanel = function() {
+    const statsPanel = document.getElementById('statsPanel');
+    const statsOverlay = document.getElementById('statsOverlay');
+    statsPanel.style.display = 'none';
+    statsOverlay.style.display = 'none';
+};
+
+// 渲染标签统计面板
+AlgorithmBlog.prototype.renderStatsPanel = function() {
+    const statsContent = document.getElementById('statsContent');
+    statsContent.innerHTML = '';
+
+    // 统计各标签的题目数量
+    const tagStats = {
+        'dp': { name: '动态规划', count: 0, color: '#48bb78', icon: 'fa-project-diagram' },
+        'str': { name: '字符串', count: 0, color: '#ed8936', icon: 'fa-font' },
+        'ccpc': { name: 'CCPC竞赛', count: 0, color: '#e53e3e', icon: 'fa-trophy' },
+        'trie': { name: '字典树', count: 0, color: '#9f7aea', icon: 'fa-code-branch' }
+    };
+
+    // 统计各类型题目数量
+    this.files.forEach(file => {
+        if (file.tag && tagStats[file.tag]) {
+            tagStats[file.tag].count++;
+        }
+    });
+
+    // 创建统计卡片
+    const statsGrid = document.createElement('div');
+    statsGrid.className = 'stats-grid';
+
+    let totalCount = 0;
+
+    Object.keys(tagStats).forEach(tag => {
+        const stat = tagStats[tag];
+        totalCount += stat.count;
+
+        const statCard = document.createElement('div');
+        statCard.className = 'stat-card';
+        statCard.style.borderLeft = `4px solid ${stat.color}`;
+
+        statCard.innerHTML = `
+            <div class="stat-card-header">
+                <i class="fas ${stat.icon}" style="color: ${stat.color}"></i>
+                <span class="stat-card-name">${stat.name}</span>
+            </div>
+            <div class="stat-card-count" style="color: ${stat.color}">${stat.count}</div>
+            <div class="stat-card-label">道题目</div>
+        `;
+
+        // 点击卡片筛选对应类型的题目
+        statCard.addEventListener('click', () => {
+            const typeFilter = document.getElementById('typeFilter');
+            typeFilter.value = tag;
+            this.filterFiles();
+            this.hideStatsPanel();
+            this.showToast(`已筛选 ${stat.name} 题目`, 'info');
+        });
+
+        statsGrid.appendChild(statCard);
+    });
+
+    // 添加总览卡片
+    const totalCard = document.createElement('div');
+    totalCard.className = 'stat-card total-card';
+    totalCard.style.borderLeft = '4px solid #667eea';
+
+    totalCard.innerHTML = `
+        <div class="stat-card-header">
+            <i class="fas fa-tasks" style="color: #667eea"></i>
+            <span class="stat-card-name">总计</span>
+        </div>
+        <div class="stat-card-count" style="color: #667eea">${totalCount}</div>
+        <div class="stat-card-label">道题目</div>
+    `;
+
+    // 点击总览卡片重置筛选为全部
+    totalCard.addEventListener('click', () => {
+        const typeFilter = document.getElementById('typeFilter');
+        typeFilter.value = '';
+        this.filterFiles();
+        this.hideStatsPanel();
+        this.showToast('已显示全部题目', 'info');
+    });
+
+    statsGrid.appendChild(totalCard);
+
+    statsContent.appendChild(statsGrid);
 };

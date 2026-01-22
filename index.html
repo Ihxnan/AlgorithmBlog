@@ -13,7 +13,7 @@
     <meta http-equiv="Expires" content="0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.4.0/github-markdown.min.css">
-    <link rel="stylesheet" href="css/styles.css?v=20260121235251">
+    <link rel="stylesheet" href="css/styles.css?v=20260122163918">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
@@ -43,7 +43,7 @@
             <!-- 新增功能区域 -->
             <div class="header-features">
                 <div class="stats-container">
-                    <div class="stat-item">
+                    <div class="stat-item clickable-stat" id="totalProblemsStat" title="点击查看各类型题目数量">
                         <i class="fas fa-tasks"></i>
                         <div class="stat-info">
                             <span class="stat-value" id="totalProblems">10</span>
@@ -234,8 +234,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
-    <script src="js/particles.js?v=20260121235251"></script>
-    <script src="js/script.js?v=20260121235251"></script>
+    <script src="js/particles.js?v=20260122163918"></script>
+    <script src="js/script.js?v=20260122163918"></script>
     <script src="js/version-manager.js"></script>
 
     <!-- 热度图遮罩层 -->
@@ -262,6 +262,21 @@
                 <div class="legend-color level-4"></div>
             </div>
             <span class="legend-label">多</span>
+        </div>
+    </div>
+
+    <!-- 标签统计面板 -->
+    <div class="heatmap-overlay" id="statsOverlay"></div>
+
+    <div class="heatmap-panel" id="statsPanel">
+        <div class="heatmap-header">
+            <h3><i class="fas fa-chart-pie"></i> 题目分类统计</h3>
+            <button class="close-btn" id="closeStats">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="stats-content" id="statsContent">
+            <!-- 标签统计将通过JavaScript动态生成 -->
         </div>
     </div>
 </body>
