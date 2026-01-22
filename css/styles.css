@@ -2852,19 +2852,18 @@ body {
 
 .heatmap-calendar {
     display: flex;
-    flex-direction: column;
     gap: 0.5rem;
 }
 
 .heatmap-week-labels {
     display: flex;
+    flex-direction: column;
     gap: 3px;
-    padding-left: 30px;
-    margin-bottom: 0.25rem;
+    padding-top: 0;
 }
 
 .heatmap-week-label {
-    width: 11px;
+    width: 15px;
     height: 11px;
     font-size: 9px;
     color: var(--text-secondary);
