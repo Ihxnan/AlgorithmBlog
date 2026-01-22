@@ -80,8 +80,18 @@ class AlgorithmBlog {
         try {
             // 首先尝试从API获取文件列表
             try {
-                this.files = await this.safeFetch('api/files');
-                console.log('从API获取文件列表成功');
+                const apiFiles = await this.safeFetch('api/files');
+                // 转换 API 返回的格式为内部格式
+                this.files = apiFiles.map(file => ({
+                    name: file.name,
+                    path: file.path,
+                    date: file.date,
+                    category: file.type,
+                    isTemplate: file.type === 'template' && file.date === 'root',
+                    isTemplateFile: file.type === 'template' && file.date === 'template',
+                    isMarkdown: file.path.endsWith('.md')
+                }));
+                console.log('从API获取文件列表成功，共', this.files.length, '个文件');
             } catch (apiError) {
                 throw new Error('API不可用');
             }
@@ -90,18 +100,18 @@ class AlgorithmBlog {
             try {
                 // 尝试动态扫描目录结构
                 this.files = await this.scanDirectoryStructure();
-                console.log('动态扫描目录成功');
+                console.log('动态扫描目录成功，共', this.files.length, '个文件');
             } catch (scanError) {
                 console.log('动态扫描失败，使用静态文件列表:', scanError.message);
                 // 如果动态扫描也失败，使用最新的静态文件列表
                 this.files = this.getStaticFileList();
             }
         }
-        
+
         // 自动添加标签
         this.addTagsToFiles();
         this.renderFileList();
-        
+
         // 默认加载template.cpp文件
         this.loadDefaultFile();
     }
@@ -332,6 +342,8 @@ class AlgorithmBlog {
                 file.plus = true;
             }
         });
+
+        console.log('添加标签后的文件列表:', this.files.map(f => ({ name: f.name, tag: f.tag, path: f.path })));
     }
 
     
@@ -778,7 +790,21 @@ class AlgorithmBlog {
         document.querySelectorAll('.file-item').forEach(item => {
             item.classList.remove('active');
         });
-        event.target.closest('.file-item').classList.add('active');
+
+        // 如果是通过点击事件触发的，设置活动状态
+        if (event && event.target && event.target.closest('.file-item')) {
+            event.target.closest('.file-item').classList.add('active');
+        } else {
+            // 如果是直接调用的，根据文件路径查找对应的 DOM 元素
+            const fileItems = document.querySelectorAll('.file-item');
+            fileItems.forEach(item => {
+                const itemName = item.textContent.trim();
+                const displayName = this.getDisplayName(file.name);
+                if (itemName.includes(displayName)) {
+                    item.classList.add('active');
+                }
+            });
+        }
 
         // 显示加载状态
         const codeDisplay = document.getElementById('codeDisplay');
@@ -791,7 +817,7 @@ class AlgorithmBlog {
 
             try {
                 // 尝试从API获取文件内容
-                const data = await this.safeFetch(`api/file?path=${encodeURIComponent(file.path)}`);
+                const data = await this.safeFetch(`api/files/${file.path}`);
                 content = data.content;
                 this.updateFileInfo(data);
             } catch (apiError) {
@@ -921,6 +947,16 @@ class AlgorithmBlog {
 
     displayCode(content) {
         const codeDisplay = document.getElementById('codeDisplay');
+        const codeContainer = document.querySelector('.code-container');
+
+        // 移除已存在的 Markdown 容器
+        const existingMarkdown = codeContainer.querySelector('.markdown-body');
+        if (existingMarkdown) {
+            existingMarkdown.remove();
+        }
+
+        // 恢复 codeDisplay 的显示
+        codeDisplay.parentElement.style.display = 'block';
 
         // 解析第一行的URL链接
         const lines = content.split('\n');
@@ -963,8 +999,16 @@ class AlgorithmBlog {
         if (typeof marked !== 'undefined') {
             const htmlContent = marked.parse(content);
 
-            // 清空 codeContainer 并创建新的 Markdown 容器
-            codeContainer.innerHTML = '';
+            // 隐藏原有的 codeDisplay
+            codeDisplay.parentElement.style.display = 'none';
+
+            // 移除已存在的 Markdown 容器
+            const existingMarkdown = codeContainer.querySelector('.markdown-body');
+            if (existingMarkdown) {
+                existingMarkdown.remove();
+            }
+
+            // 创建新的 Markdown 容器
             const markdownDiv = document.createElement('div');
             markdownDiv.className = 'markdown-body';
             markdownDiv.innerHTML = htmlContent;
@@ -999,21 +1043,37 @@ class AlgorithmBlog {
 
     // 默认加载template.cpp文件
     async loadDefaultFile() {
-        // 查找template.cpp文件
-        const templateFile = this.files.find(file => file.name === 'template.cpp');
-        
+        console.log('loadDefaultFile 开始执行');
+        console.log('当前文件列表:', this.files);
+
+        // 查找template.cpp文件（注意：API返回的name属性不包含.cpp扩展名）
+        // 所以我们需要查找name为'template'或者path为'template.cpp'的文件
+        const templateFile = this.files.find(file =>
+            file.name === 'template' || file.path === 'template.cpp'
+        );
+
         if (templateFile) {
-            // 延迟一点时间确保DOM已经完全渲染
-            setTimeout(() => {
-                // 模拟点击template.cpp文件
-                const templateFileElement = document.querySelector('.file-item.template-file');
-                if (templateFileElement) {
-                    templateFileElement.click();
-                } else {
-                    // 如果找不到DOM元素，直接调用loadFile方法
-                    this.loadFile(templateFile);
-                }
-            }, 100);
+            console.log('找到 template 文件:', templateFile);
+
+            // 等待 DOM 完全渲染
+            await new Promise(resolve => setTimeout(resolve, 200));
+
+            console.log('开始加载 template.cpp');
+
+            // 直接调用 loadFile 方法，而不是模拟点击
+            // 这样更可靠，不依赖于 DOM 元素的存在
+            await this.loadFile(templateFile);
+
+            console.log('template.cpp 加载完成');
+
+            // 设置文件列表中的活动状态
+            const templateFileElement = document.querySelector('.file-item.template-file');
+            if (templateFileElement) {
+                templateFileElement.classList.add('active');
+                console.log('已设置活动状态');
+            }
+        } else {
+            console.warn('未找到 template 文件');
         }
     }
 
@@ -1428,14 +1488,15 @@ class AlgorithmBlog {
         const totalProblems = this.files.filter(file =>
             !file.isTemplate &&
             !file.isTemplateFile &&
-            file.name.endsWith('.cpp') &&
-            file.tag
+            file.path &&
+            file.path.endsWith('.cpp') &&
+            file.tag && file.tag !== 'tmpl'
         ).length;
 
         // 计算活跃天数（基于题目列表中的不同日期数量）
         const uniqueDates = new Set();
         this.files.forEach(file => {
-            if (file.date && !file.isTemplate && !file.isTemplateFile) {
+            if (file.date && !file.isTemplate && !file.isTemplateFile && file.tag && file.tag !== 'tmpl') {
                 uniqueDates.add(file.date);
             }
         });
@@ -1667,27 +1728,46 @@ class AlgorithmBlog {
                 const templateContent = await this.safeFetch('template.cpp');
                 const templateLines = templateContent.split('\n').length;
                 totalLines += templateLines;
+                console.log('模板文件行数:', templateLines);
             } catch (error) {
                 console.warn('无法读取模板文件:', error);
             }
 
-            // 统计有 tag 的题目文件行数
-            const cppFiles = this.files.filter(file =>
-                file.name.endsWith('.cpp') &&
-                !file.isTemplate &&
-                !file.isTemplateFile &&
-                file.tag
-            );
+            // 统计所有 cpp 文件（排除模板文件）
+            console.log('所有文件列表:', this.files.map(f => ({
+                name: f.name,
+                path: f.path,
+                isTemplate: f.isTemplate,
+                isTemplateFile: f.isTemplateFile,
+                tag: f.tag
+            })));
+
+            const cppFiles = this.files.filter(file => {
+                const isCpp = file.path && file.path.endsWith('.cpp');
+                const isNotTemplate = !file.isTemplate;
+                const isNotTemplateFile = !file.isTemplateFile;
+                const hasTag = file.tag && file.tag !== 'tmpl';
+
+                console.log(`文件 ${file.name}: isCpp=${isCpp}, isNotTemplate=${isNotTemplate}, isNotTemplateFile=${isNotTemplateFile}, hasTag=${hasTag}`);
+
+                return isCpp && isNotTemplate && isNotTemplateFile && hasTag;
+            });
+
+            console.log('找到的题目文件数量:', cppFiles.length);
+            console.log('题目文件列表:', cppFiles.map(f => ({ name: f.name, tag: f.tag, path: f.path })));
 
             for (const file of cppFiles) {
                 try {
                     const content = await this.safeFetch(file.path);
                     const lines = content.split('\n').length;
                     totalLines += lines;
+                    console.log(`${file.name}: ${lines} 行`);
                 } catch (error) {
                     console.warn(`无法读取文件 ${file.name}:`, error);
                 }
             }
+
+            console.log('总行数:', totalLines);
 
             // 更新DOM
             document.getElementById('totalLines').textContent = totalLines;
@@ -1913,43 +1993,72 @@ AlgorithmBlog.prototype.openMemoPanel = async function() {
 // 扫描不务正业目录
 AlgorithmBlog.prototype.scanMemoDirectory = async function() {
     const memoFiles = [];
-    const memoDir = '不务正业/';
     
     try {
-        // 尝试获取文件列表
-        const response = await fetch(memoDir);
-        if (!response.ok) {
-            throw new Error('无法访问不务正业目录');
-        }
-        
-        const html = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const links = doc.querySelectorAll('a[href]');
-        
-        links.forEach(link => {
-            const href = link.getAttribute('href');
-            if (href && href.endsWith('.md') && !href.startsWith('../')) {
-                // 解码 URL 编码的文件名用于显示
-                let fileName = href;
-                try {
-                    fileName = decodeURIComponent(href);
-                } catch (e) {
-                    console.warn('文件名解码失败:', href);
-                }
+        // 优先尝试从 API 获取文件列表
+        const response = await this.safeFetch('api/memos');
+        if (response && response.files) {
+            response.files.forEach(file => {
                 memoFiles.push({
-                    name: fileName,
-                    path: memoDir + href  // 使用原始的 href 构建路径
+                    name: file.name,
+                    path: file.path
                 });
+            });
+            console.log('从API获取不务正业文件列表成功，共', memoFiles.length, '个文件');
+        } else {
+            throw new Error('API 返回数据格式不正确');
+        }
+    } catch (apiError) {
+        console.warn('API获取失败，尝试直接访问目录:', apiError.message);
+        
+        // 如果 API 不可用，尝试直接访问目录
+        try {
+            const memoDir = '不务正业/';
+            const response = await fetch(memoDir);
+            
+            if (!response.ok) {
+                throw new Error('无法访问不务正业目录');
             }
-        });
-    } catch (error) {
-        console.warn('扫描不务正业目录失败，使用静态列表:', error.message);
-        // 使用静态列表作为后备
-        memoFiles.push({
-            name: 'Arch-Memo.md',
-            path: '不务正业/Arch-Memo.md'
-        });
+            
+            const html = await response.text();
+            
+            // 检查是否返回的是 index.html（说明目录列表不可用）
+            if (html.includes('<!DOCTYPE html>') && html.includes('算法日常')) {
+                throw new Error('目录列表不可用，返回了 index.html');
+            }
+            
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const links = doc.querySelectorAll('a[href]');
+            
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href.endsWith('.md') && !href.startsWith('../')) {
+                    // 解码 URL 编码的文件名用于显示
+                    let fileName = href;
+                    try {
+                        fileName = decodeURIComponent(href);
+                    } catch (e) {
+                        console.warn('文件名解码失败:', href);
+                    }
+                    memoFiles.push({
+                        name: fileName,
+                        path: memoDir + href  // 使用原始的 href 构建路径
+                    });
+                }
+            });
+        } catch (dirError) {
+            console.warn('扫描不务正业目录失败，使用静态列表:', dirError.message);
+            // 使用静态列表作为后备
+            memoFiles.push({
+                name: 'ArchMemo.md',
+                path: '不务正业/ArchMemo.md'
+            });
+            memoFiles.push({
+                name: 'Navigation.md',
+                path: '不务正业/Navigation.md'
+            });
+        }
     }
     
     return memoFiles;
@@ -2117,6 +2226,19 @@ class MusicPlayer {
 
     async loadPlaylist() {
         try {
+            // 尝试从 API 获取音乐列表
+            try {
+                const response = await fetch('/api/music');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.playlist = data.files || [];
+                    console.log('从API加载音乐列表成功，找到', this.playlist.length, '首歌曲');
+                    return;
+                }
+            } catch (apiError) {
+                console.log('API不可用，尝试扫描music目录');
+            }
+
             // 动态扫描 music 目录
             try {
                 const htmlText = await fetch('music/').then(r => r.text());
@@ -2128,6 +2250,7 @@ class MusicPlayer {
             }
         } catch (error) {
             console.error('加载播放列表失败:', error);
+            this.playlist = this.getStaticPlaylist();
         }
     }
 
@@ -2903,7 +3026,7 @@ AlgorithmBlog.prototype.renderLinesPanel = function() {
 
         // 统计各类型题目行数
         const cppFiles = this.files.filter(file =>
-            file.name.endsWith('.cpp') &&
+            file.path.endsWith('.cpp') &&
             !file.isTemplate &&
             !file.isTemplateFile &&
             file.tag
@@ -2976,3 +3099,329 @@ AlgorithmBlog.prototype.renderLinesPanel = function() {
         linesContent.appendChild(linesGrid);
     })();
 };
+
+// ==================== 登录注册功能 ====================
+
+class AuthManager {
+    constructor() {
+        this.loginModal = document.getElementById('loginModal');
+        this.registerModal = document.getElementById('registerModal');
+        this.authOverlay = document.getElementById('authOverlay');
+        this.loginBtn = document.getElementById('loginBtn');
+        this.registerBtn = document.getElementById('registerBtn');
+        this.init();
+    }
+
+    init() {
+        // 绑定打开模态框按钮
+        this.loginBtn.addEventListener('click', () => this.openModal('login'));
+        this.registerBtn.addEventListener('click', () => this.openModal('register'));
+
+        // 绑定关闭按钮
+        document.getElementById('closeLoginModal').addEventListener('click', () => this.closeModal());
+        document.getElementById('closeRegisterModal').addEventListener('click', () => this.closeModal());
+        this.authOverlay.addEventListener('click', () => this.closeModal());
+
+        // 绑定切换按钮
+        document.querySelector('.switch-to-register').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.switchModal('register');
+        });
+        document.querySelector('.switch-to-login').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.switchModal('login');
+        });
+
+        // 绑定密码显示/隐藏
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = btn.dataset.target;
+                const input = document.getElementById(targetId);
+                const icon = btn.querySelector('i');
+
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+
+        // 绑定登录表单提交
+        document.getElementById('loginForm').addEventListener('submit', (e) => this.handleLogin(e));
+
+        // 绑定注册表单提交
+        document.getElementById('registerForm').addEventListener('submit', (e) => this.handleRegister(e));
+
+        // ESC 键关闭模态框
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeModal();
+            }
+        });
+
+        // 检查是否已登录
+        this.checkLoginStatus();
+    }
+
+    openModal(type) {
+        this.closeModal();
+        setTimeout(() => {
+            if (type === 'login') {
+                this.loginModal.classList.add('active');
+            } else {
+                this.registerModal.classList.add('active');
+            }
+            this.authOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }, 100);
+    }
+
+    closeModal() {
+        this.loginModal.classList.remove('active');
+        this.registerModal.classList.remove('active');
+        this.authOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    switchModal(type) {
+        this.loginModal.classList.remove('active');
+        this.registerModal.classList.remove('active');
+        setTimeout(() => {
+            if (type === 'login') {
+                this.loginModal.classList.add('active');
+            } else {
+                this.registerModal.classList.add('active');
+            }
+        }, 100);
+    }
+
+    async handleLogin(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const data = {
+            username: formData.get('username'),
+            password: formData.get('password'),
+            rememberMe: document.getElementById('rememberMe').checked
+        };
+
+        const submitBtn = form.querySelector('.auth-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
+
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // 保存 token
+                if (data.rememberMe) {
+                    localStorage.setItem('token', result.token);
+                } else {
+                    sessionStorage.setItem('token', result.token);
+                }
+                localStorage.setItem('user', JSON.stringify(result.user));
+
+                this.showNotification('登录成功！', 'success');
+                this.closeModal();
+                this.updateAuthUI(result.user);
+            } else {
+                this.showNotification(result.message || '登录失败，请检查用户名和密码', 'error');
+            }
+        } catch (error) {
+            console.error('登录错误:', error);
+            this.showNotification('登录失败，请稍后重试', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> 登录';
+        }
+    }
+
+    async handleRegister(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+
+        const password = formData.get('password');
+        const confirmPassword = formData.get('confirmPassword');
+
+        if (password !== confirmPassword) {
+            this.showNotification('两次输入的密码不一致', 'error');
+            return;
+        }
+
+        const data = {
+            username: formData.get('username'),
+            email: formData.get('email'),
+            password: password
+        };
+
+        const submitBtn = form.querySelector('.auth-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 注册中...';
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                this.showNotification('注册成功！请登录', 'success');
+                form.reset();
+                this.switchModal('login');
+            } else {
+                this.showNotification(result.message || '注册失败，请稍后重试', 'error');
+            }
+        } catch (error) {
+            console.error('注册错误:', error);
+            this.showNotification('注册失败，请稍后重试', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> 注册';
+        }
+    }
+
+    checkLoginStatus() {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const userStr = localStorage.getItem('user');
+
+        if (token && userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                this.updateAuthUI(user);
+            } catch (error) {
+                console.error('解析用户信息失败:', error);
+            }
+        }
+    }
+
+    updateAuthUI(user) {
+        const authSection = document.querySelector('.auth-section');
+        authSection.innerHTML = `
+            <div class="user-info">
+                <img src="img/head.png" alt="${user.username}" class="user-avatar">
+                <span class="user-name">${user.username}</span>
+            </div>
+            <button class="auth-btn" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出</span>
+            </button>
+        `;
+
+        document.getElementById('logoutBtn').addEventListener('click', () => this.handleLogout());
+    }
+
+    handleLogout() {
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
+        localStorage.removeItem('user');
+
+        const authSection = document.querySelector('.auth-section');
+        authSection.innerHTML = `
+            <button class="auth-btn" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>登录</span>
+            </button>
+            <button class="auth-btn auth-btn-primary" id="registerBtn">
+                <i class="fas fa-user-plus"></i>
+                <span>注册</span>
+            </button>
+        `;
+
+        // 重新绑定事件
+        document.getElementById('loginBtn').addEventListener('click', () => this.openModal('login'));
+        document.getElementById('registerBtn').addEventListener('click', () => this.openModal('register'));
+
+        this.showNotification('已退出登录', 'success');
+    }
+
+    showNotification(message, type = 'info') {
+        // 创建通知元素
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        `;
+
+        // 添加样式
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: ${type === 'success' ? '#48bb78' : type === 'error' ? '#f56565' : '#4299e1'};
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideIn 0.3s ease;
+        `;
+
+        // 添加动画样式
+        if (!document.getElementById('notificationStyles')) {
+            const style = document.createElement('style');
+            style.id = 'notificationStyles';
+            style.textContent = `
+                @keyframes slideIn {
+                    from {
+                        transform: translateX(400px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                @keyframes slideOut {
+                    from {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: translateX(400px);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(notification);
+
+        // 3秒后自动移除
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }, 3000);
+    }
+}
+
+// 初始化认证管理器
+document.addEventListener('DOMContentLoaded', () => {
+    new AuthManager();
+});
