@@ -1049,6 +1049,11 @@ class AlgorithmBlog {
             this.showStatsPanel();
         });
 
+        // 点击代码行数显示行数统计
+        document.getElementById('totalLinesStat').addEventListener('click', () => {
+            this.showLinesPanel();
+        });
+
         // 关闭热度图
         document.getElementById('closeHeatmap').addEventListener('click', () => {
             this.hideHeatmap();
@@ -1067,6 +1072,16 @@ class AlgorithmBlog {
         // 点击遮罩层关闭标签统计面板
         document.getElementById('statsOverlay').addEventListener('click', () => {
             this.hideStatsPanel();
+        });
+
+        // 关闭代码行数面板
+        document.getElementById('closeLines').addEventListener('click', () => {
+            this.hideLinesPanel();
+        });
+
+        // 点击遮罩层关闭代码行数面板
+        document.getElementById('linesOverlay').addEventListener('click', () => {
+            this.hideLinesPanel();
         });
 
         // 切换侧边栏
@@ -1646,13 +1661,24 @@ class AlgorithmBlog {
     async updateTotalLines() {
         try {
             let totalLines = 0;
-            
-            // 获取所有C++文件
-            const cppFiles = this.files.filter(file => 
-                file.name.endsWith('.cpp') && !file.isTemplate
+
+            // 统计模板文件行数
+            try {
+                const templateContent = await this.safeFetch('template.cpp');
+                const templateLines = templateContent.split('\n').length;
+                totalLines += templateLines;
+            } catch (error) {
+                console.warn('无法读取模板文件:', error);
+            }
+
+            // 统计有 tag 的题目文件行数
+            const cppFiles = this.files.filter(file =>
+                file.name.endsWith('.cpp') &&
+                !file.isTemplate &&
+                !file.isTemplateFile &&
+                file.tag
             );
-            
-            // 计算每个文件的行数
+
             for (const file of cppFiles) {
                 try {
                     const content = await this.safeFetch(file.path);
@@ -1662,16 +1688,7 @@ class AlgorithmBlog {
                     console.warn(`无法读取文件 ${file.name}:`, error);
                 }
             }
-            
-            // 添加模板文件的行数
-            try {
-                const templateContent = await this.safeFetch('template.cpp');
-                const templateLines = templateContent.split('\n').length;
-                totalLines += templateLines;
-            } catch (error) {
-                console.warn('无法读取模板文件:', error);
-            }
-            
+
             // 更新DOM
             document.getElementById('totalLines').textContent = totalLines;
         } catch (error) {
@@ -2834,4 +2851,128 @@ AlgorithmBlog.prototype.renderStatsPanel = function() {
     statsGrid.appendChild(totalCard);
 
     statsContent.appendChild(statsGrid);
+};
+
+// 显示代码行数统计面板
+AlgorithmBlog.prototype.showLinesPanel = function() {
+    const linesPanel = document.getElementById('linesPanel');
+    const linesOverlay = document.getElementById('linesOverlay');
+    linesPanel.style.display = 'block';
+    linesOverlay.style.display = 'block';
+    this.renderLinesPanel();
+};
+
+// 隐藏代码行数统计面板
+AlgorithmBlog.prototype.hideLinesPanel = function() {
+    const linesPanel = document.getElementById('linesPanel');
+    const linesOverlay = document.getElementById('linesOverlay');
+    linesPanel.style.display = 'none';
+    linesOverlay.style.display = 'none';
+};
+
+// 渲染代码行数统计面板
+AlgorithmBlog.prototype.renderLinesPanel = function() {
+    const linesContent = document.getElementById('linesContent');
+    linesContent.innerHTML = '<div class="loading">正在统计代码行数...</div>';
+
+    // 按算法类型统计行数
+    const lineStats = {
+        'dp': { name: '动态规划', count: 0, files: 0, color: '#48bb78', icon: 'fa-project-diagram' },
+        'str': { name: '字符串', count: 0, files: 0, color: '#ed8936', icon: 'fa-font' },
+        'ccpc': { name: 'CCPC竞赛', count: 0, files: 0, color: '#e53e3e', icon: 'fa-trophy' },
+        'trie': { name: '字典树', count: 0, files: 0, color: '#9f7aea', icon: 'fa-code-branch' },
+        'template': { name: '模板文件', count: 0, files: 0, color: '#667eea', icon: 'fa-layer-group' }
+    };
+
+    // 异步统计行数
+    (async () => {
+        let totalLines = 0;
+        let totalFiles = 0;
+
+        // 统计模板文件行数
+        try {
+            const templateContent = await this.safeFetch('template.cpp');
+            const templateLines = templateContent.split('\n').length;
+            lineStats['template'].count = templateLines;
+            lineStats['template'].files = 1;
+            totalLines += templateLines;
+            totalFiles += 1;
+        } catch (error) {
+            console.warn('无法读取模板文件:', error);
+        }
+
+        // 统计各类型题目行数
+        const cppFiles = this.files.filter(file =>
+            file.name.endsWith('.cpp') &&
+            !file.isTemplate &&
+            !file.isTemplateFile &&
+            file.tag
+        );
+
+        for (const file of cppFiles) {
+            try {
+                const content = await this.safeFetch(file.path);
+                const lines = content.split('\n').length;
+
+                if (file.tag && lineStats[file.tag]) {
+                    lineStats[file.tag].count += lines;
+                    lineStats[file.tag].files += 1;
+                }
+
+                totalLines += lines;
+                totalFiles += 1;
+            } catch (error) {
+                console.warn(`无法读取文件 ${file.name}:`, error);
+            }
+        }
+
+        // 创建统计卡片
+        const linesGrid = document.createElement('div');
+        linesGrid.className = 'lines-grid';
+
+        Object.keys(lineStats).forEach(key => {
+            const stat = lineStats[key];
+            if (stat.files > 0) {
+                const lineCard = document.createElement('div');
+                lineCard.className = 'line-card';
+                lineCard.style.borderLeft = `4px solid ${stat.color}`;
+
+                lineCard.innerHTML = `
+                    <div class="line-card-header">
+                        <i class="fas ${stat.icon}" style="color: ${stat.color}"></i>
+                        <span class="line-card-name">${stat.name}</span>
+                    </div>
+                    <div class="line-card-stats">
+                        <div class="line-card-count" style="color: ${stat.color}">${stat.count}</div>
+                        <div class="line-card-files">${stat.files} 个文件</div>
+                    </div>
+                    <div class="line-card-label">代码行数</div>
+                `;
+
+                linesGrid.appendChild(lineCard);
+            }
+        });
+
+        // 添加总览卡片
+        const totalCard = document.createElement('div');
+        totalCard.className = 'line-card total-line-card';
+        totalCard.style.borderLeft = '4px solid #667eea';
+
+        totalCard.innerHTML = `
+            <div class="line-card-header">
+                <i class="fas fa-chart-line" style="color: #667eea"></i>
+                <span class="line-card-name">总计</span>
+            </div>
+            <div class="line-card-stats">
+                <div class="line-card-count" style="color: #667eea">${totalLines}</div>
+                <div class="line-card-files">${totalFiles} 个文件</div>
+            </div>
+            <div class="line-card-label">代码行数</div>
+        `;
+
+        linesGrid.appendChild(totalCard);
+
+        linesContent.innerHTML = '';
+        linesContent.appendChild(linesGrid);
+    })();
 };
