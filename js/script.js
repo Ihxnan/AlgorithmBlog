@@ -2286,23 +2286,17 @@ class MusicPlayer {
             decodedName = fileName;
         }
 
+        // 移除扩展名
         const nameWithoutExt = decodedName.replace(/\.(mp3|wav|ogg|m4a)$/i, '');
 
-        // 歌曲名从开头到第一个下划线
-        const firstUnderscoreIndex = nameWithoutExt.indexOf('_');
-        let title = firstUnderscoreIndex !== -1 ? nameWithoutExt.substring(0, firstUnderscoreIndex) : nameWithoutExt;
+        // 按下划线分割文件名
+        const parts = nameWithoutExt.split('_');
 
-        // 艺术家从第一个下划线到第二个下划线（如果有）
-        let artist = 'Unknown';
-        const secondUnderscoreIndex = nameWithoutExt.indexOf('_', firstUnderscoreIndex + 1);
-        if (secondUnderscoreIndex !== -1) {
-            artist = nameWithoutExt.substring(firstUnderscoreIndex + 1, secondUnderscoreIndex);
-        } else if (firstUnderscoreIndex !== -1) {
-            artist = nameWithoutExt.substring(firstUnderscoreIndex + 1);
-        }
+        // 歌曲名是第一部分
+        let title = parts[0] || 'Unknown';
 
-        // 清理标题中的质量标识
-        title = title.replace(/_\d+kbps$/i, '').trim();
+        // 歌手是第二部分（如果存在）
+        let artist = parts.length > 1 ? parts[1] : 'Unknown';
 
         return { title, artist };
     }
@@ -2312,7 +2306,7 @@ class MusicPlayer {
             {
                 name: 'Dear Mr 「F」_ずっと真夜中でいいのに。_潜潜話_320kbps.mp3',
                 path: 'music/Dear Mr 「F」_ずっと真夜中でいいのに。_潜潜話_320kbps.mp3',
-                title: '潜潜話',
+                title: 'Dear Mr 「F」',
                 artist: 'ずっと真夜中でいいのに。'
             },
             {
@@ -2328,8 +2322,8 @@ class MusicPlayer {
                 artist: 'ずっと真夜中でいいのに。'
             },
             {
-                name: 'またね幻_ずっと真夜中でいいのに。_今は今で誓い是笑みで_320kbps.mp3',
-                path: 'music/またね幻_ずっと真夜中でいいのに。_今は今で誓い是笑みで_320kbps.mp3',
+                name: 'またね幻_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
+                path: 'music/またね幻_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
                 title: 'またね幻',
                 artist: 'ずっと真夜中でいいのに。'
             },
@@ -2346,8 +2340,8 @@ class MusicPlayer {
                 artist: 'ずっと真夜中でいいのに。'
             },
             {
-                name: '正義_ずっと真夜中でいいのに。_今は今で誓い是笑みで_320kbps.mp3',
-                path: 'music/正義_ずっと真夜中でいいのに。_今は今で誓い是笑みで_320kbps.mp3',
+                name: '正義_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
+                path: 'music/正義_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
                 title: '正義',
                 artist: 'ずっと真夜中でいいのに。'
             },

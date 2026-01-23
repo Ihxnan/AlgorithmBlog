@@ -446,10 +446,20 @@ app.get('/api/music', (req, res) => {
 
         const musicFiles = files.map(file => {
             const fileName = file;
+            const nameWithoutExt = fileName.replace(/\.(mp3|wav|ogg|m4a)$/i, '');
+            const parts = nameWithoutExt.split('_');
+
+            // 歌曲名是第一部分
+            const title = parts[0] || 'Unknown';
+
+            // 歌手是第二部分（如果存在）
+            const artist = parts.length > 1 ? parts[1] : 'Unknown';
+
             return {
                 name: fileName,
                 path: `music/${fileName}`,
-                title: fileName.replace(/\.(mp3|wav|ogg|m4a)$/i, '')
+                title: title,
+                artist: artist
             };
         });
 
