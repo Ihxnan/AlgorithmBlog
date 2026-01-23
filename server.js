@@ -22,17 +22,31 @@ app.use('/avatars', express.static(path.join(__dirname, 'avatars')));
 // 初始化数据库
 const db = new Database(path.join(__dirname, 'database.sqlite'));
 
-// 创建用户表
+// 创建用户表（添加 is_admin 字段）
 db.exec(`
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
+        is_admin INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
 `);
+
+// 检查并添加 is_admin 字段（如果表已存在但没有该字段）
+try {
+    db.exec(`ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0`);
+} catch (e) {
+    // 字段已存在，忽略错误
+}
+
+// 设置第一个用户为管理员
+const firstUser = db.prepare('SELECT id FROM users LIMIT 1').get();
+if (firstUser) {
+    db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(firstUser.id);
+}
 
 // JWT 验证中间件
 const authenticateToken = (req, res, next) => {
@@ -50,6 +64,15 @@ const authenticateToken = (req, res, next) => {
         req.user = user;
         next();
     });
+};
+
+// 管理员验证中间件
+const requireAdmin = (req, res, next) => {
+    const user = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(req.user.id);
+    if (!user || !user.is_admin) {
+        return res.status(403).json({ message: '需要管理员权限' });
+    }
+    next();
 };
 
 // ==================== 认证相关 API ====================
@@ -127,7 +150,8 @@ app.post('/api/auth/login', async (req, res) => {
             {
                 id: user.id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                is_admin: user.is_admin
             },
             JWT_SECRET,
             { expiresIn: '7d' }
@@ -139,7 +163,8 @@ app.post('/api/auth/login', async (req, res) => {
             user: {
                 id: user.id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                is_admin: user.is_admin
             }
         });
     } catch (error) {
@@ -311,6 +336,46 @@ app.get('/api/auth/avatar/:userId', (req, res) => {
         res.sendFile(avatarPath);
     } catch (error) {
         console.error('获取头像错误:', error);
+        res.status(500).json({ message: '服务器错误' });
+    }
+});
+
+// 获取所有用户列表（需要认证）
+app.get('/api/auth/users', authenticateToken, (req, res) => {
+    try {
+        const users = db.prepare('SELECT id, username, email, is_admin, created_at FROM users ORDER BY created_at DESC').all();
+        res.json({ users });
+    } catch (error) {
+        console.error('获取用户列表错误:', error);
+        res.status(500).json({ message: '服务器错误' });
+    }
+});
+
+// 踢出用户（需要管理员权限）
+app.delete('/api/auth/users/:userId', authenticateToken, requireAdmin, (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId);
+
+        // 不能踢出自己
+        if (userId === req.user.id) {
+            return res.status(400).json({ message: '不能踢出自己' });
+        }
+
+        // 不能踢出其他管理员
+        const targetUser = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(userId);
+        if (!targetUser) {
+            return res.status(404).json({ message: '用户不存在' });
+        }
+        if (targetUser.is_admin) {
+            return res.status(403).json({ message: '不能踢出管理员' });
+        }
+
+        // 删除用户
+        db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+
+        res.json({ message: '用户已被踢出' });
+    } catch (error) {
+        console.error('踢出用户错误:', error);
         res.status(500).json({ message: '服务器错误' });
     }
 });

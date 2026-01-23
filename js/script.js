@@ -3128,6 +3128,18 @@ class AuthManager {
         document.getElementById('closeChangePasswordModal').addEventListener('click', () => this.closeChangePasswordModal());
         document.getElementById('changePasswordOverlay').addEventListener('click', () => this.closeChangePasswordModal());
 
+        // 绑定用户列表模态框
+        const viewUsersBtn = document.getElementById('viewUsers');
+        if (viewUsersBtn) {
+            viewUsersBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.openUsersListModal();
+            });
+        }
+        document.getElementById('closeUsersListModal').addEventListener('click', () => this.closeUsersListModal());
+        document.getElementById('usersListOverlay').addEventListener('click', () => this.closeUsersListModal());
+
         // 绑定用户菜单操作按钮
         document.getElementById('changeUsernameBtn').addEventListener('click', () => this.openChangeUsernameModal());
         document.getElementById('changePasswordBtn').addEventListener('click', () => this.openChangePasswordModal());
@@ -3335,6 +3347,7 @@ class AuthManager {
     }
 
     updateAuthUI(user) {
+        console.log('updateAuthUI 被调用，用户:', user);
         const authSection = document.querySelector('.auth-section');
         const savedAvatar = localStorage.getItem('userAvatar') || `/api/auth/avatar/${user.id}?t=${Date.now()}`;
 
@@ -3347,6 +3360,25 @@ class AuthManager {
         `;
 
         document.getElementById('userProfileBtn').addEventListener('click', () => this.openUserMenu());
+
+        // 显示"查看用户"按钮并绑定事件
+        const usersStatItem = document.getElementById('usersStatItem');
+        if (usersStatItem) {
+            usersStatItem.style.display = 'flex';
+            const viewUsersBtn = document.getElementById('viewUsers');
+            if (viewUsersBtn) {
+                // 移除所有旧的监听器（通过克隆节点）
+                const newBtn = viewUsersBtn.cloneNode(true);
+                viewUsersBtn.parentNode.replaceChild(newBtn, viewUsersBtn);
+                // 添加新的监听器
+                newBtn.addEventListener('click', (e) => {
+                    console.log('viewUsersBtn 被点击', e);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.openUsersListModal();
+                });
+            }
+        }
     }
 
     openUserMenu() {
@@ -3406,6 +3438,160 @@ class AuthManager {
         document.getElementById('changePasswordOverlay').classList.remove('active');
         document.body.style.overflow = '';
         document.getElementById('changePasswordForm').reset();
+    }
+
+    openUsersListModal() {
+        console.log('openUsersListModal 被调用');
+        const modal = document.getElementById('usersListModal');
+        const overlay = document.getElementById('usersListOverlay');
+        console.log('模态框元素:', modal, overlay);
+        if (modal && overlay) {
+            modal.classList.add('active');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            this.loadUsersList();
+        } else {
+            console.error('找不到模态框元素');
+        }
+    }
+
+    closeUsersListModal() {
+        document.getElementById('usersListModal').classList.remove('active');
+        document.getElementById('usersListOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    async loadUsersList() {
+        console.log('loadUsersList 被调用');
+        const container = document.getElementById('usersListContainer');
+        console.log('容器元素:', container);
+        if (!container) {
+            console.error('找不到容器元素');
+            return;
+        }
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>';
+
+        try {
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            console.log('Token:', token ? '存在' : '不存在');
+            const response = await fetch('/api/auth/users', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            console.log('响应状态:', response.status);
+            const result = await response.json();
+            console.log('响应数据:', result);
+
+            if (response.ok) {
+                this.renderUsersList(result.users);
+            } else {
+                container.innerHTML = `<div class="error"><i class="fas fa-exclamation-circle"></i> ${result.message || '加载失败'}</div>`;
+            }
+        } catch (error) {
+            console.error('加载用户列表错误:', error);
+            container.innerHTML = '<div class="error"><i class="fas fa-exclamation-circle"></i> 加载失败，请稍后重试</div>';
+        }
+    }
+
+    renderUsersList(users) {
+        const container = document.getElementById('usersListContainer');
+
+        if (users.length === 0) {
+            container.innerHTML = '<div class="empty"><i class="fas fa-user-slash"></i> 暂无注册用户</div>';
+            return;
+        }
+
+        // 获取当前用户信息，判断是否是管理员
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const isAdmin = currentUser.is_admin === 1;
+
+        const usersListHtml = users.map(user => {
+            const createdAt = new Date(user.created_at).toLocaleString('zh-CN');
+            const avatarUrl = `/api/auth/avatar/${user.id}?t=${Date.now()}`;
+            const isCurrentUser = user.id === currentUser.id;
+            const isUserAdmin = user.is_admin === 1;
+
+            // 管理员标识
+            const adminBadge = isUserAdmin ? '<span class="admin-badge"><i class="fas fa-crown"></i> 管理员</span>' : '';
+
+            // 踢出按钮（仅管理员可见，且不能踢出自己和其他管理员）
+            const kickButton = isAdmin && !isCurrentUser && !isUserAdmin
+                ? `<button class="kick-user-btn" data-user-id="${user.id}" data-username="${user.username}" title="踢出用户">
+                        <i class="fas fa-user-minus"></i> 踢出
+                   </button>`
+                : '';
+
+            return `
+                <div class="user-card" data-user-id="${user.id}">
+                    <img src="${avatarUrl}" alt="${user.username}" class="user-card-avatar" onerror="this.src='img/head.png'">
+                    <div class="user-card-info">
+                        <div class="user-card-name">
+                            ${user.username}
+                            ${adminBadge}
+                        </div>
+                        <div class="user-card-email">${user.email}</div>
+                        <div class="user-card-date"><i class="fas fa-calendar-alt"></i> 注册时间: ${createdAt}</div>
+                    </div>
+                    ${kickButton}
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="users-count">
+                <i class="fas fa-users"></i>
+                共 ${users.length} 位注册用户
+                ${isAdmin ? '<span class="admin-indicator"><i class="fas fa-shield-alt"></i> 管理员模式</span>' : ''}
+            </div>
+            <div class="users-list">
+                ${usersListHtml}
+            </div>
+        `;
+
+        // 绑定踢出按钮事件
+        if (isAdmin) {
+            container.querySelectorAll('.kick-user-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const userId = btn.dataset.userId;
+                    const username = btn.dataset.username;
+                    this.kickUser(userId, username);
+                });
+            });
+        }
+    }
+
+    async kickUser(userId, username) {
+        if (!confirm(`确定要踢出用户 "${username}" 吗？此操作不可撤销。`)) {
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const response = await fetch(`/api/auth/users/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                this.showNotification(`用户 "${username}" 已被踢出`, 'success');
+                // 重新加载用户列表
+                this.loadUsersList();
+            } else {
+                this.showNotification(result.message || '踢出用户失败', 'error');
+            }
+        } catch (error) {
+            console.error('踢出用户错误:', error);
+            this.showNotification('踢出用户失败，请稍后重试', 'error');
+        }
     }
 
     async handleAvatarUpload(e) {

@@ -1927,6 +1927,195 @@ body {
     backdrop-filter: blur(5px);
 }
 
+/* ========== 用户列表模态框样式 ========== */
+.users-list-modal {
+    max-width: 600px;
+    width: 90%;
+}
+
+.users-list-body {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.users-list-container {
+    width: 100%;
+}
+
+.users-count {
+    text-align: center;
+    padding: 15px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.users-count i {
+    margin-right: 8px;
+}
+
+.users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.user-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    transition: var(--transition);
+}
+
+.user-card:hover {
+    border-color: var(--primary-color);
+    transform: translateX(5px);
+    box-shadow: var(--shadow-md);
+}
+
+.user-card-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.user-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-card-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+}
+
+.user-card-email {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    word-break: break-all;
+}
+
+.user-card-date {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.user-card-date i {
+    font-size: 11px;
+}
+
+.users-list-container .loading,
+.users-list-container .error,
+.users-list-container .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.users-list-container .loading i,
+.users-list-container .error i,
+.users-list-container .empty i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.users-list-container .loading {
+    color: var(--primary-color);
+}
+
+.users-list-container .error {
+    color: #e53e3e;
+}
+
+.users-list-container .empty {
+    color: var(--text-secondary);
+}
+
+/* 管理员标识 */
+.admin-indicator {
+    margin-left: 15px;
+    padding: 8px 15px;
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.admin-indicator i {
+    font-size: 16px;
+}
+
+.admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.admin-badge i {
+    font-size: 10px;
+}
+
+/* 踢出用户按钮 */
+.kick-user-btn {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.kick-user-btn:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.kick-user-btn:active {
+    transform: translateY(0);
+}
+
+.kick-user-btn i {
+    font-size: 14px;
+}
+
 .memo-modal-content {
     background: var(--surface-color);
     border-radius: var(--border-radius);
