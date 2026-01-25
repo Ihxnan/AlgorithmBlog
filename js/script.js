@@ -3784,6 +3784,12 @@ class AuthManager {
         document.getElementById('loginBtn').addEventListener('click', () => this.openModal('login'));
         document.getElementById('registerBtn').addEventListener('click', () => this.openModal('register'));
 
+        // 隐藏"查看用户"按钮
+        const usersStatItem = document.getElementById('usersStatItem');
+        if (usersStatItem) {
+            usersStatItem.style.display = 'none';
+        }
+
         this.showNotification('已退出登录', 'success');
     }
 

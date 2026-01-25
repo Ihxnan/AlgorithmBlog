@@ -48,6 +48,7 @@ using namespace std;
 using ll = long long;
 using lll = __int128;
 using ull = unsigned long long;
+using vb = vector<bool>;
 using vi = vector<int>;
 using vvi = vector<vi>;
 using vl = vector<ll>;
