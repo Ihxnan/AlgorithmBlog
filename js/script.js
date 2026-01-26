@@ -1078,6 +1078,11 @@ class AlgorithmBlog {
     }
 
     setupEventListeners() {
+        // 预览 Task.md 按钮
+        document.getElementById('previewTask').addEventListener('click', () => {
+            this.previewTask();
+        });
+
         // 复制代码
         document.getElementById('copyCode').addEventListener('click', (e) => {
             this.addButtonClickEffect(e.target);
@@ -1206,7 +1211,8 @@ class AlgorithmBlog {
                 document.getElementById('searchInput').blur();
             }
         });
-    }
+
+        }
 
     
 
@@ -2201,6 +2207,25 @@ AlgorithmBlog.prototype.showMarkdownPanel = function(title, content) {
             panel.remove();
         }
     });
+};
+
+// 预览 Task.md
+AlgorithmBlog.prototype.previewTask = async function() {
+    try {
+        // 加载 Task.md 文件内容
+        const content = await this.safeFetch('Task.md');
+
+        // 渲染 Markdown
+        const html = marked.parse(content);
+
+        // 显示 Markdown 面板
+        this.showMarkdownPanel('Task.md', html);
+
+        this.showToast('已加载: Task.md', 'success');
+    } catch (error) {
+        console.error('加载 Task.md 失败:', error);
+        this.showToast('加载 Task.md 失败', 'error');
+    }
 };
 
 // ===================== 完整的音乐播放器 =====================
