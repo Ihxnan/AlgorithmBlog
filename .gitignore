@@ -1,8 +1,8 @@
 *.out
 *.exe
-*.json
 
 .vscode
-IFLOW.md
+AGENTS.md
 log.txt
 data
+.env
