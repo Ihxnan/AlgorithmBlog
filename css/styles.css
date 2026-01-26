@@ -140,8 +140,8 @@ body {
     align-items: center;
     gap: 0.5rem;
     padding: 0.6rem 1.25rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.35);
     color: white;
     border-radius: 25px;
     cursor: pointer;
@@ -152,7 +152,7 @@ body {
 }
 
 .auth-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
@@ -163,15 +163,6 @@ body {
 
 .auth-btn i {
     font-size: 1rem;
-}
-
-.auth-btn-primary {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.4);
-}
-
-.auth-btn-primary:hover {
-    background: rgba(255, 255, 255, 0.35);
 }
 
 .author-info a {

@@ -6,5 +6,6 @@
 ![nvidia](../img/nvidia.png)
 -   [x] Lutris
 ![lutris](../img/lutris.png)
--   [] Virtual Machine
+-   [x] Virtual Machine
+![virtual machine](../img/virtual_machine.png)
 -   [] 显卡直通
