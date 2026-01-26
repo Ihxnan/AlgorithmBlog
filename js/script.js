@@ -2235,10 +2235,12 @@ class MusicPlayer {
         this.playlist = [];
         this.currentIndex = 0;
         this.isPlaying = false;
-        this.isShuffle = false;
         this.playerVisible = false;
         this.hideTimeout = null;
         this.playHistory = []; // 播放历史记录
+        this.playMode = 0; // 0: 单曲循环, 1: 随机播放
+        this.isDragging = false; // 是否正在拖动进度条
+        this.hasMoved = false; // 拖动时是否真正移动了
 
         this.init();
     }
@@ -2247,6 +2249,7 @@ class MusicPlayer {
         await this.loadPlaylist();
         this.setupEventListeners();
         this.setupPlayerVisibility();
+        this.updatePlayModeUI();
     }
 
     async loadPlaylist() {
@@ -2431,8 +2434,80 @@ class MusicPlayer {
         });
 
         // 进度条滑块
-        document.getElementById('progressSlider').addEventListener('input', (e) => {
-            this.seek(e.target.value);
+        const progressSlider = document.getElementById('progressSlider');
+        const progressTrack = document.querySelector('.progress-track');
+
+        // 记录鼠标位置和是否正在拖动
+        let isDraggingSlider = false;
+        let trackRect = null;
+
+        // 在轨道上点击或拖动
+        progressTrack.addEventListener('mousedown', (e) => {
+            // 无论是点击轨道还是滑块，都使用轨道的尺寸来计算
+            trackRect = progressTrack.getBoundingClientRect();
+            isDraggingSlider = true;
+            
+            // 计算并更新进度
+            const percentage = this.calculateProgressFromPosition(e.clientX, trackRect);
+            this.updateProgressFromSlider(percentage);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDraggingSlider && trackRect) {
+                e.preventDefault();
+                const percentage = this.calculateProgressFromPosition(e.clientX, trackRect);
+                this.updateProgressFromSlider(percentage);
+            }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (isDraggingSlider && trackRect) {
+                const percentage = this.calculateProgressFromPosition(e.clientX, trackRect);
+                this.seek(percentage);
+                isDraggingSlider = false;
+                trackRect = null;
+            }
+        });
+
+        // 触摸事件支持
+        progressTrack.addEventListener('touchstart', (e) => {
+            trackRect = progressTrack.getBoundingClientRect();
+            isDraggingSlider = true;
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            if (isDraggingSlider && trackRect) {
+                e.preventDefault();
+                const percentage = this.calculateProgressFromPosition(e.touches[0].clientX, trackRect);
+                this.updateProgressFromSlider(percentage);
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            if (isDraggingSlider && trackRect) {
+                const percentage = this.calculateProgressFromPosition(e.changedTouches[0].clientX, trackRect);
+                this.seek(percentage);
+                isDraggingSlider = false;
+                trackRect = null;
+            }
+        });
+
+        // 点击进度条轨道
+        progressTrack.addEventListener('click', (e) => {
+            // 只在点击轨道或填充条时触发，不在滑块上触发
+            if (e.target === progressTrack || e.target.classList.contains('progress-fill')) {
+                // 如果刚刚完成拖动，不处理点击
+                if (this.isDragging) {
+                    return;
+                }
+                
+                e.stopPropagation(); // 阻止事件冒泡
+                const rect = progressTrack.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const percentage = (x / rect.width) * 100;
+                progressSlider.value = percentage;
+                this.seek(percentage);
+            }
         });
 
         // 音频事件
@@ -2565,10 +2640,12 @@ class MusicPlayer {
     }
 
     playSong(index) {
+        console.log('playSong 被调用，index:', index);
         if (index < 0 || index >= this.playlist.length) return;
 
         this.currentIndex = index;
         const song = this.playlist[index];
+        console.log('播放歌曲:', song.title, '路径:', song.path);
 
         // 添加到播放历史
         this.addToHistory(song);
@@ -2687,28 +2764,51 @@ class MusicPlayer {
         if (this.playlist.length === 0) return;
 
         let newIndex;
-        if (this.isShuffle) {
-            do {
-                newIndex = Math.floor(Math.random() * this.playlist.length);
-            } while (newIndex === this.currentIndex && this.playlist.length > 1);
-        } else {
-            newIndex = this.currentIndex + 1;
-            if (newIndex >= this.playlist.length) {
-                newIndex = 0;
-            }
-        }
+
+        // 随机播放
+        do {
+            newIndex = Math.floor(Math.random() * this.playlist.length);
+        } while (newIndex === this.currentIndex && this.playlist.length > 1);
 
         this.playSong(newIndex);
     }
 
     onSongEnded() {
-        this.playNext();
+        // 只有在自然播放结束时才单曲循环
+        if (this.playMode === 0) {
+            // 单曲循环：重新播放当前歌曲
+            this.audio.currentTime = 0;
+            this.audio.play();
+        } else {
+            // 随机播放：播放下一首
+            this.playNext();
+        }
     }
 
     toggleShuffle() {
-        this.isShuffle = !this.isShuffle;
+        this.playMode = (this.playMode + 1) % 2;
+        this.updatePlayModeUI();
+    }
+
+    updatePlayModeUI() {
         const btn = document.getElementById('shuffleBtn');
-        btn.classList.toggle('active', this.isShuffle);
+        const icon = btn.querySelector('i');
+        
+        // 移除所有状态类
+        btn.classList.remove('active', 'shuffle', 'repeat');
+        
+        switch (this.playMode) {
+            case 0: // 单曲循环
+                icon.className = 'fas fa-redo-alt';
+                btn.classList.add('repeat');
+                btn.title = '单曲循环';
+                break;
+            case 1: // 随机播放
+                icon.className = 'fas fa-random';
+                btn.classList.add('shuffle');
+                btn.title = '随机播放';
+                break;
+        }
     }
 
     setVolume(value) {
@@ -2716,19 +2816,64 @@ class MusicPlayer {
     }
 
     seek(value) {
+        console.log('seek 被调用，value:', value);
+        console.log('audio.duration:', this.audio.duration);
+        console.log('audio.readyState:', this.audio.readyState);
+        
+        if (!this.audio.duration || isNaN(this.audio.duration)) {
+            console.warn('音频未加载完成，无法跳转');
+            return;
+        }
+        
         const time = (value / 100) * this.audio.duration;
+        console.log('计算出的时间:', time);
         this.audio.currentTime = time;
+        console.log('设置后的 currentTime:', this.audio.currentTime);
+    }
+
+    updateProgressFromSlider(value) {
+        const progress = parseFloat(value);
+        document.getElementById('progressFill').style.width = `${progress}%`;
+        document.getElementById('progressSlider').value = progress;
+        
+        if (!this.audio.duration || isNaN(this.audio.duration)) {
+            document.getElementById('currentTime').textContent = '0:00';
+            return;
+        }
+        
+        const time = (progress / 100) * this.audio.duration;
+        document.getElementById('currentTime').textContent = this.formatTime(time);
+    }
+
+    calculateProgressFromPosition(clientX, rect) {
+        const x = clientX - rect.left;
+        const percentage = (x / rect.width) * 100;
+        // 限制在 0-100 范围内
+        return Math.max(0, Math.min(100, percentage));
     }
 
     updateProgress() {
+        // 拖动时不更新进度条，避免冲突
+        if (this.isDragging) return;
+        
+        // 检查音频是否已加载
+        if (!this.audio.duration || isNaN(this.audio.duration)) {
+            return;
+        }
+
         const progress = (this.audio.currentTime / this.audio.duration) * 100;
         document.getElementById('progressFill').style.width = `${progress}%`;
         document.getElementById('progressSlider').value = progress;
         document.getElementById('currentTime').textContent = this.formatTime(this.audio.currentTime);
+        
+        // 调试信息
+        console.log('updateProgress - currentTime:', this.audio.currentTime, 'duration:', this.audio.duration, 'progress:', progress);
     }
 
     updateTotalTime() {
-        document.getElementById('totalTime').textContent = this.formatTime(this.audio.duration);
+        if (this.audio.duration && !isNaN(this.audio.duration)) {
+            document.getElementById('totalTime').textContent = this.formatTime(this.audio.duration);
+        }
     }
 
     updateUI() {
