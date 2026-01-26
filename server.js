@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const fs = require('fs');
+const nodemailer = require('nodemailer');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -48,6 +50,66 @@ if (firstUser) {
     db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(firstUser.id);
 }
 
+// 创建验证码表
+db.exec(`
+    CREATE TABLE IF NOT EXISTS verification_codes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL,
+        code TEXT NOT NULL,
+        type TEXT NOT NULL,
+        expires_at DATETIME NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+`);
+
+// 定期清理过期验证码
+setInterval(() => {
+    db.prepare("DELETE FROM verification_codes WHERE expires_at < datetime('now')").run();
+}, 5 * 60 * 1000); // 每5分钟清理一次
+
+// 邮件发送器配置
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.qq.com',
+    port: process.env.SMTP_PORT || 587,
+    secure: false,
+    auth: {
+        user: process.env.SMTP_USER || '',
+        pass: process.env.SMTP_PASS || ''
+    }
+});
+
+// 生成6位验证码
+function generateVerificationCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// 发送验证码邮件
+async function sendVerificationEmail(email, code) {
+    const mailOptions = {
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: email,
+        subject: '算法日常 - 邮箱验证码',
+        html: `
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+                <h2 style="color: #667eea;">算法日常 - 邮箱验证</h2>
+                <p>您好，</p>
+                <p>您正在注册算法日常账号，您的验证码是：</p>
+                <div style="background: #f0f0f0; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+                    ${code}
+                </div>
+                <p>验证码有效期为 5 分钟，请尽快使用。</p>
+                <p>如果这不是您的操作，请忽略此邮件。</p>
+                <p style="color: #999; font-size: 12px; margin-top: 30px;">
+                    此邮件由系统自动发送，请勿回复。<br>
+                    Algorithm Blog - 算法日常
+                </p>
+            </div>
+        `
+    };
+
+    await transporter.sendMail(mailOptions);
+}
+
 // JWT 验证中间件
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -77,13 +139,59 @@ const requireAdmin = (req, res, next) => {
 
 // ==================== 认证相关 API ====================
 
+// 发送验证码
+app.post('/api/auth/send-code', async (req, res) => {
+    try {
+        const { email, type = 'register' } = req.body;
+
+        // 验证邮箱格式
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({ message: '请输入有效的邮箱地址' });
+        }
+
+        // 检查邮箱是否已被注册（注册时）
+        if (type === 'register') {
+            const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+            if (existingUser) {
+                return res.status(409).json({ message: '该邮箱已被注册' });
+            }
+        }
+
+        // 检查是否频繁发送（1分钟内只能发送一次）
+        const recentCode = db.prepare(
+            "SELECT created_at FROM verification_codes WHERE email = ? AND type = ? AND created_at > datetime('now', '-1 minute')"
+        ).get(email, type);
+
+        if (recentCode) {
+            return res.status(429).json({ message: '验证码发送过于频繁，请稍后再试' });
+        }
+
+        // 生成验证码
+        const code = generateVerificationCode();
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5分钟后过期
+
+        // 保存验证码到数据库
+        db.prepare(
+            'INSERT INTO verification_codes (email, code, type, expires_at) VALUES (?, ?, ?, ?)'
+        ).run(email, code, type, expiresAt.toISOString());
+
+        // 发送邮件
+        await sendVerificationEmail(email, code);
+
+        res.json({ message: '验证码已发送到您的邮箱，请查收' });
+    } catch (error) {
+        console.error('发送验证码错误:', error);
+        res.status(500).json({ message: '发送验证码失败，请稍后重试' });
+    }
+});
+
 // 用户注册
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, verificationCode } = req.body;
 
         // 验证输入
-        if (!username || !email || !password) {
+        if (!username || !email || !password || !verificationCode) {
             return res.status(400).json({ message: '请填写所有必填字段' });
         }
 
@@ -93,6 +201,20 @@ app.post('/api/auth/register', async (req, res) => {
 
         if (password.length < 6) {
             return res.status(400).json({ message: '密码长度至少为6个字符' });
+        }
+
+        // 验证邮箱格式
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({ message: '请输入有效的邮箱地址' });
+        }
+
+        // 验证验证码
+        const validCode = db.prepare(
+            "SELECT * FROM verification_codes WHERE email = ? AND code = ? AND type = 'register' AND expires_at > datetime('now') ORDER BY created_at DESC LIMIT 1"
+        ).get(email, verificationCode);
+
+        if (!validCode) {
+            return res.status(400).json({ message: '验证码无效或已过期' });
         }
 
         // 检查用户名是否已存在
@@ -108,6 +230,9 @@ app.post('/api/auth/register', async (req, res) => {
         const result = db.prepare(
             'INSERT INTO users (username, email, password) VALUES (?, ?, ?)'
         ).run(username, email, hashedPassword);
+
+        // 删除已使用的验证码
+        db.prepare('DELETE FROM verification_codes WHERE email = ? AND code = ?').run(email, verificationCode);
 
         res.status(201).json({
             message: '注册成功',

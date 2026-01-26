@@ -3190,6 +3190,9 @@ class AuthManager {
         // 绑定注册表单提交
         document.getElementById('registerForm').addEventListener('submit', (e) => this.handleRegister(e));
 
+        // 绑定发送验证码按钮
+        document.getElementById('sendRegisterCode').addEventListener('click', () => this.handleSendVerificationCode());
+
         // ESC 键关闭模态框
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -3298,7 +3301,8 @@ class AuthManager {
         const data = {
             username: formData.get('username'),
             email: formData.get('email'),
-            password: password
+            password: password,
+            verificationCode: formData.get('verificationCode')
         };
 
         const submitBtn = form.querySelector('.auth-submit-btn');
@@ -3344,6 +3348,78 @@ class AuthManager {
                 console.error('解析用户信息失败:', error);
             }
         }
+    }
+
+    async handleSendVerificationCode() {
+        const emailInput = document.getElementById('registerEmail');
+        const sendBtn = document.getElementById('sendRegisterCode');
+
+        if (!emailInput || !sendBtn) {
+            console.error('找不到必要的元素');
+            this.showNotification('页面错误，请刷新后重试', 'error');
+            return;
+        }
+
+        const email = emailInput.value.trim();
+
+        // 验证邮箱格式
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            this.showNotification('请输入有效的邮箱地址', 'error');
+            emailInput.focus();
+            return;
+        }
+
+        const originalText = sendBtn.innerHTML;
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 发送中...';
+
+        try {
+            const response = await fetch('/api/auth/send-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, type: 'register' })
+            });
+
+            let result;
+            try {
+                result = await response.json();
+            } catch (jsonError) {
+                console.error('解析响应JSON失败:', jsonError);
+                result = { message: '服务器响应格式错误' };
+            }
+
+            if (response.ok) {
+                this.showNotification('验证码已发送到您的邮箱，请查收', 'success');
+                this.startCountdown(sendBtn);
+            } else {
+                this.showNotification(result.message || '发送验证码失败', 'error');
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = originalText;
+            }
+        } catch (error) {
+            console.error('发送验证码错误:', error);
+            this.showNotification('发送验证码失败，请稍后重试', 'error');
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = originalText;
+        }
+    }
+
+    startCountdown(button) {
+        let seconds = 60;
+        const originalText = button.innerHTML;
+
+        const timer = setInterval(() => {
+            seconds--;
+            button.innerHTML = `<i class="fas fa-clock"></i> ${seconds}秒后重发`;
+
+            if (seconds <= 0) {
+                clearInterval(timer);
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }, 1000);
     }
 
     updateAuthUI(user) {
