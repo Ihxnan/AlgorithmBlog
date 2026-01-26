@@ -2811,15 +2811,15 @@ AlgorithmBlog.prototype.renderHeatmap = function() {
     const calendarDiv = document.createElement('div');
     calendarDiv.className = 'heatmap-calendar';
 
-    // 添加星期标签
-    const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+    // 添加星期标签（从周一到周日）
+    const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
     const weekLabelsDiv = document.createElement('div');
     weekLabelsDiv.className = 'heatmap-week-labels';
     weekDays.forEach((day, index) => {
         const label = document.createElement('div');
         label.className = 'heatmap-week-label';
         label.textContent = day;
-        if (index === 0 || index === 6) {
+        if (index === 6) {  // 周日
             label.classList.add('weekend');
         }
         weekLabelsDiv.appendChild(label);
@@ -2831,13 +2831,18 @@ AlgorithmBlog.prototype.renderHeatmap = function() {
     let currentWeek = [];
     let currentDate = new Date(startDate);
 
-    // 找到第一个周日
+    // 找到第一个周一
     const dayOfWeek = currentDate.getDay();
-    currentDate.setDate(currentDate.getDate() - dayOfWeek);
+    const daysToMonday = (dayOfWeek + 6) % 7;  // 将周日(0)转换为6，其他减1
+    currentDate.setDate(currentDate.getDate() - daysToMonday);
 
     // 生成所有周的数据
     while (currentDate <= today || currentWeek.length > 0) {
-        const dateStr = currentDate.toISOString().split('T')[0];
+        // 使用本地时间生成日期字符串，避免时区偏移问题
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
         const count = dateStats[dateStr] || 0;
         const level = this.getHeatmapLevel(count, maxFiles);
 
@@ -2847,8 +2852,8 @@ AlgorithmBlog.prototype.renderHeatmap = function() {
             level: level
         });
 
-        // 如果是一周的最后一天，或者已经超过今天，则保存这一周
-        if (currentDate.getDay() === 6 || currentDate > today) {
+        // 如果是一周的最后一天（周日），或者已经超过今天，则保存这一周
+        if (currentDate.getDay() === 0 || currentDate > today) {
             weeks.push([...currentWeek]);
             currentWeek = [];
         }
