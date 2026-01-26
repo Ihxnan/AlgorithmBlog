@@ -637,19 +637,42 @@ app.get('/api/music', (req, res) => {
         const musicFiles = files.map(file => {
             const fileName = file;
             const nameWithoutExt = fileName.replace(/\.(mp3|wav|ogg|m4a)$/i, '');
-            const parts = nameWithoutExt.split('_');
 
-            // 歌曲名是第一部分
-            const title = parts[0] || 'Unknown';
+            let artist = 'Unknown';
+            let title = nameWithoutExt;
 
-            // 歌手是第二部分（如果存在）
-            const artist = parts.length > 1 ? parts[1] : 'Unknown';
+            // 优先使用 " - " 分隔（格式：Artist - SongName）
+            if (nameWithoutExt.includes(' - ')) {
+                const parts = nameWithoutExt.split(' - ');
+                artist = parts[0].trim();
+                title = parts.slice(1).join(' - ').trim();
+            }
+            // 其次使用 "_" 分隔（格式：SongName_Artist_Extra）
+            else if (nameWithoutExt.includes('_')) {
+                const parts = nameWithoutExt.split('_');
+                title = parts[0].trim();
+
+                // 歌手是第二部分，但需要去掉最后的额外信息（如 _320kbps）
+                if (parts.length >= 2) {
+                    // 提取歌手部分（从第二部分开始，但去掉最后的数字/比特率信息）
+                    let artistParts = parts.slice(1);
+
+                    // 移除最后的额外信息（如 "320kbps", "Tunes That Stick Vol 18" 等）
+                    // 如果最后一部分包含数字或kbps，则移除
+                    const lastPart = artistParts[artistParts.length - 1];
+                    if (/\d+kbps/i.test(lastPart) || /^Tunes|^Playlist|^ZUTOMAYO/i.test(lastPart)) {
+                        artistParts.pop();
+                    }
+
+                    artist = artistParts.join('_').trim();
+                }
+            }
 
             return {
                 name: fileName,
                 path: `music/${fileName}`,
-                title: title,
-                artist: artist
+                title: title || 'Unknown',
+                artist: artist || 'Unknown'
             };
         });
 
