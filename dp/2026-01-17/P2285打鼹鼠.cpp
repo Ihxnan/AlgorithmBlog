@@ -14,5 +14,15 @@ void solve()
     for (auto &[time, x, y] : arr)
         cin >> time >> x >> y;
     sort(all(arr));
-    
+    auto dfs = [&](auto &&self, int num, int time) -> int
+    {
+        if (num == n)
+            return 0;
+        int ans = self(self, num + 1, time);
+        if (!num || get<0>(arr[num]) - time >= abs(get<1>(arr[num]) - get<1>(arr[num - 1])) + abs(get<2>(arr[num]) - get<2>(arr[num - 1])))
+            ans = max(self(self, num + 1, get<0>(arr[num])), ans);
+        return ans;
+    };
+
+    cout << dfs(dfs, 0, 0);
 }
