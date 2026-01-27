@@ -19,9 +19,8 @@ class VersionManager {
     init() {
         // 开发模式检测
         this.isDevelopmentMode = this.detectDevelopmentMode();
-        
+
         if (this.isDevelopmentMode) {
-            console.log('检测到开发模式，启用自动版本管理');
             this.setupAutoVersioning();
         }
     }
@@ -57,7 +56,6 @@ class VersionManager {
         
         // 在控制台添加版本更新命令
         window.updateVersion = () => this.forceUpdateVersion();
-        console.log('开发模式：按 Ctrl+Shift+U 或在控制台执行 updateVersion() 来强制更新版本');
     }
 
     // 检查更新
@@ -73,7 +71,7 @@ class VersionManager {
                 
                 // 如果文件修改时间晚于版本号日期，提示更新
                 if (modifiedTime > versionTime * 1000000) { // 粗略比较
-                    console.log('检测到文件已更新，建议刷新页面或按 Ctrl+Shift+U 更新版本');
+                    // 文件已更新
                 }
             }
         } catch (error) {
@@ -112,8 +110,6 @@ class VersionManager {
     updateVersionInHTML(newVersion) {
         // 注意：在浏览器环境中无法直接修改文件系统
         // 这个方法主要用于演示，实际需要后端支持
-        console.log(`新版本号: ${newVersion}`);
-        console.log('请手动更新HTML文件中的版本号，或使用开发工具脚本自动更新');
     }
 
     // 显示更新通知

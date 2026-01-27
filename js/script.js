@@ -91,18 +91,14 @@ class AlgorithmBlog {
                     isTemplateFile: file.type === 'template' && file.date === 'template',
                     isMarkdown: file.path.endsWith('.md')
                 }));
-                console.log('从API获取文件列表成功，共', this.files.length, '个文件');
             } catch (apiError) {
                 throw new Error('API不可用');
             }
         } catch (error) {
-            console.log('API不可用，尝试动态扫描目录结构');
             try {
                 // 尝试动态扫描目录结构
                 this.files = await this.scanDirectoryStructure();
-                console.log('动态扫描目录成功，共', this.files.length, '个文件');
             } catch (scanError) {
-                console.log('动态扫描失败，使用静态文件列表:', scanError.message);
                 // 如果动态扫描也失败，使用最新的静态文件列表
                 this.files = this.getStaticFileList();
             }
@@ -278,7 +274,6 @@ class AlgorithmBlog {
                         fileName = decodeURIComponent(href);
                     } catch (e) {
                         // 如果解码失败，使用原始文件名
-                        console.warn('文件名解码失败:', href);
                     }
                     files.push(fileName);
                 }
@@ -342,11 +337,7 @@ class AlgorithmBlog {
                 file.plus = true;
             }
         });
-
-        console.log('添加标签后的文件列表:', this.files.map(f => ({ name: f.name, tag: f.tag, path: f.path })));
     }
-
-    
 
     // 处理文件名显示，去掉"-优化空间"和前面的序号
     getDisplayName(fileName, isTemplateFile = false) {
@@ -371,7 +362,6 @@ class AlgorithmBlog {
         const fileList = document.getElementById('fileList');
         fileList.innerHTML = '';
 
-        console.log('renderFileList 调用，文件总数:', this.files.length);
 
         // 分离模板文件、template目录文件和普通文件
         const templateFiles = [];
@@ -708,7 +698,6 @@ class AlgorithmBlog {
 
     // 在分组中渲染文件
     renderFilesInGroup(container, files) {
-        console.log('renderFilesInGroup 调用，文件数量:', files.length);
 
         // 按文件名分组，让PLUS版本排在后面
         const fileGroups = {};
@@ -1043,9 +1032,6 @@ class AlgorithmBlog {
 
     // 默认加载template.cpp文件
     async loadDefaultFile() {
-        console.log('loadDefaultFile 开始执行');
-        console.log('当前文件列表:', this.files);
-
         // 查找template.cpp文件（注意：API返回的name属性不包含.cpp扩展名）
         // 所以我们需要查找name为'template'或者path为'template.cpp'的文件
         const templateFile = this.files.find(file =>
@@ -1053,24 +1039,17 @@ class AlgorithmBlog {
         );
 
         if (templateFile) {
-            console.log('找到 template 文件:', templateFile);
-
             // 等待 DOM 完全渲染
             await new Promise(resolve => setTimeout(resolve, 200));
-
-            console.log('开始加载 template.cpp');
 
             // 直接调用 loadFile 方法，而不是模拟点击
             // 这样更可靠，不依赖于 DOM 元素的存在
             await this.loadFile(templateFile);
 
-            console.log('template.cpp 加载完成');
-
             // 设置文件列表中的活动状态
             const templateFileElement = document.querySelector('.file-item.template-file');
             if (templateFileElement) {
                 templateFileElement.classList.add('active');
-                console.log('已设置活动状态');
             }
         } else {
             console.warn('未找到 template 文件');
@@ -1754,26 +1733,18 @@ class AlgorithmBlog {
                 const isNotTemplateFile = !file.isTemplateFile;
                 const hasTag = file.tag && file.tag !== 'tmpl';
 
-                console.log(`文件 ${file.name}: isCpp=${isCpp}, isNotTemplate=${isNotTemplate}, isNotTemplateFile=${isNotTemplateFile}, hasTag=${hasTag}`);
-
                 return isCpp && isNotTemplate && isNotTemplateFile && hasTag;
             });
-
-            console.log('找到的题目文件数量:', cppFiles.length);
-            console.log('题目文件列表:', cppFiles.map(f => ({ name: f.name, tag: f.tag, path: f.path })));
 
             for (const file of cppFiles) {
                 try {
                     const content = await this.safeFetch(file.path);
                     const lines = content.split('\n').length;
                     totalLines += lines;
-                    console.log(`${file.name}: ${lines} 行`);
                 } catch (error) {
                     console.warn(`无法读取文件 ${file.name}:`, error);
                 }
             }
-
-            console.log('总行数:', totalLines);
 
             // 更新DOM
             document.getElementById('totalLines').textContent = totalLines;
@@ -2010,13 +1981,10 @@ AlgorithmBlog.prototype.scanMemoDirectory = async function() {
                     path: file.path
                 });
             });
-            console.log('从API获取不务正业文件列表成功，共', memoFiles.length, '个文件');
         } else {
             throw new Error('API 返回数据格式不正确');
         }
     } catch (apiError) {
-        console.warn('API获取失败，尝试直接访问目录:', apiError.message);
-        
         // 如果 API 不可用，尝试直接访问目录
         try {
             const memoDir = '不务正业/';
@@ -2045,7 +2013,7 @@ AlgorithmBlog.prototype.scanMemoDirectory = async function() {
                     try {
                         fileName = decodeURIComponent(href);
                     } catch (e) {
-                        console.warn('文件名解码失败:', href);
+                        // 解码失败，使用原始文件名
                     }
                     memoFiles.push({
                         name: fileName,
@@ -2238,7 +2206,7 @@ class MusicPlayer {
         this.playerVisible = false;
         this.hideTimeout = null;
         this.playHistory = []; // 播放历史记录
-        this.playMode = 0; // 0: 单曲循环, 1: 随机播放
+        this.playMode = 1; // 0: 单曲循环, 1: 随机播放（默认随机播放）
         this.isDragging = false; // 是否正在拖动进度条
         this.hasMoved = false; // 拖动时是否真正移动了
 
@@ -2260,18 +2228,16 @@ class MusicPlayer {
                 if (response.ok) {
                     const data = await response.json();
                     this.playlist = data.files || [];
-                    console.log('从API加载音乐列表成功，找到', this.playlist.length, '首歌曲');
                     return;
                 }
             } catch (apiError) {
-                console.log('API不可用，尝试扫描music目录');
+                // API不可用，尝试扫描music目录
             }
 
             // 动态扫描 music 目录
             try {
                 const htmlText = await fetch('music/').then(r => r.text());
                 this.playlist = this.parseMusicFiles(htmlText);
-                console.log('扫描music目录成功，找到', this.playlist.length, '首歌曲');
             } catch (scanError) {
                 console.error('扫描music目录失败:', scanError.message);
                 this.playlist = [];
@@ -2581,12 +2547,10 @@ class MusicPlayer {
     }
 
     playSong(index) {
-        console.log('playSong 被调用，index:', index);
         if (index < 0 || index >= this.playlist.length) return;
 
         this.currentIndex = index;
         const song = this.playlist[index];
-        console.log('播放歌曲:', song.title, '路径:', song.path);
 
         // 添加到播放历史
         this.addToHistory(song);
@@ -2672,13 +2636,13 @@ class MusicPlayer {
                 }
             }
 
-            // 生成封面 URL
-            const coverUrl = `/api/music/cover/${song.name}`;
+            // 生成封面 URL（添加随机参数以避免缓存问题）
+            const coverUrl = `/api/music/cover/${encodeURIComponent(song.name)}`;
             const fallbackIcon = `<i class="fas ${isCurrentPlaying && this.isPlaying ? 'fa-volume-up' : 'fa-music'}"></i>`;
 
             item.innerHTML = `
                 <div class="playlist-item-cover">
-                    <img src="${coverUrl}" alt="${song.title}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <img src="${coverUrl}" alt="${song.title}" loading="lazy" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="playlist-item-icon" style="display: none;">${fallbackIcon}</div>
                 </div>
                 <div class="playlist-item-info">
@@ -2768,19 +2732,13 @@ class MusicPlayer {
     }
 
     seek(value) {
-        console.log('seek 被调用，value:', value);
-        console.log('audio.duration:', this.audio.duration);
-        console.log('audio.readyState:', this.audio.readyState);
-        
         if (!this.audio.duration || isNaN(this.audio.duration)) {
             console.warn('音频未加载完成，无法跳转');
             return;
         }
-        
+
         const time = (value / 100) * this.audio.duration;
-        console.log('计算出的时间:', time);
         this.audio.currentTime = time;
-        console.log('设置后的 currentTime:', this.audio.currentTime);
     }
 
     updateProgressFromSlider(value) {
@@ -2817,9 +2775,6 @@ class MusicPlayer {
         document.getElementById('progressFill').style.width = `${progress}%`;
         document.getElementById('progressSlider').value = progress;
         document.getElementById('currentTime').textContent = this.formatTime(this.audio.currentTime);
-        
-        // 调试信息
-        console.log('updateProgress - currentTime:', this.audio.currentTime, 'duration:', this.audio.duration, 'progress:', progress);
     }
 
     updateTotalTime() {
@@ -3550,7 +3505,6 @@ class AuthManager {
     }
 
     updateAuthUI(user) {
-        console.log('updateAuthUI 被调用，用户:', user);
         const authSection = document.querySelector('.auth-section');
         const savedAvatar = localStorage.getItem('userAvatar') || `/api/auth/avatar/${user.id}?t=${Date.now()}`;
 
@@ -3575,7 +3529,6 @@ class AuthManager {
                 viewUsersBtn.parentNode.replaceChild(newBtn, viewUsersBtn);
                 // 添加新的监听器
                 newBtn.addEventListener('click', (e) => {
-                    console.log('viewUsersBtn 被点击', e);
                     e.preventDefault();
                     e.stopPropagation();
                     this.openUsersListModal();
@@ -3644,10 +3597,8 @@ class AuthManager {
     }
 
     openUsersListModal() {
-        console.log('openUsersListModal 被调用');
         const modal = document.getElementById('usersListModal');
         const overlay = document.getElementById('usersListOverlay');
-        console.log('模态框元素:', modal, overlay);
         if (modal && overlay) {
             modal.classList.add('active');
             overlay.classList.add('active');
@@ -3665,9 +3616,7 @@ class AuthManager {
     }
 
     async loadUsersList() {
-        console.log('loadUsersList 被调用');
         const container = document.getElementById('usersListContainer');
-        console.log('容器元素:', container);
         if (!container) {
             console.error('找不到容器元素');
             return;
@@ -3676,7 +3625,6 @@ class AuthManager {
 
         try {
             const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-            console.log('Token:', token ? '存在' : '不存在');
             const response = await fetch('/api/auth/users', {
                 method: 'GET',
                 headers: {
@@ -3684,9 +3632,7 @@ class AuthManager {
                 }
             });
 
-            console.log('响应状态:', response.status);
             const result = await response.json();
-            console.log('响应数据:', result);
 
             if (response.ok) {
                 this.renderUsersList(result.users);

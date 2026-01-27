@@ -10,5 +10,9 @@ void solve()
 {
     int n, m;
     cin >> n >> m;
+    vector<tuple<int, int, int>> arr(m);
+    for (auto &[time, x, y] : arr)
+        cin >> time >> x >> y;
+    sort(all(arr));
     
 }
