@@ -2603,6 +2603,13 @@ class MusicPlayer {
         // 更新歌曲信息
         document.getElementById('songTitle').textContent = song.title;
         document.getElementById('songArtist').textContent = song.artist;
+
+        // 更新封面图片
+        const playerCover = document.getElementById('playerCover');
+        const fallbackIcon = playerCover.nextElementSibling;
+        playerCover.style.display = 'block';
+        fallbackIcon.style.display = 'none';
+        playerCover.src = `/api/music/cover/${song.name}`;
     }
 
     addToHistory(song) {
@@ -2665,10 +2672,14 @@ class MusicPlayer {
                 }
             }
 
+            // 生成封面 URL
+            const coverUrl = `/api/music/cover/${song.name}`;
+            const fallbackIcon = `<i class="fas ${isCurrentPlaying && this.isPlaying ? 'fa-volume-up' : 'fa-music'}"></i>`;
+
             item.innerHTML = `
-                <div class="playlist-item-index">${index + 1}</div>
-                <div class="playlist-item-icon">
-                    <i class="fas ${isCurrentPlaying && this.isPlaying ? 'fa-volume-up' : 'fa-music'}"></i>
+                <div class="playlist-item-cover">
+                    <img src="${coverUrl}" alt="${song.title}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="playlist-item-icon" style="display: none;">${fallbackIcon}</div>
                 </div>
                 <div class="playlist-item-info">
                     <div class="playlist-item-title">${song.title}</div>

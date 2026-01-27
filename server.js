@@ -715,6 +715,131 @@ app.get('/api/memos', (req, res) => {
 
 // ==================== 其他路由 ====================
 
+// 提取音乐封面
+app.get('/api/music/cover/:filename', (req, res) => {
+    const filename = decodeURIComponent(req.params.filename);
+    const filePath = path.join(__dirname, 'music', filename);
+
+    console.log('提取封面请求:', filename);
+
+    // 检查文件是否存在
+    if (!fs.existsSync(filePath)) {
+        console.log('文件不存在:', filePath);
+        return res.status(404).json({ error: '文件不存在' });
+    }
+
+    try {
+        const buffer = fs.readFileSync(filePath);
+
+        // 检查是否为 ID3v2 格式
+        if (buffer.length < 10 || buffer.toString('ascii', 0, 3) !== 'ID3') {
+            console.log('非 ID3v2 格式');
+            return res.status(404).json({ error: '无封面信息' });
+        }
+
+        // 读取 ID3v2 标签大小
+        const id3Size = buffer.readUInt32BE(6);
+        const syncedSize = (id3Size & 0x7F) |
+                           ((id3Size >> 1) & 0x3F80) |
+                           ((id3Size >> 2) & 0x1FC000) |
+                           ((id3Size >> 3) & 0x0FE00000);
+
+        console.log('ID3 标签大小:', syncedSize, '文件大小:', buffer.length);
+
+        // 读取 ID3v2 标签数据
+        const id3Data = buffer.slice(10, 10 + syncedSize);
+
+        // 查找 APIC 帧（附加图片）
+        const apicIndex = id3Data.indexOf('APIC');
+
+        if (apicIndex === -1) {
+            console.log('未找到 APIC 帧');
+            return res.status(404).json({ error: '无封面信息' });
+        }
+
+        console.log('找到 APIC 帧在位置:', apicIndex);
+
+        // 解析 APIC 帧
+        let offset = apicIndex + 4; // 跳过 'APIC'
+
+        // 检查是否超出边界
+        if (offset + 6 > id3Data.length) {
+            console.log('APIC 帧数据不足');
+            return res.status(500).json({ error: 'APIC 帧格式错误' });
+        }
+
+        // 读取帧大小
+        const frameSize = (id3Data[offset] << 24) |
+                         (id3Data[offset + 1] << 16) |
+                         (id3Data[offset + 2] << 8) |
+                         id3Data[offset + 3];
+        offset += 4;
+
+        console.log('帧大小:', frameSize);
+
+        // 跳过标志
+        offset += 2;
+
+        // 跳过 MIME 类型
+        const mimeEnd = id3Data.indexOf(0, offset);
+        if (mimeEnd === -1) {
+            console.log('未找到 MIME 类型结束符');
+            return res.status(500).json({ error: 'MIME 类型格式错误' });
+        }
+        const mimeType = id3Data.toString('ascii', offset, mimeEnd);
+        offset = mimeEnd + 1;
+
+        console.log('MIME 类型:', mimeType);
+
+        // 跳过图片类型
+        offset += 1;
+
+        // 跳过描述
+        const descEnd = id3Data.indexOf(0, offset);
+        if (descEnd === -1) {
+            console.log('未找到描述结束符');
+            return res.status(500).json({ error: '描述格式错误' });
+        }
+        offset = descEnd + 1;
+
+        // 计算图片数据大小
+        const remainingSize = id3Data.length - offset;
+        const imageSize = Math.min(frameSize - (offset - apicIndex - 10), remainingSize);
+
+        console.log('图片数据大小:', imageSize);
+
+        // 读取图片数据
+        const imageData = id3Data.slice(offset, offset + imageSize);
+
+        if (imageData.length === 0) {
+            console.log('图片数据为空');
+            return res.status(500).json({ error: '图片数据为空' });
+        }
+
+        // 根据 MIME 类型设置 Content-Type
+        let contentType = 'image/jpeg';
+        if (mimeType === 'image/png') {
+            contentType = 'image/png';
+        } else if (mimeType === 'image/gif') {
+            contentType = 'image/gif';
+        }
+
+        console.log('返回封面图片，大小:', imageData.length, '类型:', contentType);
+
+        // 设置缓存头（24小时）
+        res.set({
+            'Content-Type': contentType,
+            'Cache-Control': 'public, max-age=86400'
+        });
+
+        res.send(imageData);
+
+    } catch (error) {
+        console.error('提取封面失败:', error);
+        res.status(500).json({ error: '提取封面失败' });
+    }
+});
+
 // 健康检查
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
