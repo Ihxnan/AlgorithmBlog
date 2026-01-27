@@ -2273,12 +2273,12 @@ class MusicPlayer {
                 this.playlist = this.parseMusicFiles(htmlText);
                 console.log('扫描music目录成功，找到', this.playlist.length, '首歌曲');
             } catch (scanError) {
-                console.warn('扫描music目录失败，使用静态列表:', scanError.message);
-                this.playlist = this.getStaticPlaylist();
+                console.error('扫描music目录失败:', scanError.message);
+                this.playlist = [];
             }
         } catch (error) {
             console.error('加载播放列表失败:', error);
-            this.playlist = this.getStaticPlaylist();
+            this.playlist = [];
         }
     }
 
@@ -2317,75 +2317,16 @@ class MusicPlayer {
         // 移除扩展名
         const nameWithoutExt = decodedName.replace(/\.(mp3|wav|ogg|m4a)$/i, '');
 
-        // 按下划线分割文件名
-        const parts = nameWithoutExt.split('_');
+        // 按 " - " 分割文件名（歌手 - 歌名）
+        const parts = nameWithoutExt.split(' - ');
 
-        // 歌曲名是第一部分
-        let title = parts[0] || 'Unknown';
+        // 歌手是第一部分
+        let artist = parts[0] || 'Unknown';
 
-        // 歌手是第二部分（如果存在）
-        let artist = parts.length > 1 ? parts[1] : 'Unknown';
+        // 歌曲名是第二部分（如果存在）
+        let title = parts.length > 1 ? parts[1] : 'Unknown';
 
         return { title, artist };
-    }
-
-    getStaticPlaylist() {
-        return [
-            {
-                name: 'Dear Mr 「F」_ずっと真夜中でいいのに。_潜潜話_320kbps.mp3',
-                path: 'music/Dear Mr 「F」_ずっと真夜中でいいのに。_潜潜話_320kbps.mp3',
-                title: 'Dear Mr 「F」',
-                artist: 'ずっと真夜中でいいのに。'
-            },
-            {
-                name: 'あいつら全員同窓会_ずっと真夜中でいいのに。_Tunes That Stick Vol 18_320kbps.mp3',
-                path: 'music/あいつら全員同窓会_ずっと真夜中でいいのに。_Tunes That Stick Vol 18_320kbps.mp3',
-                title: 'あいつら全員同窓会',
-                artist: 'ずっと真夜中でいいのに。'
-            },
-            {
-                name: 'マイノリティ脈絡_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
-                path: 'music/マイノリティ脈絡_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
-                title: 'マイノリティ脈絡',
-                artist: 'ずっと真夜中でいいのに。'
-            },
-            {
-                name: 'またね幻_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
-                path: 'music/またね幻_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
-                title: 'またね幻',
-                artist: 'ずっと真夜中でいいのに。'
-            },
-            {
-                name: '勘ぐれい_ずっと真夜中でいいのに。_ZUTOMAYO\'s Playlist for Mainland China_320kbps.mp3',
-                path: 'music/勘ぐれい_ずっと真夜中でいいのに。_ZUTOMAYO\'s Playlist for Mainland China_320kbps.mp3',
-                title: '勘ぐれい',
-                artist: 'ずっと真夜中でいいのに。'
-            },
-            {
-                name: '暗く黒く_ずっと真夜中でいいのに。_ZUTOMAYO - 2024 中国特别版_320kbps.mp3',
-                path: 'music/暗く黒く_ずっと真夜中でいいのに。_ZUTOMAYO - 2024 中国特别版_320kbps.mp3',
-                title: '暗く黒く',
-                artist: 'ずっと真夜中でいいのに。'
-            },
-            {
-                name: '正義_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
-                path: 'music/正義_ずっと真夜中でいいのに。_今は今で誓いは笑みで_320kbps.mp3',
-                title: '正義',
-                artist: 'ずっと真夜中でいいのに。'
-            },
-            {
-                name: '残機_ずっと真夜中でいいのに。_TOKYO - VIRAL 2023 -_320kbps.mp3',
-                path: 'music/残機_ずっと真夜中でいいのに。_TOKYO - VIRAL 2023 -_320kbps.mp3',
-                title: '残機',
-                artist: 'ずっと真夜中でいいのに。'
-            },
-            {
-                name: '海馬成長痛_ずっと真夜中でいいのに。_海馬成長痛_320kbps.mp3',
-                path: 'music/海馬成長痛_ずっと真夜中でいいのに。_海馬成長痛_320kbps.mp3',
-                title: '海馬成長痛',
-                artist: 'ずっと真夜中でいいのに。'
-            }
-        ];
     }
 
     setupEventListeners() {
