@@ -2889,7 +2889,7 @@ AlgorithmBlog.prototype.renderHeatmap = function() {
     currentDate.setDate(currentDate.getDate() - daysToMonday);
 
     // 生成所有周的数据
-    while (currentDate <= today || currentWeek.length > 0) {
+    while (currentDate <= today) {
         // 使用本地时间生成日期字符串，避免时区偏移问题
         const year = currentDate.getFullYear();
         const month = String(currentDate.getMonth() + 1).padStart(2, '0');
@@ -2904,13 +2904,18 @@ AlgorithmBlog.prototype.renderHeatmap = function() {
             level: level
         });
 
-        // 如果是一周的最后一天（周日），或者已经超过今天，则保存这一周
-        if (currentDate.getDay() === 0 || currentDate > today) {
+        // 如果是一周的最后一天（周日），则保存这一周
+        if (currentDate.getDay() === 0) {
             weeks.push([...currentWeek]);
             currentWeek = [];
         }
 
         currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // 添加最后一周（可能不满一周）
+    if (currentWeek.length > 0) {
+        weeks.push([...currentWeek]);
     }
 
     // 渲染周网格

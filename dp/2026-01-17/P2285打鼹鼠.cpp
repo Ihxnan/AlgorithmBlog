@@ -13,16 +13,18 @@ void solve()
     vector<tuple<int, int, int>> arr(m);
     for (auto &[time, x, y] : arr)
         cin >> time >> x >> y;
-    sort(all(arr));
-    auto dfs = [&](auto &&self, int num, int time) -> int
+    vi dp(m);
+    int ans = 0;
+    for (int i = 0; i < m; ++i)
     {
-        if (num == n)
-            return 0;
-        int ans = self(self, num + 1, time);
-        if (!num || get<0>(arr[num]) - time >= abs(get<1>(arr[num]) - get<1>(arr[num - 1])) + abs(get<2>(arr[num]) - get<2>(arr[num - 1])))
-            ans = max(self(self, num + 1, get<0>(arr[num])), ans);
-        return ans;
-    };
-
-    cout << dfs(dfs, 0, 0);
+        auto &[ti, xi, yi] = arr[i];
+        for (int j = 0; j < i; ++j)
+        {
+            auto &[tj, xj, yj] = arr[j];
+            if (ti - tj >= abs(xi - xj) + abs(yi - yj))
+                dp[i] = max(dp[i], dp[j]);
+        }
+        ans = max(ans, ++dp[i]);
+    }
+    cout << ans;
 }
