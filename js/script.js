@@ -1002,6 +1002,15 @@ class AlgorithmBlog {
             markdownDiv.className = 'markdown-body';
             markdownDiv.innerHTML = htmlContent;
             codeContainer.appendChild(markdownDiv);
+
+            // 渲染数学公式
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                MathJax.typesetPromise([markdownDiv]).then(() => {
+                    console.log('MathJax formulas rendered');
+                }).catch((err) => {
+                    console.error('MathJax rendering error:', err);
+                });
+            }
         } else {
             // 如果 marked.js 不可用，显示原始内容
             codeDisplay.textContent = content;
@@ -2168,6 +2177,15 @@ AlgorithmBlog.prototype.showMarkdownPanel = function(title, content) {
     // 根据当前主题设置样式
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     bodyDiv.className = `markdown-body ${isDark ? 'markdown-body-dark' : 'markdown-body-light'}`;
+
+    // 渲染数学公式
+    if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+        MathJax.typesetPromise([bodyDiv]).then(() => {
+            console.log('MathJax formulas rendered in panel');
+        }).catch((err) => {
+            console.error('MathJax rendering error:', err);
+        });
+    }
 
     // 点击背景关闭
     panel.addEventListener('click', (e) => {

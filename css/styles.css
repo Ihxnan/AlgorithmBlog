@@ -4078,6 +4078,63 @@ body {
     color: white;
 }
 
+/* MathJax 公式渲染样式 */
+.markdown-body mjx-container {
+    font-size: 110% !important;
+    color: var(--text-primary);
+}
+
+/* 行内公式 */
+.markdown-body mjx-container[jax="CHTML"][display="true"] {
+    margin: 1.5em 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.5em 0;
+}
+
+/* 公式容器在深色主题下的适配 */
+:root[data-theme="dark"] .markdown-body mjx-container {
+    color: #f7fafc;
+}
+
+:root[data-theme="dark"] .markdown-body mjx-container svg {
+    fill: #f7fafc;
+}
+
+:root[data-theme="dark"] .markdown-body mjx-container svg path {
+    fill: #f7fafc;
+}
+
+:root[data-theme="dark"] .markdown-body mjx-container mjx-mtext {
+    color: #f7fafc;
+}
+
+/* 公式容器在浅色主题下的适配 */
+:root[data-theme="light"] .markdown-body mjx-container {
+    color: #2d3748;
+}
+
+:root[data-theme="light"] .markdown-body mjx-container svg {
+    fill: #2d3748;
+}
+
+:root[data-theme="light"] .markdown-body mjx-container svg path {
+    fill: #2d3748;
+}
+
+:root[data-theme="light"] .markdown-body mjx-container mjx-mtext {
+    color: #2d3748;
+}
+
+/* 确保公式在移动端可滚动 */
+@media (max-width: 768px) {
+    .markdown-body mjx-container[jax="CHTML"][display="true"] {
+        font-size: 95% !important;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
 /* 响应式设计 */
 @media (max-width: 480px) {
     .user-menu-modal {
