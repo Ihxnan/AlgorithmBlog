@@ -951,6 +951,21 @@ body {
     animation: pulse 2s infinite;
 }
 
+/* Memo badge */
+.memo-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #4299e1, #3182ce);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(66, 153, 225, 0.3);
+}
+
 @keyframes pulse {
     0% {
         opacity: 1;

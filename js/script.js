@@ -94,6 +94,27 @@ class AlgorithmBlog {
             } catch (apiError) {
                 throw new Error('API不可用');
             }
+
+            // 加载笔记文件（memos）
+            try {
+                const memos = await this.safeFetch('api/memos');
+                console.log('Memos API response:', memos);
+                if (memos && memos.files) {
+                    console.log(`Loading ${memos.files.length} memo files`);
+                    memos.files.forEach(memo => {
+                        console.log(`Adding memo: ${memo.name}, path: ${memo.path}`);
+                        this.files.push({
+                            name: memo.name,
+                            path: memo.path,
+                            date: null,
+                            category: 'memo',
+                            isMarkdown: true
+                        });
+                    });
+                }
+            } catch (memoError) {
+                console.warn('加载笔记文件失败:', memoError.message);
+            }
         } catch (error) {
             try {
                 // 尝试动态扫描目录结构
@@ -363,16 +384,20 @@ class AlgorithmBlog {
         fileList.innerHTML = '';
 
 
-        // 分离模板文件、template目录文件和普通文件
+        // 分离模板文件、template目录文件、笔记文件和普通文件
         const templateFiles = [];
         const templateDirFiles = [];
+        const memoFiles = [];
         const regularFiles = {};
-        
+
         this.files.forEach(file => {
             if (file.isTemplate) {
                 templateFiles.push(file);
             } else if (file.isTemplateFile) {
                 templateDirFiles.push(file);
+            } else if (file.category === 'memo') {
+                memoFiles.push(file);
+                console.log(`Memo file found: ${file.name}`);
             } else {
                 const date = file.date || '未知日期';
                 if (!regularFiles[date]) {
@@ -381,6 +406,8 @@ class AlgorithmBlog {
                 regularFiles[date].push(file);
             }
         });
+
+        console.log(`File counts - Template: ${templateFiles.length}, TemplateDir: ${templateDirFiles.length}, Memos: ${memoFiles.length}, Regular: ${Object.keys(regularFiles).length} dates`);
 
         // 渲染火车头header和文件
         if (templateFiles.length > 0) {
@@ -466,6 +493,70 @@ class AlgorithmBlog {
             });
 
             fileList.appendChild(templateDirContainer);
+        }
+
+        // 渲染笔记文件（memos）
+        console.log(`Rendering memo section, memoFiles.length = ${memoFiles.length}`);
+        if (memoFiles.length > 0) {
+            console.log('Creating memo header');
+            const memoHeader = document.createElement('div');
+            memoHeader.className = 'date-header memo-header';
+            memoHeader.innerHTML = `
+                <i class="fas fa-chevron-right"></i>
+                <i class="fas fa-book"></i>
+                不务正业
+            `;
+
+            const memoContainer = document.createElement('div');
+            memoContainer.className = 'date-files';
+            memoContainer.style.display = 'none'; // 默认不展开
+            memoHeader.classList.add('collapsed');
+
+            // 添加点击事件
+            memoHeader.style.cursor = 'pointer';
+            memoHeader.addEventListener('click', () => {
+                console.log('Memo header clicked');
+                const isCollapsed = memoHeader.classList.contains('collapsed');
+                const icon = memoHeader.querySelector('.fa-chevron-right, .fa-chevron-down');
+
+                if (isCollapsed) {
+                    memoContainer.style.display = 'block';
+                    memoHeader.classList.remove('collapsed');
+                    icon.className = 'fas fa-chevron-down';
+                } else {
+                    memoContainer.style.display = 'none';
+                    memoHeader.classList.add('collapsed');
+                    icon.className = 'fas fa-chevron-right';
+                }
+            });
+
+            fileList.appendChild(memoHeader);
+
+            // 渲染笔记文件
+            memoFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item memo-file';
+                fileItem.dataset.fileIndex = this.files.indexOf(file);
+
+                const displayName = this.getDisplayName(file.name);
+                const iconClass = 'fa-file-alt';
+
+                console.log(`Rendering memo file item: ${file.name}, displayName: ${displayName}, isMarkdown: ${file.isMarkdown}, fileIndex: ${fileItem.dataset.fileIndex}`);
+
+                fileItem.innerHTML = `
+                    <i class="fas ${iconClass} file-icon"></i>
+                    ${displayName}
+                    <span class="memo-badge">笔记</span>
+                `;
+                fileItem.addEventListener('click', () => {
+                    console.log(`Clicking memo file: ${file.name}`);
+                    this.loadFile(file);
+                });
+                memoContainer.appendChild(fileItem);
+            });
+
+            fileList.appendChild(memoContainer);
+            console.log('Memo container added to DOM');
         }
 
         // 按日期排序普通文件（最新的在前）
@@ -775,6 +866,8 @@ class AlgorithmBlog {
     }
 
     async loadFile(file) {
+        console.log('loadFile called with:', file);
+
         // 更新活动状态
         document.querySelectorAll('.file-item').forEach(item => {
             item.classList.remove('active');
@@ -823,6 +916,7 @@ class AlgorithmBlog {
 
             // 检测是否为 Markdown 文件
             const isMarkdown = file.isMarkdown || file.name.endsWith('.md');
+            console.log(`Loading file: ${file.name}, isMarkdown: ${isMarkdown}, file.isMarkdown: ${file.isMarkdown}`);
             if (isMarkdown) {
                 this.displayMarkdown(content);
             } else {
@@ -975,6 +1069,7 @@ class AlgorithmBlog {
     }
 
     displayMarkdown(content) {
+        console.log('displayMarkdown called');
         const codeDisplay = document.getElementById('codeDisplay');
         const codeContainer = document.querySelector('.code-container');
 
@@ -986,7 +1081,18 @@ class AlgorithmBlog {
 
         // 使用 marked.js 渲染 Markdown
         if (typeof marked !== 'undefined') {
-            const htmlContent = marked.parse(content);
+            // 配置 marked.js 的 renderer 以正确处理代码块
+            const renderer = new marked.Renderer();
+            renderer.code = function(code, language) {
+                // 如果指定了语言，确保使用正确的语言类名
+                const validLanguage = language && language.trim() !== '' ? language.trim() : '';
+                const languageClass = validLanguage ? `language-${validLanguage}` : '';
+
+                return `<pre><code class="${languageClass}">${escapeHtml(code)}</code></pre>`;
+            };
+
+            // 使用自定义渲染器
+            const htmlContent = marked.parse(content, { renderer: renderer });
 
             // 隐藏原有的 codeDisplay
             codeDisplay.parentElement.style.display = 'none';
@@ -1010,6 +1116,28 @@ class AlgorithmBlog {
                 }).catch((err) => {
                     console.error('MathJax rendering error:', err);
                 });
+            }
+
+            // 对代码块进行语法高亮
+            if (typeof Prism !== 'undefined') {
+                console.log('Prism is available, starting syntax highlighting...');
+                const codeBlocks = markdownDiv.querySelectorAll('pre code');
+                console.log(`Found ${codeBlocks.length} code blocks to highlight`);
+
+                // 使用 requestAnimationFrame 确保 DOM 完全更新后再高亮
+                requestAnimationFrame(() => {
+                    codeBlocks.forEach((codeBlock) => {
+                        console.log('Code block classes:', codeBlock.className);
+                        // 高亮代码
+                        try {
+                            Prism.highlightElement(codeBlock);
+                        } catch (error) {
+                            console.error('Error highlighting code block:', error);
+                        }
+                    });
+                });
+            } else {
+                console.warn('Prism is not available');
             }
         } else {
             // 如果 marked.js 不可用，显示原始内容
@@ -1066,6 +1194,24 @@ class AlgorithmBlog {
     }
 
     setupEventListeners() {
+        // 全局文件点击事件委托
+        document.getElementById('fileList').addEventListener('click', (e) => {
+            console.log('FileList clicked, target:', e.target);
+            const fileItem = e.target.closest('.file-item');
+            console.log('Closest file-item:', fileItem);
+            if (fileItem) {
+                // 查找对应的文件对象
+                const fileIndex = parseInt(fileItem.dataset.fileIndex);
+                console.log('File index:', fileIndex);
+                if (!isNaN(fileIndex) && this.files[fileIndex]) {
+                    console.log(`Global click handler: loading file ${this.files[fileIndex].name}`);
+                    this.loadFile(this.files[fileIndex]);
+                } else {
+                    console.log('Invalid file index or file not found');
+                }
+            }
+        });
+
         // 预览 Task.md 按钮
         document.getElementById('previewTask').addEventListener('click', () => {
             this.previewTask();
@@ -2116,13 +2262,23 @@ AlgorithmBlog.prototype.loadAndRenderMarkdown = async function(file) {
     try {
         // 加载 Markdown 文件内容
         const content = await this.safeFetch(file.path);
-        
+
+        // 配置 marked.js 的 renderer 以正确处理代码块
+        const renderer = new marked.Renderer();
+        renderer.code = function(code, language) {
+            // 如果指定了语言，确保使用正确的语言类名
+            const validLanguage = language && language.trim() !== '' ? language.trim() : '';
+            const languageClass = validLanguage ? `language-${validLanguage}` : '';
+
+            return `<pre><code class="${languageClass}">${escapeHtml(code)}</code></pre>`;
+        };
+
         // 渲染 Markdown
-        const html = marked.parse(content);
-        
+        const html = marked.parse(content, { renderer: renderer });
+
         // 创建或更新 Markdown 显示面板
         this.showMarkdownPanel(file.name, html);
-        
+
         this.showToast(`已加载: ${file.name}`, 'success');
     } catch (error) {
         console.error('加载 Markdown 文件失败:', error);
@@ -2132,6 +2288,7 @@ AlgorithmBlog.prototype.loadAndRenderMarkdown = async function(file) {
 
 // 显示 Markdown 面板
 AlgorithmBlog.prototype.showMarkdownPanel = function(title, content) {
+    console.log('showMarkdownPanel called with:', title);
     // 移除已存在的面板
     const existingPanel = document.querySelector('.markdown-panel');
     if (existingPanel) {
@@ -2185,6 +2342,24 @@ AlgorithmBlog.prototype.showMarkdownPanel = function(title, content) {
         }).catch((err) => {
             console.error('MathJax rendering error:', err);
         });
+    }
+
+    // 对代码块进行语法高亮
+    if (typeof Prism !== 'undefined') {
+        console.log('Prism is available, starting syntax highlighting in panel...');
+        const codeBlocks = bodyDiv.querySelectorAll('pre code');
+        console.log(`Found ${codeBlocks.length} code blocks to highlight in panel`);
+
+        codeBlocks.forEach((codeBlock) => {
+            console.log('Code block classes in panel:', codeBlock.className);
+            try {
+                Prism.highlightElement(codeBlock);
+            } catch (error) {
+                console.error('Error highlighting code block in panel:', error);
+            }
+        });
+    } else {
+        console.warn('Prism is not available in panel');
     }
 
     // 点击背景关闭
@@ -2573,15 +2748,6 @@ class MusicPlayer {
         // 添加到播放历史
         this.addToHistory(song);
 
-        this.audio.src = song.path;
-        this.audio.play().then(() => {
-            this.isPlaying = true;
-            this.showPlayer();
-            this.updateUI();
-        }).catch(error => {
-            console.error('播放失败:', error);
-        });
-
         // 更新歌曲信息
         document.getElementById('songTitle').textContent = song.title;
         document.getElementById('songArtist').textContent = song.artist;
@@ -2592,6 +2758,26 @@ class MusicPlayer {
         playerCover.style.display = 'block';
         fallbackIcon.style.display = 'none';
         playerCover.src = `/api/music/cover/${song.name}`;
+
+        // 先暂停当前播放（如果有）
+        this.audio.pause();
+
+        // 等待音频加载完成后再播放
+        this.audio.src = song.path;
+        this.audio.load(); // 显式触发加载
+
+        const playPromise = this.audio.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                this.isPlaying = true;
+                this.showPlayer();
+                this.updateUI();
+            }).catch(error => {
+                console.error('播放失败:', error);
+                this.isPlaying = false;
+                this.updateUI();
+            });
+        }
     }
 
     addToHistory(song) {
@@ -4036,3 +4222,15 @@ class AuthManager {
 document.addEventListener('DOMContentLoaded', () => {
     new AuthManager();
 });
+
+// HTML 转义函数，防止 XSS 攻击
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
