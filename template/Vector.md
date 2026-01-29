@@ -29,6 +29,9 @@ vector(Iter first, Iter last);
 ## 元素访问
 
 ```cpp
+// 执行边界检查
+reference at(size_t pos);
+
 // 不执行边界检查
 reference operator[](size_t pos);
 
