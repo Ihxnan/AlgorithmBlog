@@ -107,7 +107,7 @@ void push_back(const T& value);
 // 就地构造元素于结尾
 // 返回插入元素的引用
 template <class... Args>
-reference emplace(Args&&... args);
+reference emplace_back(Args&&... args);
 
 // 移除末元素
 void pop_back();

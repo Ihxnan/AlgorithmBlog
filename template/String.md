@@ -1,438 +1,219 @@
-# C++ std::string 所有成员函数 超详细完整版详解
+# string(字符串)
 
-## 一、字符串基础属性 & 容量相关函数（最常用）
-
-这类函数用于获取字符串的**长度、容量、判空**，修改字符串的内存容量，是使用频率最高的基础函数，无任何副作用，不会修改字符串内容。
-
-### 1. 长度/大小相关
+### 定义
 
 ```cpp
-// 1. 返回字符串【有效字符的个数】，不包含 '\0'，两个函数完全等价，任选其一
-size_t size() const noexcept;
-size_t length() const noexcept;
-
-// 2. 返回字符串底层内存中【能容纳的最大字符数】（不扩容的情况下）
-size_t capacity() const noexcept;
-
-// 3. 返回字符串理论上能容纳的最大字符数（系统限制），一般用不到
-size_t max_size() const noexcept;
-```
-✅ 示例：
-```cpp
-string s = "Hello C++";
-cout << "有效长度：" << s.size() << endl;  // 8 (H e l l o  空格 C + +)
-cout << "等价长度：" << s.length() << endl; // 8
-cout << "当前容量：" << s.capacity() << endl; // 一般>=8，编译器自动分配冗余空间
+template <
+	class CharT,
+	class Traits = std::char_traits<CharT>,
+	class Allocator = std::allocator<CharT>
+> class string;
 ```
 
-### 2. 判空 & 清空 & 预留容量 & 收缩容量
+## 构造函数
+
 ```cpp
-// 1. 判断字符串是否为空（有效字符数为0），为空返回true，否则false
-bool empty() const noexcept;
+// 构造一个空字符串，使用默认构造的分配器
+string() : string(Allocator());
 
-// 2. 清空字符串的【所有有效字符】，size()变为0，capacity()不变（内存不释放）
-void clear() noexcept;
+// 构造一个包含 count 个字符 ch 副本的字符串
+string(size_t count, CharT ch);
 
-// 3. 提前预留内存空间，让字符串至少能容纳n个字符，减少后续扩容的拷贝开销，提升效率
-// 仅当n > 当前capacity()时才会扩容，n<=capacity()时无任何操作
-void reserve(size_t n = 0);
+// 构造一个包含范围 [first, last) 内容的字符串
+string(Iter first, Iter last);
 
-// 4. C++11新增：收缩内存容量，让capacity() == size()，释放冗余内存空间，节省内存
-void shrink_to_fit();
-```
-✅ 示例：
-```cpp
-string s = "1234567890";
-cout << "是否为空：" << s.empty() << endl; // 0(false)
-s.clear();
-cout << "清空后是否为空：" << s.empty() << endl; // 1(true)
+// 构造一个包含范围 [s, s + count) 内容的字符串
+// count 默认为 s 的长度
+string(const charT *s, size_t count = Traits::length(s));
 
-s = "abc";
-cout << "size=" << s.size() << ", capacity=" << s.capacity() << endl; // size=3, cap>=3
-s.reserve(20); // 预留20个字符的空间
-cout << "reserve后：size=" << s.size() << ", capacity=" << s.capacity() << endl; // size=3, cap>=20
-s.shrink_to_fit();
-cout << "收缩后：size=" << s.size() << ", capacity=" << s.capacity() << endl; // size=3, cap=3
+// 构造一个包含范围 [other.data() + pos, other.data() + pos + count) 内容的字符串。
+// count 超出范围会取到末尾
+string(const string &other, size_t pos = 0, size_t count = npos);
+
+// 等价于 string(ilist.begin(), ilist.end())
+string(std::initializer_list<CharT> ilist);
 ```
 
-### 3. 重置字符串长度（填充/截断）
+## 元素访问
+
 ```cpp
-// 将字符串的有效长度设置为n，分两种情况：
-// ① n < 当前size()：截断字符串，只保留前n个字符，后面的字符直接丢弃
-// ② n > 当前size()：扩容字符串，新增的位置用【字符c】填充，默认填充 '\0'
-void resize(size_t n, char c = '\0');
-```
-✅ 示例：
-```cpp
-string s = "Hello";
-s.resize(3); // n<5，截断 → "Hel"
-cout << s << endl;
+// 执行边界检查
+reference at(size_t pos);
 
-s.resize(6, '!'); // n>3，扩容+填充 → "Hel!!!"
-cout << s << endl;
-```
+// 不执行边界检查
+reference operator[](size_t pos);
 
----
+// 返回第一个元素的引用
+reference front();
 
-## 二、字符访问函数（4种方式，最全）
-`std::string` 本质是**字符的动态数组**，支持多种字符访问方式，所有访问函数都有「只读版」和「读写版」，满足不同场景需求，**下标从 0 开始**。
-### 1. 下标访问运算符 [] （最常用，无越界检查）
-```cpp
-// 读写版：返回pos位置字符的引用，可修改字符
-char& operator[] (size_t pos);
-// 只读版：const对象调用，返回字符的只读拷贝，不可修改
-const char& operator[] (size_t pos) const;
-```
-⚠️ 注意：**[] 不做越界检查**，如果 `pos >= size()`，程序直接**崩溃(UB)**，效率高，日常推荐使用。
-
-### 2. at() 成员函数（带越界检查，最安全）
-```cpp
-char& at(size_t pos);
-const char& at(size_t pos) const;
-```
-⚠️ 注意：**at() 会做严格的越界检查**，如果 `pos >= size()`，直接抛出 `out_of_range` 异常，程序不会崩溃，适合对安全性要求高的场景，效率比 [] 略低。
-
-### 3. 获取首尾字符（快捷方式）
-```cpp
-// 读写版
-char& front(); // 返回第一个字符的引用
-char& back();  // 返回最后一个字符的引用
-// 只读版
-const char& front() const;
-const char& back() const;
-```
-✅ 等价关系：`s.front()` = `s[0]` ，`s.back()` = `s[s.size()-1]`
-
-### 4. 获取底层C风格字符串指针
-```cpp
-// 返回指向字符串首地址的const char*指针，字符串以 '\0' 结尾，只读不可修改
-const char* c_str() const noexcept;
-const char* data() const noexcept;
-```
-✅ 说明：C++11之后，`c_str()` 和 `data()` **完全等价**；C++11之前，`data()` 不保证末尾有 '\0'。常用于兼容C语言函数（如 printf、fopen等需要const char*参数的场景）。
-
-### ✅ 字符访问完整示例
-```cpp
-string s = "12345";
-s[0] = '9'; // []修改字符 → "92345"
-s.at(4) = '0'; // at()修改字符 → "92340"
-cout << s.front() << endl; // 9
-cout << s.back() << endl;  // 0
-
-// 兼容C语言
-printf("C风格字符串：%s\n", s.c_str()); // 92340
-// s.c_str()[0] = 'a'; // 错误：c_str()返回const指针，不可修改
+// 返回最后一个元素的引用
+reference back();
 ```
 
----
+## 迭代器
 
-## 三、字符串增删改插 操作函数（核心重点）
-这类函数是string的核心功能，用于**添加、删除、修改、插入**字符/字符串，分为「尾部追加」「任意位置插入」「删除指定字符」「替换指定内容」四大类，全覆盖所有修改场景。
-### ✅ 第一类：尾部追加（push_back / append / += ），效率最高
-所有尾部追加操作，都是在字符串**最后一个有效字符后**添加内容，底层扩容策略最优，**优先使用这类函数做追加**。
-#### 1. 追加单个字符
 ```cpp
-void push_back(char c); // 尾部追加1个char字符
+// 返回指向起始的迭代器
+iterator begin();
+
+// 返回指向末尾的迭代器
+iterator end();
+
+// 返回指向起始的逆向迭代器
+reverse_iterator rbegin();
+
+// 返回指向末尾的逆向迭代器
+reverse_iterator rend();
 ```
 
-#### 2. 追加字符串（append 重载，功能最全）
+## 容量
+
 ```cpp
-// ① 追加另一个string对象
-string& append(const string& str);
-// ② 追加另一个string的子串：从str的pos位置开始，追加len个字符
-string& append(const string& str, size_t pos, size_t len = npos);
-// ③ 追加C风格字符串(const char*)
-string& append(const char* s);
-// ④ 追加C风格字符串的前n个字符
-string& append(const char* s, size_t n);
-// ⑤ 追加n个相同的字符c
-string& append(size_t n, char c);
-// ⑥ 追加迭代器区间[first, last)的字符
-template<class Iter> string& append(Iter first, Iter last);
+// 检查是否为空
+bool empty() const;
+
+// 返回元素数量
+size_t size() const;
+size_t lenght() const;
 ```
 
-#### 3. 重载 += 运算符（最简洁，推荐日常使用）
-`+=` 是 append 的简化版，语法更友好，支持所有常用追加场景，**功能等价，效率一致**，是开发中的首选。
-```cpp
-string& operator+= (const string& str);
-string& operator+= (const char* s);
-string& operator+= (char c);
-```
+## 修改器
 
-✅ 追加示例（功能等价，任选风格）：
 ```cpp
-string s = "Hello";
-s.push_back('!'); // Hello!
-s += " World";    // Hello! World
-s.append(3, '*'); // Hello! World***
-s.append("12345", 2); // Hello! World***12
-```
+// 清除内容
+void clear();
 
-### ✅ 第二类：任意位置插入（insert），灵活度最高
-`insert(pos, ...)` 可以在字符串的**任意下标pos位置**插入内容，插入后原pos及后面的字符全部后移，**pos的合法范围：0 ≤ pos ≤ size()**（pos=size()等价于尾部追加）。
-> 语法重载和append几乎一致，只多了一个「插入位置pos」参数，示例仅展示常用重载
-```cpp
-string s = "abcdef";
-s.insert(3, "123"); // 在下标3插入 → "abc123def"
-s.insert(0, 2, '#'); // 在开头插入2个# → "##abc123def"
-s.insert(s.size(), "xyz"); // 在末尾插入 → "##abc123defxyz"
-```
+// ==== 插入元素 ====
+//
+// 在位置 index 插入
+// count 个字符 ch 的副本
+string& insert(size_t index, size_t count, CharT ch);
+// 范围 [s, s + count) 中的字符
+// count 默认为s的长度
+string& insert(size_t index, const CharT *s, size_t count = Traits::length(s));
+// 字符串 str
+string& insert(size_t index, const string &str);
+// 通过 str.substr(s_index, count) 获得的字符串
+string& insert(size_t index, const string &str, size_t s_index, size_t count = npos);
+//
+// 返回指向插入操作中第一个插入的元素的迭代器
+// 在 pos 指向的字符之前插入
+// 字符 ch
+iterator insert(const_iterator pos, CharT ch);
+// count 个 ch 的副本
+iterator insert(const_iterator pos, size_t count, CharT ch);
+// 来自初始化列表 ilist 的元素
+iterator insert(const_iterator pos, std::initializer_list<CharT> ilist);
+// 来自范围[first, last)的元素
+void insert(const_iterator pos, Iter first, Iter last);
 
-### ✅ 第三类：删除字符（erase），两种重载
-```cpp
-// 重载1：删除从pos位置开始的len个字符，返回修改后的字符串
-// 规则：① pos默认0，len默认npos → 不传参则清空字符串
-//      ② 如果pos+len > size()，则删除从pos到末尾的所有字符
-string& erase(size_t pos = 0, size_t len = npos);
-
-// 重载2：删除迭代器指向的单个字符，返回指向下一个字符的迭代器（C++11）
-iterator erase(iterator p);
-// 删除迭代器区间[first, last)的字符，返回指向下一个字符的迭代器
+// 擦出元素
+// 移除从 index 开始的 count 个字符
+// 超出范围删除到结尾
+// 默认删除到结尾
+string& erase(size_t index = 0, size_t count = npos);
+// 返回指向删除元素的下一个有效元素的迭代器
+// 移除 pos 处的字符
+iterator erase(iterator pos);
+// 移除范围 [first, last) 中的字符
 iterator erase(iterator first, iterator last);
+
+// 添加元素到结尾
+void push_back(CharT ch);
+string& operator+=(CharT ch);
+
+// 移除末元素
+void pop_back();
+
+// 将字符追加到末尾
+// 追加 count 个字符 ch 的副本
+string& append(size_t count, CharT ch);
+// 追加范围 [s, s + count) 中的字符
+string& append(const CharT *s, size_t count = Traits::length(s));
+string& operator+=(const CharT *s)
+// 追加另一个字符串 str 中的字符
+string& append(const string &str);
+string& operator+=(const string &str);
+// 通过 str.substr(s_index, count) 获得的字符串
+string& append(const string &str, size_t index, size_t count = npos);
+// 等价于 return append(basic_string(first, last)
+string& append(Iter first, Iter last);
+// 等价于 return append(ilist.begin(), ilist.size())
+string& append(std::initializer_list<CharT> ilist);
+string& operator+=(std::initializer_list<CharT> ilist);
+
+// 替代字符串的指定部分
+// 范围字符被 str 替换
+string& replace(size_t index, size_t count, const string &str);
+string& replace(iterator first, iterator last, const string &str);
+
+// 范围字符被 str.substr(s_index, s_count) 替换
+string& replace(size_t index, size_t count, const string &str， size_t s_index, s_count = npos);
+
+// 范围字符被范围 [cstr, cstr + count2) 中的字符替换
+string& replace(size_t index, size_t count, const CharT *cstr, size_t cs_count = Traits::length(cstr))
+string& replace(iterator first, iterator last, const CharT *cstr, size_t cs_count = Traits::length(cstr));
+
+// 范围字符被字符 ch 替换
+string& replace(size_t index, size_t count, size_t count2, CharT ch)
+string& replace(iterator first, iterator last, size_t count2, CharT ch);
+
+// 范围字符被范围 [first, last) 的字符替换
+string& replace(iterator first, iterator last, Iter first2, Iter last2);
+
+// 范围字符被 ilist 中的字符替换
+string& replace(size_t index, size_t count, std::initializer_list<CharT> ilist);
+string& replace(iterator first, iterator last, std::initializer_list<CharT> ilist);
+
+// 更改存储的元素数量
+void resize(size_t count, CharT ch = CharT());
+
+// 将值赋给容器
+string& operator=(const string &str);
+string& operator=(const CharT *s);
+string& operator=(std::initializer_list<CharT> ilist);
+
+void assign(const string &str);
+void assign(size_t count, CharT ch);
+void assign(const CharT* s, size_t count = Traits::length(s));
+void assign(const string& str, size_t index, size_t count = npos);
+void assign(Iter first, Iter last);
+void assign(std::initializer_list<CharT> ilist);
 ```
-✅ 示例：
+
+
+
+## 非成员函数
+
 ```cpp
-string s = "0123456789";
-s.erase(3,2); // 从下标3删2个字符 → "01256789"
-s.erase(7);   // 从下标7删到末尾 → "0125678"
-s.erase();    // 清空 → ""
+// 字典序比较两个 vector 的值
+
+template <class T, class Alloc>
+bool operator==(const std::vector<T, Alloc>& lhs,
+                const std::vector<T, Alloc>& rhs);
+
+template <class T, class Alloc>
+bool operator!=(const std::vector<T, Alloc>& lhs,
+                const std::vector<T, Alloc>& rhs);
+
+template <class T, class Alloc>
+bool operator<(const std::vector<T, Alloc>& lhs,
+               const std::vector<T, Alloc>& rhs);
+
+template <class T, class Alloc>
+bool operator<=(const std::vector<T, Alloc>& lhs,
+                const std::vector<T, Alloc>& rhs);
+
+template <class T, class Alloc>
+bool operator>(const std::vector<T, Alloc>& lhs,
+               const std::vector<T, Alloc>& rhs);
+
+template <class T, class Alloc>
+bool operator>=(const std::vector<T, Alloc>& lhs,
+                const std::vector<T, Alloc>& rhs);
+
+template <class T, class Alloc>
+constexpr synth-three-way-result<T>
+    operator<=>(const std::vector<T, Alloc>& lhs,
+                const std::vector<T, Alloc>& rhs);
 ```
-
-### ✅ 第四类：替换字符/字符串（replace），最强修改函数
-`replace` 是string的「全能修改函数」，核心逻辑：**先删除指定范围的内容，再在该位置插入新内容**，支持所有场景的替换，是修改字符串的终极方案。
-> 核心语法：`replace(起始pos, 要替换的长度len, 新内容)`
-```cpp
-string s = "I love Java";
-s.replace(7,4,"C++"); // 从下标7开始，替换4个字符 → "I love C++"
-s.replace(0,1,"We");  // 从下标0开始，替换1个字符 → "We love C++"
-s.replace(3,5,2,'*'); // 从下标3开始，替换5个字符为2个* → "We ** C++"
-```
-
----
-
-## 四、字符串查找 & 搜索 函数（全系列，高频）
-所有查找函数都在 `<string>` 中实现，**均为const成员函数（不修改原字符串）**，返回值统一为 `size_t` 类型：
-✅ 查找规则（重中之重）：
-1. 找到匹配内容 → 返回**第一个匹配字符的下标位置**；
-2. 未找到匹配内容 → 返回 `string::npos` 常量；
-3. 所有查找函数都有「正向查找」和「反向查找」，互补使用。
-
-### ✔️ 1. 正向查找（从左到右，默认从pos=0开始）
-```cpp
-// ① 查找字符c，从pos开始找
-size_t find(char c, size_t pos = 0) const noexcept;
-// ② 查找字符串str，从pos开始找
-size_t find(const string& str, size_t pos = 0) const noexcept;
-// ③ 查找C风格字符串s，从pos开始找
-size_t find(const char* s, size_t pos = 0) const;
-// ④ 查找C风格字符串s的前n个字符，从pos开始找
-size_t find(const char* s, size_t pos, size_t n) const;
-```
-
-### ✔️ 2. 反向查找（从右到左，默认从末尾pos=npos开始）
-函数名是 `rfind`，参数和find完全一致，唯一区别是**从指定位置向左查找**，找到后返回第一个匹配的下标。
-```cpp
-size_t rfind(char c, size_t pos = npos) const noexcept;
-size_t rfind(const string& str, size_t pos = npos) const noexcept;
-// 其余重载和find一致
-```
-
-### ✔️ 3. 查找首个/最后一个指定字符（find_first_of / find_last_of）
-```cpp
-// 查找【任意一个】指定字符的【第一个】出现位置，返回最小下标
-size_t find_first_of(const string& str, size_t pos = 0) const noexcept;
-// 查找【任意一个】指定字符的【最后一个】出现位置，返回最大下标
-size_t find_last_of(const string& str, size_t pos = npos) const noexcept;
-```
-✅ 用途：比如查找字符串中是否包含数字/字母/符号，非常高效。
-
-### ✔️ 4. 查找首个/最后一个非指定字符（find_first_not_of / find_last_not_of）
-```cpp
-// 查找第一个【不属于】指定字符集的字符位置
-size_t find_first_not_of(const string& str, size_t pos = 0) const noexcept;
-// 查找最后一个【不属于】指定字符集的字符位置
-size_t find_last_not_of(const string& str, size_t pos = npos) const noexcept;
-```
-
-### ✅ 查找函数完整示例（开发常用写法）
-```cpp
-string s = "abc123abc456abc";
-// 正向查找
-size_t pos1 = s.find("abc"); // 0 (第一个abc的起始下标)
-size_t pos2 = s.find("abc", 1); // 6 (从下标1开始找的第一个abc)
-
-// 反向查找
-size_t pos3 = s.rfind("abc"); // 12 (最后一个abc的起始下标)
-
-// 判断是否找到的标准写法！！！
-if(s.find("xyz") == string::npos) {
-    cout << "未找到xyz" << endl;
-}
-
-// 查找是否包含数字
-size_t pos4 = s.find_first_of("0123456789"); // 3
-```
-> 🔴 必记：判断查找是否成功，**必须用 `== string::npos`**，不能用 `== -1`（npos是无符号最大值，和int的-1本质不同）。
-
----
-
-## 五、字符串比较 函数（compare / == / != / < / > 等）
-string支持**完整的字符串比较**，遵循「ASCII码字典序」：从第一个字符开始逐个比较，直到出现不同字符，ASCII码大的字符所在的字符串更大；如果所有字符都相同，长度长的字符串更大。
-### ✔️ 方式1：重载比较运算符（最简洁，推荐）
-支持所有常用比较逻辑，语法直观，效率高，**日常开发首选**：
-```cpp
-bool operator== (const string& lhs, const string& rhs) const noexcept;
-bool operator!= (const string& lhs, const string& rhs) const noexcept;
-bool operator<  (const string& lhs, const string& rhs) const noexcept;
-bool operator<= (const string& lhs, const string& rhs) const noexcept;
-bool operator>  (const string& lhs, const string& rhs) const noexcept;
-bool operator>= (const string& lhs, const string& rhs) const noexcept;
-```
-
-### ✔️ 方式2：compare() 成员函数（功能最全，返回int值）
-适合需要精确知道「比较结果差值」的场景，返回值规则：
-- 返回 `0` → 两个字符串**相等**；
-- 返回 `<0` → 当前字符串 小于 目标字符串；
-- 返回 `>0` → 当前字符串 大于 目标字符串。
-```cpp
-string s1 = "abc";
-string s2 = "abd";
-cout << (s1 < s2) << endl;  // 1(true)
-cout << s1.compare(s2) << endl; // -1 (s1 < s2)
-cout << ("abc" == s1) << endl; // 1(true)，支持和C字符串直接比较
-```
-
----
-
-## 六、字符串截取 子串函数（substr），必备函数
-```cpp
-// 从字符串的pos位置开始，截取len个字符，返回新的string对象
-// 核心规则 和构造函数的子串规则完全一致！
-string substr(size_t pos = 0, size_t len = npos) const;
-```
-✅ 核心规则（必须记）：
-1. 如果 `pos >= size()` → 抛出 `out_of_range` 越界异常；
-2. 如果 `len = npos` 或 `pos+len > size()` → 截取「从pos到字符串末尾」的所有字符；
-3. 原字符串**不会被修改**，返回的是全新的子串对象。
-
-✅ 示例：
-```cpp
-string s = "0123456789";
-string sub1 = s.substr(3,4); // 从3开始截4个 → "3456"
-string sub2 = s.substr(7);   // 从7开始截到末尾 → "789"
-```
-
----
-
-## 七、字符串交换 & 赋值 函数
-### ✔️ 1. 赋值函数（assign），重载版本齐全
-`assign` 是string的「重置赋值」函数，作用：**清空原字符串的所有内容，再将新内容赋值给当前字符串**，等价于 `string s = 新内容`，适合对已存在的字符串重新赋值。
-```cpp
-string s;
-s.assign(5, '*'); // 赋值5个* → "*****"
-s.assign("Hello",3); // 赋值前3个字符 → "Hel"
-s.assign(string("C++")); // 赋值string对象 → "C++"
-```
-
-### ✔️ 2. 交换函数（swap），极致高效
-```cpp
-void swap(string& str); // 交换两个string对象的内容
-```
-✅ 核心特性：`swap` 是**O(1)时间复杂度**，仅交换两个字符串的「内存指针」，不拷贝任何字符，效率极高，无任何性能损耗，是交换字符串的最优方式。
-```cpp
-string s1 = "abc", s2 = "123";
-s1.swap(s2);
-cout << s1 << " " << s2 << endl; // 123 abc
-```
-
----
-
-## 八、C++11 新增的重要成员函数（必学）
-C++11对string做了大量优化和扩展，新增的函数都是高频实用型，**C++11及以上编译器全部支持**，必须掌握：
-```cpp
-// 1. pop_back()：删除字符串的最后一个字符，无返回值，效率=push_back()
-void pop_back() noexcept;
-
-// 2. emplace_back(char c)：尾部追加单个字符，等价于push_back()，但构造更高效
-void emplace_back(char c);
-
-// 3. emplace(pos, char c)：在pos位置插入单个字符，等价于insert(pos,1,c)，效率更高
-iterator emplace(iterator pos, char c);
-
-// 4. 移动赋值运算符：接管右值的资源，等价于移动构造，效率极高
-string& operator=(string&& str) noexcept;
-
-// 5. 列表赋值：支持{...}赋值
-string& operator=(initializer_list<char> il);
-```
-✅ 示例：
-```cpp
-string s = "Hello";
-s.pop_back(); // Hello → Hell
-s.emplace_back('o'); // Hell → Hello
-s.emplace(s.begin()+2, 'l'); // Hello → Helllo
-```
-
----
-
-## 九、string 全局重载函数（非成员函数，全部必备）
-除了成员函数，C++为string提供了**大量全局重载函数**，都是开发中高频使用的核心功能，这些函数定义在`std`命名空间中，**必须掌握**，分为三大类：
-### ✔️ 第一类：全局输入输出重载（cin/cout）
-```cpp
-istream& operator>> (istream& is, string& str); // 输入字符串（遇空格/回车结束）
-ostream& operator<< (ostream& os, const string& str); // 输出字符串
-```
-
-### ✔️ 第二类：全局字符串拼接重载（+）
-支持 `string+string`、`string+C字符串`、`C字符串+string`、`string+char`、`char+string` 所有组合，返回新的string对象：
-```cpp
-string operator+ (const string& lhs, const string& rhs);
-string operator+ (const string& lhs, const char* rhs);
-string operator+ (const char* lhs, const string& rhs);
-string operator+ (const string& lhs, char rhs);
-string operator+ (char lhs, const string& rhs);
-```
-
-### ✔️ 第三类：全局getline函数（读取整行字符串，含空格）
-**重中之重**：`cin >> string` 读取字符串时，会把「空格、制表符、回车」当作分隔符，无法读取带空格的整行内容，此时必须用`getline`！
-```cpp
-// 读取从输入流is中，到换行符'\n'为止的所有字符，存入str，包含空格，自动丢弃'\n'
-istream& getline(istream& is, string& str);
-// 重载：读取到指定分隔符delim为止，丢弃delim
-istream& getline(istream& is, string& str, char delim);
-```
-✅ 示例（解决带空格输入问题）：
-```cpp
-string s;
-cin >> s; // 输入：Hello World → 只读取到Hello
-getline(cin, s); // 输入：Hello World → 完整读取Hello World
-getline(cin, s, ','); // 输入：abc,123 → 读取到abc，分隔符是,
-```
-
----
-
-## 十、string 所有函数 速查表（收藏版，无遗漏）
-### ✅ 1. 基础属性 & 容量
-`size()/length()、capacity()、max_size()、empty()、clear()、reserve()、shrink_to_fit()、resize()`
-
-### ✅ 2. 字符访问
-`operator[]、at()、front()、back()、c_str()、data()`
-
-### ✅ 3. 增删改插
-`push_back()、append()、operator+=、insert()、erase()、replace()`
-
-### ✅ 4. 查找搜索
-`find()、rfind()、find_first_of()、find_last_of()、find_first_not_of()、find_last_not_of()`
-
-### ✅ 5. 比较
-`operator==/!=/<</<=/>>/>=、compare()`
-
-### ✅ 6. 截取 & 赋值 & 交换
-
-`substr()、assign()、swap()`
-
-### ✅ 7. C++11新增
-`pop_back()、emplace_back()、emplace()、operator=(string&&)`
-
-### ✅ 8. 全局重载函数
-`operator>>、operator<<、operator+、getline()
