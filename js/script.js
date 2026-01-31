@@ -3651,7 +3651,7 @@ class AuthManager {
 
     updateAuthUI(user) {
         const authSection = document.querySelector('.auth-section');
-        const savedAvatar = localStorage.getItem('userAvatar') || `/api/auth/avatar/${user.id}?t=${Date.now()}`;
+        const savedAvatar = localStorage.getItem(`userAvatar_${user.id}`) || `/api/auth/avatar/${user.id}?t=${Date.now()}`;
 
         authSection.innerHTML = `
             <div class="user-info clickable" id="userProfileBtn" title="点击查看用户设置">
@@ -3691,7 +3691,7 @@ class AuthManager {
 
         if (userStr) {
             const user = JSON.parse(userStr);
-            const savedAvatar = localStorage.getItem('userAvatar') || `/api/auth/avatar/${user.id}?t=${Date.now()}`;
+            const savedAvatar = localStorage.getItem(`userAvatar_${user.id}`) || `/api/auth/avatar/${user.id}?t=${Date.now()}`;
 
             document.getElementById('currentUsername').textContent = user.username;
             document.getElementById('currentEmail').textContent = user.email;
@@ -3933,8 +3933,9 @@ class AuthManager {
                             userAvatar.src = avatarData;
                         }
 
-                        // 保存头像到localStorage作为缓存
-                        localStorage.setItem('userAvatar', avatarData);
+                        // 保存头像到localStorage作为缓存（使用用户ID作为键名）
+                        const user = JSON.parse(localStorage.getItem('user'));
+                        localStorage.setItem(`userAvatar_${user.id}`, avatarData);
 
                         this.showNotification('头像已更新', 'success');
                     } else {
