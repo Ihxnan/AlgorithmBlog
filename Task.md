@@ -10,5 +10,5 @@
 ### Jan
 
 -   [] <a href="https://atcoder.jp/contests/abc443" target="_blank">abc443(01-31 20:00)</a>
--   [] <a href="https://ac.nowcoder.com/acm/contest/127265" target="_blank">牛客小白月赛128(01-30 19:00)</a>
+-   [x] <a href="https://ac.nowcoder.com/acm/contest/127265" target="_blank">牛客小白月赛128(01-30 19:00)</a>
 -   [x] <a href="https://ac.nowcoder.com/acm/contest/127240" target="_blank">牛客周赛 Round 128(01-25 19：00)</a>
