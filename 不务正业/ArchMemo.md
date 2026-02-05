@@ -14,7 +14,7 @@
 ![fastfetch](../img/fastfetch/fastfetch6.png)
 - 2026-01-26
 ![fastfetch](../img/fastfetch/fastfetch7.png)
-
--   2026-01-29
-
-    ![fastfetch](../img/fastfetch/fastfetch8.png)
+- 2026-01-29
+![fastfetch](../img/fastfetch/fastfetch8.png)
+- 2026-02-05
+![fastfetch](../img/fastfetch/fastfetch9.png)

@@ -130,7 +130,6 @@ void assign(std::initializer_list<T> ilist);
 
 ```cpp
 // 字典序比较两个 vector 的值
-
 template <class T, class Alloc>
 bool operator==(const std::vector<T, Alloc>& lhs,
                 const std::vector<T, Alloc>& rhs);
