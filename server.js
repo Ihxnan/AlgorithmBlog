@@ -819,6 +819,111 @@ app.get('/api/music/cover/:filename', (req, res) => {
     }
 });
 
+// 提取音乐歌词
+app.get('/api/music/lyrics/:filename', (req, res) => {
+    const filename = decodeURIComponent(req.params.filename);
+    const filePath = path.join(__dirname, 'music', filename);
+
+    // 检查文件是否存在
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ lyrics: null });
+    }
+
+    try {
+        const buffer = fs.readFileSync(filePath);
+
+        // 检查是否为 ID3v2 格式
+        if (buffer.length < 10 || buffer.toString('ascii', 0, 3) !== 'ID3') {
+            return res.status(404).json({ lyrics: null });
+        }
+
+        // 读取 ID3v2 标签大小
+        const id3Size = buffer.readUInt32BE(6);
+        const syncedSize = (id3Size & 0x7F) |
+                           ((id3Size >> 1) & 0x3F80) |
+                           ((id3Size >> 2) & 0x1FC000) |
+                           ((id3Size >> 3) & 0x0FE00000);
+
+        // 读取 ID3v2 标签数据
+        const id3Data = buffer.slice(10, 10 + syncedSize);
+
+        // 查找 USLT 帧（非同步歌词）
+        const usltIndex = id3Data.indexOf('USLT');
+
+        if (usltIndex === -1) {
+            return res.status(404).json({ lyrics: null });
+        }
+
+        // 解析 USLT 帧
+        let offset = usltIndex + 4; // 跳过 'USLT'
+
+        // 检查是否超出边界
+        if (offset + 6 > id3Data.length) {
+            return res.status(404).json({ lyrics: null });
+        }
+
+        // 读取帧大小
+        const frameSize = (id3Data[offset] << 24) |
+                         (id3Data[offset + 1] << 16) |
+                         (id3Data[offset + 2] << 8) |
+                         id3Data[offset + 3];
+        offset += 4;
+
+        // 跳过标志
+        offset += 2;
+
+        // 跳过语言（3字节）
+        offset += 3;
+
+        // 跳过描述（以 null 结尾）
+        const descEnd = id3Data.indexOf(0, offset);
+        if (descEnd === -1) {
+            return res.status(404).json({ lyrics: null });
+        }
+        offset = descEnd + 1;
+
+        // 计算歌词数据大小
+        const remainingSize = id3Data.length - offset;
+        const lyricsSize = Math.min(frameSize - (offset - usltIndex - 10), remainingSize);
+
+        // 读取歌词数据
+        const lyricsData = id3Data.slice(offset, offset + lyricsSize);
+
+        if (lyricsData.length === 0) {
+            return res.status(404).json({ lyrics: null });
+        }
+
+        // 尝试解码歌词（可能使用 UTF-16 或 ISO-8859-1 编码）
+        let lyricsText = '';
+        try {
+            // 尝试 UTF-16 解码
+            if (lyricsData[0] === 0xFF && lyricsData[1] === 0xFE) {
+                lyricsText = lyricsData.toString('utf16le', 2);
+            } else if (lyricsData[0] === 0xFE && lyricsData[1] === 0xFF) {
+                lyricsText = lyricsData.toString('utf16be', 2);
+            } else {
+                // 尝试 UTF-8 或 ISO-8859-1
+                lyricsText = lyricsData.toString('utf8');
+            }
+        } catch (e) {
+            // 如果解码失败，尝试 Latin1
+            lyricsText = lyricsData.toString('latin1');
+        }
+
+        // 设置缓存头（24小时）
+        res.set({
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, max-age=86400'
+        });
+
+        res.json({ lyrics: lyricsText });
+
+    } catch (error) {
+        console.error('提取歌词失败:', error);
+        res.status(404).json({ lyrics: null });
+    }
+});
+
 // 健康检查
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });

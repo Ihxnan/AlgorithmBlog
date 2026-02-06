@@ -13,10 +13,10 @@
     <meta http-equiv="Expires" content="0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.4.0/github-markdown.min.css">
-    <link rel="stylesheet" href="css/styles.css?v=20260131110654">
+    <link rel="stylesheet" href="css/styles.css?v=20260206231334">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/marked/11.1.1/marked.min.js"></script>
     <!-- MathJax for formula rendering -->
     <script>
         window.MathJax = {
@@ -38,7 +38,7 @@
             }
         };
     </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script id="MathJax-script" async src="https://cdn.bootcdn.net/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
 </head>
 <body>
     <!-- 粒子背景 -->
@@ -218,7 +218,7 @@
     <div class="music-player" id="musicPlayer">
         <div class="player-container">
             <div class="player-info">
-                <div class="player-cover">
+                <div class="player-cover" id="playerCoverContainer" style="cursor: pointer;" title="点击查看歌词和封面">
                     <img src="" alt="专辑封面" id="playerCover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <i class="fas fa-music" style="display: none;"></i>
                 </div>
@@ -271,6 +271,42 @@
 
                     <audio id="audioPlayer"></audio>
                 </div>
+
+    <!-- 歌词遮罩层 -->
+    <div class="lyrics-overlay" id="lyricsOverlay"></div>
+
+    <!-- 歌词面板 -->
+    <div class="lyrics-panel" id="lyricsPanel">
+        <div class="lyrics-header">
+            <div class="lyrics-song-info">
+                <h3 id="lyricsSongTitle">歌曲标题</h3>
+                <p id="lyricsSongArtist">歌手</p>
+            </div>
+            <button class="close-btn" id="closeLyrics">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="lyrics-body">
+            <div class="lyrics-cover-section">
+                <div class="vinyl-record" id="vinylRecord">
+                    <div class="vinyl-disc"></div>
+                    <div class="vinyl-label">
+                        <img src="" alt="专辑封面" id="lyricsCover">
+                    </div>
+                </div>
+                <div class="play-status" id="playStatus">
+                    <i class="fas fa-pause"></i>
+                    <span>正在播放</span>
+                </div>
+            </div>
+            <div class="lyrics-text-section">
+                <div id="lyricsText">
+                    <!-- 歌词将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer class="footer">
         <div class="container">
             <p>&copy; 2025 Algorithm Blog. Created with <i class="fas fa-heart"></i> by Ihxnan</p>
@@ -280,8 +316,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
-    <script src="js/particles.js?v=20260131110654"></script>
-    <script src="js/script.js?v=20260131110654"></script>
+    <script src="js/particles.js?v=20260206231334"></script>
+    <script src="js/script.js?v=20260206231334"></script>
     <script src="js/version-manager.js"></script>
 
     <!-- 热度图遮罩层 -->

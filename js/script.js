@@ -2455,6 +2455,19 @@ class MusicPlayer {
             this.hidePlaylist();
         });
 
+        // 歌词弹窗事件
+        document.getElementById('playerCoverContainer').addEventListener('click', () => {
+            this.showLyrics();
+        });
+
+        document.getElementById('closeLyrics').addEventListener('click', () => {
+            this.hideLyrics();
+        });
+
+        document.getElementById('lyricsOverlay').addEventListener('click', () => {
+            this.hideLyrics();
+        });
+
         // 播放列表面板鼠标事件
         const playlistPanel = document.getElementById('playlistPanel');
         playlistPanel.addEventListener('mouseenter', () => {
@@ -2673,6 +2686,9 @@ class MusicPlayer {
         }
 
         this.updateUI();
+        // 更新黑胶唱片和播放状态
+        this.updateVinylRotation();
+        this.updatePlayStatusDisplay();
     }
 
     playSong(index) {
@@ -2747,6 +2763,219 @@ class MusicPlayer {
     hidePlaylist() {
         const panel = document.getElementById('playlistPanel');
         panel.classList.remove('show');
+    }
+
+    async showLyrics() {
+        const currentSong = this.playlist[this.currentIndex];
+        if (!currentSong) return;
+
+        const lyricsPanel = document.getElementById('lyricsPanel');
+        const lyricsOverlay = document.getElementById('lyricsOverlay');
+        const lyricsText = document.getElementById('lyricsText');
+        const lyricsCover = document.getElementById('lyricsCover');
+        const lyricsSongTitle = document.getElementById('lyricsSongTitle');
+        const lyricsSongArtist = document.getElementById('lyricsSongArtist');
+        const vinylRecord = document.getElementById('vinylRecord');
+        const playStatus = document.getElementById('playStatus');
+
+        // 更新歌曲信息
+        lyricsSongTitle.textContent = currentSong.title;
+        lyricsSongArtist.textContent = currentSong.artist;
+
+        // 更新封面
+        lyricsCover.src = `/api/music/cover/${encodeURIComponent(currentSong.name)}`;
+
+        // 更新黑胶唱片旋转状态
+        this.updateVinylRotation();
+
+        // 更新播放状态显示
+        this.updatePlayStatusDisplay();
+
+        // 显示加载状态
+        lyricsText.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> 加载歌词中...</div>';
+        lyricsOverlay.classList.add('show');
+lyricsPanel.classList.add('show');
+
+        try {
+            // 获取歌词
+            const response = await fetch(`/api/music/lyrics/${encodeURIComponent(currentSong.name)}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.lyrics) {
+                    // 解析歌词（支持 LRC 格式）
+                    const parsedLyrics = this.parseLyrics(data.lyrics);
+                    this.renderLyrics(parsedLyrics);
+                } else {
+                    lyricsText.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fas fa-music"></i> 暂无歌词</div>';
+                }
+            } else {
+                lyricsText.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fas fa-music"></i> 暂无歌词</div>';
+            }
+        } catch (error) {
+            console.error('获取歌词失败:', error);
+            lyricsText.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fas fa-exclamation-circle"></i> 加载歌词失败</div>';
+        }
+    }
+
+    // 更新黑胶唱片旋转状态
+    updateVinylRotation() {
+        const vinylRecord = document.getElementById('vinylRecord');
+        if (!vinylRecord) return;
+
+        if (this.isPlaying) {
+            vinylRecord.classList.add('rotating');
+            vinylRecord.classList.remove('paused');
+        } else {
+            vinylRecord.classList.add('paused');
+        }
+    }
+
+    // 更新播放状态显示
+    updatePlayStatusDisplay() {
+        const playStatus = document.getElementById('playStatus');
+        if (!playStatus) return;
+
+        if (this.isPlaying) {
+            playStatus.classList.add('playing');
+            playStatus.innerHTML = '<i class="fas fa-pause"></i><span>正在播放</span>';
+        } else {
+            playStatus.classList.remove('playing');
+            playStatus.innerHTML = '<i class="fas fa-play"></i><span>已暂停</span>';
+        }
+    }
+
+    hideLyrics() {
+        const lyricsPanel = document.getElementById('lyricsPanel');
+        const lyricsOverlay = document.getElementById('lyricsOverlay');
+        lyricsPanel.classList.remove('show');
+        lyricsOverlay.classList.remove('show');
+    }
+
+    parseLyrics(lyricsText) {
+        // 检查是否是 LRC 格式歌词
+        const lrcPattern = /^\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)$/gm;
+        const lines = [];
+        let match;
+        let hasLrc = false;
+
+        // 先尝试解析 LRC 格式
+        while ((match = lrcPattern.exec(lyricsText)) !== null) {
+            hasLrc = true;
+            const minutes = parseInt(match[1]);
+            const seconds = parseInt(match[2]);
+            const milliseconds = parseInt(match[3].padEnd(3, '0'));
+            const time = minutes * 60 + seconds + milliseconds / 1000;
+            const text = match[4].trim();
+            if (text) {
+                lines.push({ time, text });
+            }
+        }
+
+        if (hasLrc) {
+            return { isLrc: true, lines };
+        }
+
+        // 如果不是 LRC 格式，按行分割
+        const plainLines = lyricsText.split('\n').filter(line => line.trim());
+        return { isLrc: false, lines: plainLines.map((text, index) => ({ time: index, text: text.trim() })) };
+    }
+
+    renderLyrics(parsedLyrics) {
+        const lyricsText = document.getElementById('lyricsText');
+
+        if (parsedLyrics.lines.length === 0) {
+            lyricsText.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fas fa-music"></i> 暂无歌词</div>';
+            return;
+        }
+
+        lyricsText.innerHTML = '';
+
+        // 添加顶部留白，让第一行歌词可以居中显示
+        const topPadding = document.createElement('div');
+        topPadding.style.height = '40%';
+        lyricsText.appendChild(topPadding);
+
+        if (parsedLyrics.isLrc) {
+            // LRC 格式歌词
+            parsedLyrics.lines.forEach((line, index) => {
+                const lineElement = document.createElement('div');
+                lineElement.className = 'lyric-line';
+                lineElement.dataset.time = line.time;
+                lineElement.dataset.index = index;
+                lineElement.textContent = line.text;
+                lyricsText.appendChild(lineElement);
+            });
+
+            // 添加底部留白，让最后一行歌词可以居中显示
+            const bottomPadding = document.createElement('div');
+            bottomPadding.style.height = '40%';
+            lyricsText.appendChild(bottomPadding);
+
+            // 设置滚动同步
+            this.setupLyricsSync(parsedLyrics.lines);
+        } else {
+            // 普通文本歌词
+            parsedLyrics.lines.forEach(line => {
+                const lineElement = document.createElement('div');
+                lineElement.className = 'lyric-line lyric-line-plain';
+                lineElement.textContent = line.text;
+                lyricsText.appendChild(lineElement);
+            });
+        }
+    }
+
+    setupLyricsSync(lines) {
+        const lyricsText = document.getElementById('lyricsText');
+        const lyricLines = lyricsText.querySelectorAll('.lyric-line:not(.lyric-line-plain)');
+
+        // 移除旧的同步函数
+        if (this.lyricsSyncHandler) {
+            this.audio.removeEventListener('timeupdate', this.lyricsSyncHandler);
+        }
+
+        let lastActiveIndex = -1;
+
+        this.lyricsSyncHandler = () => {
+            const currentTime = this.audio.currentTime;
+            let activeIndex = -1;
+
+            // 找到当前时间对应的歌词行
+            for (let i = lines.length - 1; i >= 0; i--) {
+                if (currentTime >= lines[i].time) {
+                    activeIndex = i;
+                    break;
+                }
+            }
+
+            // 只有当活动行发生变化时才更新
+            if (activeIndex !== lastActiveIndex) {
+                lastActiveIndex = activeIndex;
+
+                // 更新活动行样式
+                lyricLines.forEach((line, index) => {
+                    if (index === activeIndex) {
+                        line.classList.add('active');
+                        // 平滑滚动到活动行，使其居中显示
+                        const container = lyricsText;
+                        const containerHeight = container.clientHeight;
+                        const lineOffset = line.offsetTop;
+                        const lineHeight = line.clientHeight;
+                        
+                        // 计算滚动位置，使活动行居中
+                        const scrollPosition = lineOffset - containerHeight / 2 + lineHeight / 2;
+                        
+                        container.scrollTo({
+                            top: scrollPosition,
+                            behavior: 'smooth'
+                        });
+                    } else {
+                        line.classList.remove('active');
+                    }
+                });
+            }
+        };
+
+        this.audio.addEventListener('timeupdate', this.lyricsSyncHandler);
     }
 
     renderPlaylist() {

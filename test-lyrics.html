@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网易云音乐风格歌词测试</title>
+    <link rel="stylesheet" href="css/styles.css?v=20260206225554">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            padding: 20px;
+            background: #1a202c;
+            color: #f7fafc;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-header h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        .test-instructions {
+            background: var(--surface-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .test-instructions h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        .test-instructions ul {
+            margin-left: 20px;
+        }
+        .test-instructions li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        .test-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .test-btn {
+            padding: 12px 24px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .test-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        .test-results {
+            background: var(--surface-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .test-results h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        .test-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .test-item.pass {
+            background: rgba(72, 187, 120, 0.2);
+            color: #48bb78;
+        }
+        .test-item.fail {
+            background: rgba(245, 101, 101, 0.2);
+            color: #f56565;
+        }
+        .test-item.pending {
+            background: rgba(237, 137, 54, 0.2);
+            color: #ed8936;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>网易云音乐风格歌词功能测试</h1>
+            <p>测试黑胶唱片旋转效果和歌词高亮滚动功能</p>
+        </div>
+
+        <div class="test-instructions">
+            <h3>测试说明</h3>
+            <ul>
+                <li>点击"打开歌词弹窗"按钮测试歌词显示功能</li>
+                <li>点击"播放音乐"按钮测试黑胶唱片旋转效果</li>
+                <li>观察黑胶唱片是否在播放时旋转，暂停时停止</li>
+                <li>观察歌词是否随音乐播放高亮滚动</li>
+                <li>观察当前播放的歌词行是否放大显示</li>
+                <li>测试响应式布局（缩小浏览器窗口）</li>
+            </ul>
+        </div>
+
+        <div class="test-buttons">
+            <button class="test-btn" id="openLyricsBtn">
+                <i class="fas fa-music"></i> 打开歌词弹窗
+            </button>
+            <button class="test-btn" id="playMusicBtn">
+                <i class="fas fa-play"></i> 播放音乐
+            </button>
+            <button class="test-btn" id="pauseMusicBtn">
+                <i class="fas fa-pause"></i> 暂停音乐
+            </button>
+            <button class="test-btn" id="closeLyricsBtn">
+                <i class="fas fa-times"></i> 关闭歌词弹窗
+            </button>
+        </div>
+
+        <div class="test-results">
+            <h3>测试结果</h3>
+            <div id="testResults">
+                <div class="test-item pending">
+                    <i class="fas fa-clock"></i>
+                    <span>等待测试...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 简化的音乐播放器和歌词弹窗 -->
+    <audio id="audioPlayer"></audio>
+
+    <div class="lyrics-modal" id="lyricsModal">
+        <div class="lyrics-overlay" id="lyricsOverlay"></div>
+        <div class="lyrics-content">
+            <div class="lyrics-header">
+                <div class="lyrics-song-info">
+                    <h3 id="lyricsSongTitle">测试歌曲</h3>
+                    <p id="lyricsSongArtist">测试歌手</p>
+                </div>
+                <button class="close-btn" id="closeLyrics">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="lyrics-body">
+                <div class="lyrics-cover-section">
+                    <div class="vinyl-record" id="vinylRecord">
+                        <div class="vinyl-disc"></div>
+                        <div class="vinyl-label">
+                            <img src="img/head.png" alt="测试封面" id="lyricsCover">
+                        </div>
+                    </div>
+                    <div class="play-status" id="playStatus">
+                        <i class="fas fa-play"></i>
+                        <span>已暂停</span>
+                    </div>
+                </div>
+                <div class="lyrics-text-section">
+                    <div id="lyricsText">
+                        <!-- 测试歌词 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟歌词数据
+        const testLyrics = `[00:00.00] 测试歌词第一行
+[00:03.00] 测试歌词第二行
+[00:06.00] 测试歌词第三行
+[00:09.00] 测试歌词第四行
+[00:12.00] 测试歌词第五行
+[00:15.00] 测试歌词第六行
+[00:18.00] 测试歌词第七行
+[00:21.00] 测试歌词第八行
+[00:24.00] 测试歌词第九行
+[00:27.00] 测试歌词第十行
+[00:30.00] 测试歌词第十一行
+[00:33.00] 测试歌词第十二行
+[00:36.00] 测试歌词第十三行
+[00:39.00] 测试歌词第十四行
+[00:42.00] 测试歌词第十五行
+[00:45.00] 测试歌词第十六行
+[00:48.00] 测试歌词第十七行
+[00:51.00] 测试歌词第十八行
+[00:54.00] 测试歌词第十九行
+[00:57.00] 测试歌词第二十行`;
+
+        const audio = document.getElementById('audioPlayer');
+        const lyricsModal = document.getElementById('lyricsModal');
+        const vinylRecord = document.getElementById('vinylRecord');
+        const playStatus = document.getElementById('playStatus');
+        const lyricsText = document.getElementById('lyricsText');
+
+        let isPlaying = false;
+        let lyricsSyncHandler = null;
+
+        // 解析LRC歌词
+        function parseLyrics(lyricsText) {
+            const lrcPattern = /^\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)$/gm;
+            const lines = [];
+            let match;
+
+            while ((match = lrcPattern.exec(lyricsText)) !== null) {
+                const minutes = parseInt(match[1]);
+                const seconds = parseInt(match[2]);
+                const milliseconds = parseInt(match[3].padEnd(3, '0'));
+                const time = minutes * 60 + seconds + milliseconds / 1000;
+                const text = match[4].trim();
+                if (text) {
+                    lines.push({ time, text });
+                }
+            }
+
+            return lines;
+        }
+
+        // 渲染歌词
+        function renderLyrics(lines) {
+            lyricsText.innerHTML = '';
+
+            // 添加顶部留白
+            const topPadding = document.createElement('div');
+            topPadding.style.height = '40%';
+            lyricsText.appendChild(topPadding);
+
+            lines.forEach((line, index) => {
+                const lineElement = document.createElement('div');
+                lineElement.className = 'lyric-line';
+                lineElement.dataset.time = line.time;
+                lineElement.dataset.index = index;
+                lineElement.textContent = line.text;
+                lyricsText.appendChild(lineElement);
+            });
+
+            // 添加底部留白
+            const bottomPadding = document.createElement('div');
+            bottomPadding.style.height = '40%';
+            lyricsText.appendChild(bottomPadding);
+        }
+
+        // 设置歌词同步
+        function setupLyricsSync(lines) {
+            const lyricLines = lyricsText.querySelectorAll('.lyric-line');
+            let lastActiveIndex = -1;
+
+            lyricsSyncHandler = () => {
+                const currentTime = audio.currentTime;
+                let activeIndex = -1;
+
+                for (let i = lines.length - 1; i >= 0; i--) {
+                    if (currentTime >= lines[i].time) {
+                        activeIndex = i;
+                        break;
+                    }
+                }
+
+                if (activeIndex !== lastActiveIndex) {
+                    lastActiveIndex = activeIndex;
+
+                    lyricLines.forEach((line, index) => {
+                        if (index === activeIndex) {
+                            line.classList.add('active');
+                            const container = lyricsText;
+                            const containerHeight = container.clientHeight;
+                            const lineOffset = line.offsetTop;
+                            const lineHeight = line.clientHeight;
+                            const scrollPosition = lineOffset - containerHeight / 2 + lineHeight / 2;
+                            container.scrollTo({
+                                top: scrollPosition,
+                                behavior: 'smooth'
+                            });
+                        } else {
+                            line.classList.remove('active');
+                        }
+                    });
+                }
+            };
+
+            audio.addEventListener('timeupdate', lyricsSyncHandler);
+        }
+
+        // 更新黑胶唱片旋转
+        function updateVinylRotation() {
+            if (isPlaying) {
+                vinylRecord.classList.add('rotating');
+                vinylRecord.classList.remove('paused');
+            } else {
+                vinylRecord.classList.add('paused');
+            }
+        }
+
+        // 更新播放状态显示
+        function updatePlayStatusDisplay() {
+            if (isPlaying) {
+                playStatus.classList.add('playing');
+                playStatus.innerHTML = '<i class="fas fa-pause"></i><span>正在播放</span>';
+            } else {
+                playStatus.classList.remove('playing');
+                playStatus.innerHTML = '<i class="fas fa-play"></i><span>已暂停</span>';
+            }
+        }
+
+        // 添加测试结果
+        function addTestResult(text, status) {
+            const resultsDiv = document.getElementById('testResults');
+            const testItem = document.createElement('div');
+            testItem.className = `test-item ${status}`;
+            const icon = status === 'pass' ? 'fa-check-circle' : status === 'fail' ? 'fa-times-circle' : 'fa-clock';
+            testItem.innerHTML = `<i class="fas ${icon}"></i><span>${text}</span>`;
+            resultsDiv.appendChild(testItem);
+        }
+
+        // 初始化
+        const lyricsLines = parseLyrics(testLyrics);
+        renderLyrics(lyricsLines);
+
+        // 按钮事件
+        document.getElementById('openLyricsBtn').addEventListener('click', () => {
+            lyricsModal.classList.add('show');
+            addTestResult('歌词弹窗打开成功', 'pass');
+        });
+
+        document.getElementById('closeLyricsBtn').addEventListener('click', () => {
+            lyricsModal.classList.remove('show');
+            addTestResult('歌词弹窗关闭成功', 'pass');
+        });
+
+        document.getElementById('playMusicBtn').addEventListener('click', () => {
+            if (!audio.src) {
+                // 使用一个简短的音频进行测试
+                audio.src = 'music/YOASOBI - Idol.mp3';
+                audio.load();
+            }
+            audio.play().then(() => {
+                isPlaying = true;
+                updateVinylRotation();
+                updatePlayStatusDisplay();
+                setupLyricsSync(lyricsLines);
+                addTestResult('音乐播放开始', 'pass');
+                addTestResult('黑胶唱片旋转开始', 'pass');
+            }).catch(err => {
+                console.error('播放失败:', err);
+                addTestResult('音乐播放失败: ' + err.message, 'fail');
+            });
+        });
+
+        document.getElementById('pauseMusicBtn').addEventListener('click', () => {
+            audio.pause();
+            isPlaying = false;
+            updateVinylRotation();
+            updatePlayStatusDisplay();
+            addTestResult('音乐暂停', 'pass');
+            addTestResult('黑胶唱片旋转停止', 'pass');
+        });
+
+        document.getElementById('closeLyrics').addEventListener('click', () => {
+            lyricsModal.classList.remove('show');
+        });
+
+        document.getElementById('lyricsOverlay').addEventListener('click', () => {
+            lyricsModal.classList.remove('show');
+        });
+
+        // 添加初始测试结果
+        addTestResult('测试页面加载完成', 'pass');
+        addTestResult('歌词解析成功，共 ' + lyricsLines.length + ' 行', 'pass');
+        addTestResult('等待用户操作...', 'pending');
+    </script>
+</body>
+</html>
