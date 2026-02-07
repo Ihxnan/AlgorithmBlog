@@ -1619,8 +1619,13 @@ class AlgorithmBlog {
         const templateFiles = [];
         const templateDirFiles = [];
         const regularFiles = {};
-        
+
         filteredFiles.forEach(file => {
+            // 过滤掉笔记文件（memo category），不在题目列表中显示
+            if (file.category === 'memo') {
+                return;
+            }
+
             if (file.isTemplate) {
                 templateFiles.push(file);
             } else if (file.isTemplateFile) {

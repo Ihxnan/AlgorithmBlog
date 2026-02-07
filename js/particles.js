@@ -13,25 +13,29 @@ class ParticleSystem {
         
         // 配置参数
         this.config = {
-            particleCount: 120,
-            particleSize: { min: 0.5, max: 3 },
-            particleSpeed: { min: 0.1, max: 0.8 },
-            connectionDistance: 120,
-            mouseConnectionDistance: 180,
-            particleOpacity: { min: 0.3, max: 0.8 },
-            connectionOpacity: { min: 0.1, max: 0.3 },
+            particleCount: 100,
+            particleSize: { min: 0.8, max: 2.5 },
+            particleSpeed: { min: 0.15, max: 0.6 },
+            connectionDistance: 140,
+            mouseConnectionDistance: 200,
+            particleOpacity: { min: 0.4, max: 0.7 },
+            connectionOpacity: { min: 0.08, max: 0.2 },
             glowEffect: true,
             pulseEffect: true,
-            colorScheme: 'cyan' // cyan, purple, rainbow, matrix
+            colorScheme: 'purple' // cyan, purple, pink, rainbow, matrix
         };
         
         // 颜色方案
         this.colorSchemes = {
             cyan: ['#00ffff', '#00cccc', '#0099ff', '#0066ff', '#00ffff'],
-            purple: ['#ff00ff', '#cc00ff', '#9900ff', '#6600ff', '#ff00ff'],
+            purple: ['#7c3aed', '#a855f7', '#c084fc', '#e879f9', '#7c3aed'],
+            pink: ['#db2777', '#ec4899', '#f472b6', '#fb7185', '#db2777'],
             rainbow: ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'],
             matrix: ['#00ff00', '#00cc00', '#009900', '#006600', '#00ff00']
         };
+        
+        // 默认使用紫色方案
+        this.config.colorScheme = 'purple';
         
         this.init();
     }
