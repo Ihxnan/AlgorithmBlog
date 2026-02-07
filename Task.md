@@ -13,8 +13,8 @@
 -   [] <a href="https://ac.nowcoder.com/acm/contest/120565" target="_blank">2026牛客寒假算法基础集训营5 (02-11 14：00)</a>
 -   [] <a href="https://ac.nowcoder.com/acm/contest/120564" target="_blank">2026牛客寒假算法基础集训营4 (02-09 14：00)</a>
 -   [] <a href="https://leetcode.cn/contest/weekly-contest-488/" target="_blank">力扣第488场周赛(02-08 10:30)</a>
--   [] <a href="https://www.lanqiao.cn/oj-contest/newbie-35/" target="_blank"> 蓝桥 算法入门赛</a>
--   [] <a href="https://ac.nowcoder.com/acm/contest/120563" target="_blank">2026牛客寒假算法基础集训营3 (02-07 14：00)</a>
+-   [x] <a href="https://www.lanqiao.cn/oj-contest/newbie-35/" target="_blank"> 蓝桥 算法入门赛</a>
+-   [x] <a href="https://ac.nowcoder.com/acm/contest/120563" target="_blank">2026牛客寒假算法基础集训营3 (02-07 14：00)</a>
 -   [x] <a href="https://ac.nowcoder.com/acm/contest/120562" target="_blank">2026牛客寒假算法基础集训营2 (02-05 14：00)</a>
 -   [x] <a href="https://ac.nowcoder.com/acm/contest/120561" target="_blank">2026牛客寒假算法基础集训营1 (02-03 14：00)</a>
 -   [x] <a href="https://ac.nowcoder.com/acm/contest/127264" target="_blank">牛客周赛 Round 129(02-01 19：00)</a>
