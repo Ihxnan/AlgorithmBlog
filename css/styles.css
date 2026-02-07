@@ -3026,6 +3026,14 @@ body {
     background: rgba(255, 255, 255, 0.4);
 }
 
+/* 歌词文本容器 */
+#lyricsText {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+
 /* 歌词行样式 */
 .lyric-line {
     padding: 16px 0;
@@ -3034,9 +3042,13 @@ body {
     color: rgba(255, 255, 255, 0.4);
     text-align: center;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: default;
+    cursor: pointer;
     font-weight: 400;
     letter-spacing: 0.5px;
+}
+
+.lyric-line:hover {
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .lyric-line-plain {
