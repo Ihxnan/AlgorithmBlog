@@ -795,43 +795,68 @@ body {
 }
 
 /* 筛选控件 */
-.filter-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    align-items: end;
-}
+    .filter-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: end;
+    }
 
-.filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    flex: 1;
-    min-width: 120px;
-}
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        flex: 1;
+        min-width: 120px;
+    }
 
-.filter-group label {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-}
+    .filter-group label {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
 
-.filter-group select {
-    padding: 0.5rem;
-    background: var(--surface-color);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    color: var(--text-primary);
-    font-size: 0.85rem;
-    transition: var(--transition);
-}
+    .filter-group select {
+        padding: 0.5rem;
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        transition: var(--transition);
+    }
 
-.filter-group select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-}
+    .filter-group select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+    }
 
+    /* 搜索框移动端适配 */
+    .search-box {
+        margin-bottom: 1rem;
+    }
+
+    .search-box i {
+        left: 1rem;
+        font-size: 0.9rem;
+    }
+
+    .search-box input {
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        font-size: 0.9rem;
+    }
+
+    .clear-btn {
+        right: 0.6rem;
+        width: 22px;
+        height: 22px;
+        line-height: 22px;
+    }
+
+    .clear-btn i {
+        font-size: 10px;
+    }
 
 
 /* 算法类型标签 */
@@ -919,13 +944,15 @@ body {
     padding: 0.85rem 1.4rem;
     margin: 1.25rem 0 0.75rem 0;
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background-size: 200% 200%;
+    animation: gradientShift 12s ease infinite;
     color: white;
     border-radius: var(--border-radius-sm);
     font-weight: 600;
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.15);
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -945,61 +972,70 @@ body {
 
 /* 收起状态的日期标题 */
 .date-header.collapsed {
-    background: linear-gradient(135deg, rgba(108, 117, 125, 0.8), rgba(73, 80, 87, 0.8));
-    opacity: 0.85;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.6), rgba(219, 39, 119, 0.5));
+    opacity: 0.8;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: var(--shadow-sm);
     backdrop-filter: blur(10px);
 }
 
 .date-header.collapsed:hover {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     opacity: 1;
     transform: translateX(4px) scale(1.02);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
     border-color: rgba(255, 255, 255, 0.2);
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 月份分组样式 */
 .month-group {
-    background: linear-gradient(135deg, #48bb78, #38a169);
-    border-left: 4px solid #2f855a;
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+    background-size: 200% 200%;
+    animation: gradientShift 12s ease infinite;
+    border-left: 4px solid var(--accent-color);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .month-group.collapsed {
-    background: linear-gradient(135deg, rgba(108, 117, 125, 0.9), rgba(73, 80, 87, 0.9));
-    border-left: 4px solid rgba(255, 255, 255, 0.2);
-    opacity: 0.85;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.6), rgba(124, 58, 237, 0.5));
+    border-left: 4px solid rgba(6, 182, 212, 0.6);
+    opacity: 0.8;
+    box-shadow: var(--shadow-sm);
     backdrop-filter: blur(10px);
 }
 
 .month-group.collapsed:hover {
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
     opacity: 1;
-    transform: translateX(3px) scale(1.01);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(4px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 年份分组样式 */
 .year-group {
-    background: linear-gradient(135deg, #ed8936, #dd6b20);
-    border-left: 4px solid #c05621;
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+    background-size: 200% 200%;
+    animation: gradientShift 12s ease infinite;
+    border-left: 4px solid var(--secondary-color);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .year-group.collapsed {
-    background: linear-gradient(135deg, rgba(108, 117, 125, 0.9), rgba(73, 80, 87, 0.9));
-    border-left: 4px solid rgba(255, 255, 255, 0.2);
-    opacity: 0.85;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, rgba(219, 39, 119, 0.6), rgba(124, 58, 237, 0.5));
+    border-left: 4px solid rgba(219, 39, 119, 0.6);
+    opacity: 0.8;
+    box-shadow: var(--shadow-sm);
     backdrop-filter: blur(10px);
 }
 
 .year-group.collapsed:hover {
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
     opacity: 1;
-    transform: translateX(3px) scale(1.01);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(4px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 火车头header特殊样式 */
@@ -1034,6 +1070,27 @@ body {
 
 .date-files {
     margin-left: 0.5rem;
+}
+
+/* 年份和月份组内部的日期标题样式优化 */
+.year-group .date-files .date-header,
+.month-group .date-files .date-header {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.7), rgba(219, 39, 119, 0.6));
+    font-size: 0.85rem;
+    padding: 0.7rem 1.2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.year-group .date-files .date-header.collapsed,
+.month-group .date-files .date-header.collapsed {
+    background: linear-gradient(135deg, rgba(108, 117, 125, 0.7), rgba(73, 80, 87, 0.6));
+    opacity: 0.75;
+}
+
+.year-group .date-files .date-header.collapsed:hover,
+.month-group .date-files .date-header.collapsed:hover {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.8), rgba(219, 39, 119, 0.7));
+    opacity: 1;
 }
 
 /* DP tag badge */
@@ -1182,25 +1239,27 @@ body {
 .template-dir-header:hover {
     background: linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(219, 39, 119, 0.25));
     border-color: rgba(124, 58, 237, 0.4);
-    transform: translateX(3px);
+    transform: translateX(4px);
     box-shadow: var(--shadow-md);
 }
 
 /* Template directory header collapsed state */
 .template-dir-header.collapsed {
-    background: linear-gradient(135deg, rgba(108, 117, 125, 0.9), rgba(73, 80, 87, 0.9));
-    opacity: 0.85;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.4), rgba(219, 39, 119, 0.3));
+    opacity: 0.75;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-sm);
     backdrop-filter: blur(10px);
 }
 
 .template-dir-header.collapsed:hover {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
     opacity: 1;
-    transform: translateX(3px) scale(1.01);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    border-color: rgba(255, 255, 255, 0.2);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(4px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(255, 255, 255, 0.3);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .template-dir-header i {
@@ -4898,10 +4957,363 @@ body {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
+
+    /* 日期标题移动端适配 */
+    .date-header {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        margin: 0.9rem 0 0.6rem 0;
+    }
+
+    .date-header i {
+        font-size: 0.8rem;
+        margin-right: 0.5rem;
+    }
+
+    /* 月份分组移动端适配 */
+    .month-group {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        margin: 0.9rem 0 0.6rem 0;
+    }
+
+    /* 年份分组移动端适配 */
+    .year-group {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        margin: 0.9rem 0 0.6rem 0;
+    }
+
+    /* template目录header移动端适配 */
+    .template-dir-header {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        margin-top: 0.6rem;
+    }
+
+    .template-dir-header i {
+        margin-right: 0.4rem;
+    }
+
+    /* 文件列表移动端适配 */
+    .file-item {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .file-item i {
+        font-size: 0.85rem;
+        margin-right: 0.4rem;
+    }
+
+    /* 各种badge移动端适配 */
+    .dp-badge,
+    .str-badge,
+    .ccpc-badge,
+    .trie-badge,
+    .template-badge,
+    .tmpl-badge,
+    .optimized-badge {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.4rem;
+    }
+
+    /* 减小transform效果以适应小屏幕 */
+    .date-header:hover,
+    .month-group:hover,
+    .year-group:hover,
+    .template-dir-header:hover {
+        transform: translateX(3px) scale(1.01);
+    }
+
+    .date-header.collapsed:hover,
+    .month-group.collapsed:hover,
+    .year-group.collapsed:hover,
+    .template-dir-header.collapsed:hover {
+        transform: translateX(3px) scale(1.01);
+    }
+
+    /* 侧边栏滚动条优化 */
+    .file-list {
+        max-height: calc(100vh - 14rem);
+    }
+
+    /* 代码容器移动端适配 */
+    .code-container {
+        padding: 1.5rem;
+    }
+
+    .code-container code {
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
+    /* 内容头部移动端适配 */
+    .content-header {
+        padding: 1.2rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.8rem;
+    }
+
+    .content-header h2 {
+        font-size: 1.1rem;
+        text-align: center;
+    }
+
+    .controls {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* 按钮移动端适配 */
+    .btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+    }
+
+    .btn i {
+        font-size: 0.9rem;
+    }
+
+    /* 问题链接容器移动端适配 */
+    .problem-link-container {
+        margin-bottom: 0.8rem;
+    }
+
+    .problem-link {
+        padding: 1rem;
+        gap: 0.8rem;
+    }
+
+    .problem-link-title {
+        font-size: 0.95rem;
+    }
+
+    /* 文件信息移动端适配 */
+    .file-info {
+        padding: 1rem 1.5rem;
+    }
+
+    .file-info h3 {
+        font-size: 1rem;
+    }
+
+    .info-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.8rem;
+    }
+
+    .info-item .label {
+        font-size: 0.85rem;
+    }
+
+    .info-item .value {
+        font-size: 0.9rem;
+    }
+
+    /* 页脚移动端适配 */
+    .footer {
+        padding: 1rem 0;
+        margin-top: 1.5rem;
+    }
+
+    .footer p {
+        font-size: 0.85rem;
+    }
 }
 
 /* 响应式设计 */
 @media (max-width: 480px) {
+    /* 日期标题超小屏幕适配 */
+    .date-header {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.8rem;
+        margin: 0.7rem 0 0.5rem 0;
+    }
+
+    .date-header i {
+        font-size: 0.75rem;
+        margin-right: 0.4rem;
+    }
+
+    /* 月份分组超小屏幕适配 */
+    .month-group {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.8rem;
+        margin: 0.7rem 0 0.5rem 0;
+    }
+
+    /* 年份分组超小屏幕适配 */
+    .year-group {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.8rem;
+        margin: 0.7rem 0 0.5rem 0;
+    }
+
+    /* template目录header超小屏幕适配 */
+    .template-dir-header {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+    }
+
+    .template-dir-header i {
+        margin-right: 0.35rem;
+    }
+
+    /* 文件列表超小屏幕适配 */
+    .file-item {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .file-item i {
+        font-size: 0.8rem;
+        margin-right: 0.35rem;
+    }
+
+    /* 各种badge超小屏幕适配 */
+    .dp-badge,
+    .str-badge,
+    .ccpc-badge,
+    .trie-badge,
+    .template-badge,
+    .tmpl-badge,
+    .optimized-badge {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.35rem;
+        margin-left: 0.4rem;
+    }
+
+    /* 进一步减小transform效果 */
+    .date-header:hover,
+    .month-group:hover,
+    .year-group:hover,
+    .template-dir-header:hover {
+        transform: translateX(2px) scale(1.005);
+    }
+
+    .date-header.collapsed:hover,
+    .month-group.collapsed:hover,
+    .year-group.collapsed:hover,
+    .template-dir-header.collapsed:hover {
+        transform: translateX(2px) scale(1.005);
+    }
+
+    /* 搜索框超小屏幕适配 */
+    .search-box {
+        margin-bottom: 0.8rem;
+    }
+
+    .search-box i {
+        left: 0.85rem;
+        font-size: 0.85rem;
+    }
+
+    .search-box input {
+        padding: 0.65rem 0.85rem 0.65rem 2.3rem;
+        font-size: 0.85rem;
+    }
+
+    .clear-btn {
+        right: 0.5rem;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+    }
+
+    .clear-btn i {
+        font-size: 9px;
+    }
+
+    /* 侧边栏滚动条进一步优化 */
+    .file-list {
+        max-height: calc(100vh - 12rem);
+    }
+
+    /* 代码容器超小屏幕适配 */
+    .code-container {
+        padding: 1rem;
+    }
+
+    .code-container code {
+        font-size: 0.8rem;
+        line-height: 1.35;
+    }
+
+    /* 内容头部超小屏幕适配 */
+    .content-header {
+        padding: 1rem;
+    }
+
+    .content-header h2 {
+        font-size: 1rem;
+    }
+
+    /* 按钮超小屏幕适配 */
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        gap: 0.4rem;
+    }
+
+    .btn i {
+        font-size: 0.85rem;
+    }
+
+    /* 问题链接容器超小屏幕适配 */
+    .problem-link {
+        padding: 0.8rem;
+        gap: 0.6rem;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .problem-link-title {
+        font-size: 0.9rem;
+    }
+
+    .problem-link-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* 文件信息超小屏幕适配 */
+    .file-info {
+        padding: 0.8rem 1rem;
+    }
+
+    .file-info h3 {
+        font-size: 0.95rem;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 0.6rem;
+    }
+
+    .info-item .label {
+        font-size: 0.8rem;
+    }
+
+    .info-item .value {
+        font-size: 0.85rem;
+    }
+
+    /* 页脚超小屏幕适配 */
+    .footer {
+        padding: 0.8rem 0;
+        margin-top: 1rem;
+    }
+
+    .footer p {
+        font-size: 0.8rem;
+    }
+
+    /* 用户菜单模态框 */
     .user-menu-modal {
         width: 95vw;
         max-height: 85vh;
