@@ -1129,83 +1129,54 @@ class AlgorithmBlog {
         }
     }
 
-    setupEventListeners() {
-        // 全局文件点击事件委托
-        document.getElementById('fileList').addEventListener('click', (e) => {
-            console.log('FileList clicked, target:', e.target);
-            const fileItem = e.target.closest('.file-item');
-            console.log('Closest file-item:', fileItem);
-            if (fileItem) {
-                // 查找对应的文件对象
-                const fileIndex = parseInt(fileItem.dataset.fileIndex);
-                console.log('File index:', fileIndex);
-                if (!isNaN(fileIndex) && this.files[fileIndex]) {
-                    console.log(`Global click handler: loading file ${this.files[fileIndex].name}`);
-                    this.loadFile(this.files[fileIndex]);
-                } else {
-                    console.log('Invalid file index or file not found');
-                }
-            }
-        });
-
-        // 预览 Task.md 按钮
-        document.getElementById('previewTask').addEventListener('click', () => {
-            this.previewTask();
-        });
-
-        // 复制代码
-        document.getElementById('copyCode').addEventListener('click', (e) => {
-            this.addButtonClickEffect(e.target);
-            this.copyCode();
-        });
-
+setupEventListeners() {
         // 刷新文件列表
         document.getElementById('refreshFiles').addEventListener('click', () => {
-            this.refreshFileList();
+            this.loadFileList();
         });
 
-        // 切换主题
+        // 主题切换
         document.getElementById('toggleTheme').addEventListener('click', () => {
             this.toggleTheme();
         });
 
-        // 打开不务正业笔记
-        document.getElementById('openMemo').addEventListener('click', () => {
-            this.openMemoPanel();
+        // 侧边栏切换
+        document.getElementById('toggleSidebar').addEventListener('click', () => {
+            this.toggleSidebar();
         });
 
-        // 点击活跃天数显示热度图
-        document.getElementById('activeDaysStat').addEventListener('click', () => {
-            this.showHeatmap();
+        // 预览待办任务
+        document.getElementById('previewTask').addEventListener('click', () => {
+            this.previewTask();
         });
 
-        // 点击题目总数显示标签统计
+        // 题目总数统计
         document.getElementById('totalProblemsStat').addEventListener('click', () => {
             this.showStatsPanel();
         });
 
-        // 点击代码行数显示行数统计
+        // 活跃天数热度图
+        document.getElementById('activeDaysStat').addEventListener('click', () => {
+            this.showHeatmap();
+        });
+
+        // 代码行数统计
         document.getElementById('totalLinesStat').addEventListener('click', () => {
             this.showLinesPanel();
         });
 
-        // 关闭热度图
+        // 不务正业笔记
+        document.getElementById('openMemo').addEventListener('click', () => {
+            this.openMemoPanel();
+        });
+
+        // 关闭热度图面板
         document.getElementById('closeHeatmap').addEventListener('click', () => {
             this.hideHeatmap();
         });
 
-        // 点击遮罩层关闭热度图
-        document.getElementById('heatmapOverlay').addEventListener('click', () => {
-            this.hideHeatmap();
-        });
-
-        // 关闭标签统计面板
+        // 关闭统计面板
         document.getElementById('closeStats').addEventListener('click', () => {
-            this.hideStatsPanel();
-        });
-
-        // 点击遮罩层关闭标签统计面板
-        document.getElementById('statsOverlay').addEventListener('click', () => {
             this.hideStatsPanel();
         });
 
@@ -1214,72 +1185,15 @@ class AlgorithmBlog {
             this.hideLinesPanel();
         });
 
-        // 点击遮罩层关闭代码行数面板
+        // 点击遮罩层关闭面板
+        document.getElementById('heatmapOverlay').addEventListener('click', () => {
+            this.hideHeatmap();
+        });
+        document.getElementById('statsOverlay').addEventListener('click', () => {
+            this.hideStatsPanel();
+        });
         document.getElementById('linesOverlay').addEventListener('click', () => {
             this.hideLinesPanel();
-        });
-
-        // 切换侧边栏
-        document.getElementById('toggleSidebar').addEventListener('click', () => {
-            this.toggleSidebar();
-        });
-
-        // 下载代码
-        document.getElementById('downloadCode').addEventListener('click', (e) => {
-            this.addButtonClickEffect(e.target);
-            this.downloadCurrentCode();
-        });
-
-        // 搜索功能
-        const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', () => {
-            this.filterFiles();
-        });
-
-        // 清除搜索
-        document.getElementById('clearSearch').addEventListener('click', () => {
-            searchInput.value = '';
-            this.filterFiles();
-        });
-
-        // 筛选功能
-        document.getElementById('typeFilter').addEventListener('change', () => {
-            this.filterFiles();
-        });
-
-        // 键盘快捷键
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                switch(e.key) {
-                    case 'c':
-                        if (window.getSelection().toString() === '') {
-                            e.preventDefault();
-                            this.copyCode();
-                        }
-                        break;
-                    case 'd':
-                        e.preventDefault();
-                        this.toggleTheme();
-                        break;
-                    case 'r':
-                        e.preventDefault();
-                        this.refreshFileList();
-                        break;
-                    case 's':
-                        e.preventDefault();
-                        this.downloadCurrentCode();
-                        break;
-                    case 'f':
-                        e.preventDefault();
-                        document.getElementById('searchInput').focus();
-                        break;
-                }
-            } else if (e.key === 'Escape') {
-                // ESC键清除搜索
-                document.getElementById('searchInput').value = '';
-                this.filterFiles();
-                document.getElementById('searchInput').blur();
-            }
         });
 
         }
@@ -1530,35 +1444,61 @@ class AlgorithmBlog {
         }, 1000);
     }
 
-    // 恢复用户偏好设置
-    restoreUserPreferences() {
-        // 恢复主题设置
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        const themeBtn = document.getElementById('toggleTheme');
-        if (themeBtn) {
-            themeBtn.classList.toggle('active', savedTheme === 'light');
-        }
-        
-        
-        
-        // 恢复侧边栏设置
-        const sidebarVisible = localStorage.getItem('sidebarVisible') !== 'false';
-        const layout = document.querySelector('.layout');
-        const sidebarBtn = document.getElementById('toggleSidebar');
-        
-        if (layout) {
-            if (!sidebarVisible) {
-                layout.classList.add('sidebar-hidden');
-            }
-        }
-        
-        if (sidebarBtn) {
-            sidebarBtn.classList.toggle('active', !sidebarVisible);
-        }
-    }
+        // 恢复用户偏好设置
 
-    // 更新统计信息
+        restoreUserPreferences() {
+
+            // 恢复主题设置
+
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            const themeBtn = document.getElementById('toggleTheme');
+
+            if (themeBtn) {
+
+                themeBtn.classList.toggle('active', savedTheme === 'light');
+
+            }
+
+            
+
+            
+
+            // 恢复侧边栏设置
+
+            const sidebarVisible = localStorage.getItem('sidebarVisible') !== 'false';
+
+            const layout = document.querySelector('.layout');
+
+            const sidebarBtn = document.getElementById('toggleSidebar');
+
+            
+
+            if (layout) {
+
+                if (!sidebarVisible) {
+
+                    layout.classList.add('sidebar-hidden');
+
+                }
+
+            }
+
+            
+
+            if (sidebarBtn) {
+
+                sidebarBtn.classList.toggle('active', !sidebarVisible);
+
+            }
+
+        }
+
+    
+
+        // 更新统计信息
     updateStats() {
         // 计算题目总数（统计所有有 tag 的题目）
         const totalProblems = this.files.filter(file =>
