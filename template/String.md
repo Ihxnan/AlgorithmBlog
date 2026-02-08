@@ -181,39 +181,29 @@ void assign(Iter first, Iter last);
 void assign(std::initializer_list<CharT> ilist);
 ```
 
-
-
-## 非成员函数
+## 搜索
 
 ```cpp
-// 字典序比较两个 vector 的值
-
-template <class T, class Alloc>
-bool operator==(const std::vector<T, Alloc>& lhs,
-                const std::vector<T, Alloc>& rhs);
-
-template <class T, class Alloc>
-bool operator!=(const std::vector<T, Alloc>& lhs,
-                const std::vector<T, Alloc>& rhs);
-
-template <class T, class Alloc>
-bool operator<(const std::vector<T, Alloc>& lhs,
-               const std::vector<T, Alloc>& rhs);
-
-template <class T, class Alloc>
-bool operator<=(const std::vector<T, Alloc>& lhs,
-                const std::vector<T, Alloc>& rhs);
-
-template <class T, class Alloc>
-bool operator>(const std::vector<T, Alloc>& lhs,
-               const std::vector<T, Alloc>& rhs);
-
-template <class T, class Alloc>
-bool operator>=(const std::vector<T, Alloc>& lhs,
-                const std::vector<T, Alloc>& rhs);
-
-template <class T, class Alloc>
-constexpr synth-three-way-result<T>
-    operator<=>(const std::vector<T, Alloc>& lhs,
-                const std::vector<T, Alloc>& rhs);
+// 查找给定子字符串的第一次出现
+size_t find(const string &str, size_t pos = 0);
+size_t find(const CharT* s, size_t pos = 0);
+size_t find(CharT ch, size_t pos = 0);
 ```
+
+## 操作
+
+```cpp
+// 返回子字符串
+string substr(size_t pos, size_t count = npos);
+```
+
+## 数值转换
+
+```cpp
+int stoi(const string &str, size_t *pos = nullptr, int base = 10);
+long long stoll(const string &str, size_t *pos = nullptr, int base = 10);
+
+template <class T>
+string to_string(T value);
+```
+
