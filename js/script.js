@@ -3754,6 +3754,20 @@ class AuthManager {
         // 绑定发送验证码按钮
         document.getElementById('sendRegisterCode').addEventListener('click', () => this.handleSendVerificationCode());
 
+        // 绑定服务条款链接
+        document.querySelectorAll('.terms-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.openTermsModal();
+            });
+        });
+
+        // 绑定服务条款模态框关闭按钮
+        document.getElementById('closeTermsModal').addEventListener('click', () => this.closeTermsModal());
+
+        // 绑定服务条款同意按钮
+        document.getElementById('acceptTermsBtn').addEventListener('click', () => this.acceptTerms());
+
         // ESC 键关闭模态框
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -3782,6 +3796,8 @@ class AuthManager {
         this.loginModal.classList.remove('active');
         this.registerModal.classList.remove('active');
         this.authOverlay.classList.remove('active');
+        document.getElementById('termsOverlay').classList.remove('active');
+        document.getElementById('termsModal').classList.remove('active');
         document.body.style.overflow = '';
     }
 
@@ -3795,6 +3811,28 @@ class AuthManager {
                 this.registerModal.classList.add('active');
             }
         }, 100);
+    }
+
+    openTermsModal() {
+        document.getElementById('termsOverlay').classList.add('active');
+        document.getElementById('termsModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeTermsModal() {
+        document.getElementById('termsOverlay').classList.remove('active');
+        document.getElementById('termsModal').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    acceptTerms() {
+        // 勾选服务条款复选框
+        const agreeCheckbox = document.getElementById('agreeTerms');
+        if (agreeCheckbox) {
+            agreeCheckbox.checked = true;
+        }
+        // 关闭服务条款模态框
+        this.closeTermsModal();
     }
 
     async handleLogin(e) {

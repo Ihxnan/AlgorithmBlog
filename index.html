@@ -13,7 +13,7 @@
     <meta http-equiv="Expires" content="0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.4.0/github-markdown.min.css">
-    <link rel="stylesheet" href="css/styles.css?v=20260208205448">
+    <link rel="stylesheet" href="css/styles.css?v=20260209114008">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.bootcdn.net/ajax/libs/marked/11.1.1/marked.min.js"></script>
@@ -316,8 +316,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
-    <script src="js/particles.js?v=20260208205448"></script>
-    <script src="js/script.js?v=20260208205448"></script>
+    <script src="js/particles.js?v=20260209114008"></script>
+    <script src="js/script.js?v=20260209114008"></script>
     <script src="js/version-manager.js"></script>
 
     <!-- 热度图遮罩层 -->
@@ -652,6 +652,65 @@
         <div class="auth-modal-body users-list-body">
             <div class="users-list-container" id="usersListContainer">
                 <!-- 用户列表将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 服务条款模态框 -->
+    <div class="auth-overlay" id="termsOverlay"></div>
+
+    <div class="auth-modal terms-modal" id="termsModal">
+        <div class="auth-modal-header">
+            <h2><i class="fas fa-file-contract"></i> 服务条款</h2>
+            <button class="close-btn" id="closeTermsModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="auth-modal-body terms-body">
+            <div class="terms-content">
+                <h3>1. 服务条款的接受</h3>
+                <p>欢迎使用算法日常（以下简称"本站"）。通过访问或使用本站，您确认您已阅读、理解并同意遵守本服务条款。如果您不同意这些条款，请不要使用本站。</p>
+                
+                <h3>2. 用户注册</h3>
+                <p>2.1 您必须年满13周岁才能注册成为本站用户。</p>
+                <p>2.2 您提供的注册信息必须真实、准确、完整。</p>
+                <p>2.3 您有责任维护您的账户安全，并对您账户下的所有活动负责。</p>
+                
+                <h3>3. 用户行为规范</h3>
+                <p>3.1 您不得使用本站进行任何非法或有害活动。</p>
+                <p>3.2 您不得发布、传播违法、有害、威胁、辱骂、骚扰、诽谤、侵犯他人隐私或知识产权的内容。</p>
+                <p>3.3 您不得尝试破坏、破解或以任何方式干扰本站的正常运行。</p>
+                
+                <h3>4. 内容所有权</h3>
+                <p>4.1 本站上的算法题解、代码等内容归原作者所有。</p>
+                <p>4.2 未经作者许可，不得擅自复制、传播或用于商业用途。</p>
+                
+                <h3>5. 隐私保护</h3>
+                <p>5.1 我们重视您的隐私，并采取合理措施保护您的个人信息。</p>
+                <p>5.2 我们不会在未经您同意的情况下向第三方出售或披露您的个人信息。</p>
+                <p>5.3 详细隐私政策请参阅我们的隐私声明。</p>
+                
+                <h3>6. 服务变更</h3>
+                <p>6.1 我们保留随时修改或终止本站服务的权利，无需事先通知。</p>
+                <p>6.2 我们保留随时修改本服务条款的权利。修改后的条款将在本站发布后生效。</p>
+                
+                <h3>7. 免责声明</h3>
+                <p>7.1 本站按"现状"提供服务，不提供任何明示或暗示的保证。</p>
+                <p>7.2 对于因使用本站而导致的任何损失，我们不承担责任。</p>
+                
+                <h3>8. 条款变更</h3>
+                <p>我们保留随时修改本服务条款的权利。继续使用本站即表示您接受修改后的条款。</p>
+                
+                <h3>9. 联系我们</h3>
+                <p>如果您对本服务条款有任何疑问，请通过以下方式联系我们：</p>
+                <p>Email: ihxnan@example.com</p>
+                <p>GitHub: https://github.com/Ihxnan/AlgorithmBlog</p>
+            </div>
+            <div class="terms-actions">
+                <button class="auth-submit-btn" id="acceptTermsBtn">
+                    <i class="fas fa-check"></i>
+                    我已阅读并同意
+                </button>
             </div>
         </div>
     </div>

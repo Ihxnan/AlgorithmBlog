@@ -4723,6 +4723,50 @@ body {
     text-decoration: underline;
 }
 
+/* 服务条款模态框 */
+.terms-modal {
+    max-width: 700px;
+    width: 90%;
+}
+
+.terms-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.terms-content {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.terms-content h3 {
+    color: var(--primary-color);
+    margin: 1.5rem 0 0.75rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.terms-content h3:first-child {
+    margin-top: 0;
+}
+
+.terms-content p {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.terms-actions {
+    display: flex;
+    justify-content: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
 .auth-submit-btn {
     width: 100%;
     padding: 0.875rem 1.5rem;
