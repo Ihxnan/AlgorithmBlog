@@ -26,23 +26,7 @@
 #define lowbit(x) ((x) & -(x))
 #define yn(ans) cout << ((ans) ? "Yes" : "No") << endl
 #define YN(ans) cout << ((ans) ? "YES" : "NO") << endl
-#define pb push_back
-#define qb pop_back
-#define pf push_front
-#define qf pop_front
 #define endl '\n'
-#define no                                                                                                             \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        cout << "No" << endl;                                                                                          \
-        return;                                                                                                        \
-    } while (0)
-#define yes                                                                                                            \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        cout << "Yes" << endl;                                                                                         \
-        return;                                                                                                        \
-    } while (0)
 
 using namespace std;
 using ll = long long;
