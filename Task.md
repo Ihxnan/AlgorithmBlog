@@ -2,9 +2,16 @@
 
 ## 2026
 
-### Feb
+### Mar.
 
--   [x] <a href="https://atcoder.jp/contests/abc446" target="_blank">abc446(02-21 20:00)</a>
+-   [] <a href="https://atcoder.jp/contests/abc446" target="_blank">牛客周赛 Round 133(03-01 19:00)</a>
+
+### Feb.
+
+-   [] <a href="https://ac.nowcoder.com/acm/contest/128675" target="_blank">牛客小白月赛129(02-27 19:00)</a>
+-   [] <a href="https://ac.nowcoder.com/acm/contest/128672" target="_blank">牛客周赛 Round 132(02-22 19:00)</a>
+-   [] <a href="https://leetcode.cn/contest/weekly-contest-490/" target="_blank">力扣第490场周赛(02-22 10:30)</a>
+-   [] <a href="https://atcoder.jp/contests/abc446" target="_blank">abc446(02-21 20:00)</a>
 -   [x] <a href="https://ac.nowcoder.com/acm/contest/127703" target="_blank">牛客周赛 Round 131(02-15 19：00)</a>
 -   [x] <a href="https://ac.nowcoder.com/acm/contest/120566" target="_blank">2026牛客寒假算法基础集训营6 (02-13 14：00)</a>
 -   [x] <a href="https://ac.nowcoder.com/acm/contest/120565" target="_blank">2026牛客寒假算法基础集训营5 (02-11 14：00)</a>
@@ -18,7 +25,7 @@
 -   [x] <a href="https://ac.nowcoder.com/acm/contest/127264" target="_blank">牛客周赛 Round 129(02-01 19：00)</a>
 -   [x] <a href="https://leetcode.cn/contest/weekly-contest-487/" target="_blank">力扣第487场周赛(02-01 10:30)</a>
 
-### Jan
+### Jan.
 
 -   [x] <a href="https://atcoder.jp/contests/abc443" target="_blank">abc443(01-31 20:00)</a>
 -   [x] <a href="https://ac.nowcoder.com/acm/contest/127265" target="_blank">牛客小白月赛128(01-30 19:00)</a>
