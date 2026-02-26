@@ -4509,6 +4509,9 @@ class AuthManager {
             usersStatItem.style.display = 'none';
         }
 
+        // 关闭用户设置界面
+        this.closeUserMenuModal();
+
         this.showNotification('已退出登录', 'success');
     }
 
