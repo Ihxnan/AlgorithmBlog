@@ -3621,6 +3621,13 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.vinyl-record:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 40px rgba(124, 58, 237, 0.3);
 }
 
 /* 黑胶唱片旋转动画 */
@@ -3728,13 +3735,80 @@ body {
     align-items: center;
     gap: 0.75rem;
     backdrop-filter: blur(20px);
+    cursor: pointer;
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.play-status:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
 }
 
 .play-status.playing {
     background: rgba(124, 58, 237, 0.3);
     border-color: rgba(124, 58, 237, 0.4);
     box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+}
+
+.play-status.playing:hover {
+    background: rgba(124, 58, 237, 0.4);
+    box-shadow: 0 6px 25px rgba(124, 58, 237, 0.5);
+}
+
+/* 歌词控制按钮组 */
+.lyrics-control-buttons {
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.lyrics-control-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(20px);
+    font-size: 1.1rem;
+}
+
+.lyrics-control-btn:hover {
+    background: rgba(124, 58, 237, 0.3);
+    border-color: rgba(124, 58, 237, 0.4);
+    transform: scale(1.1);
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+}
+
+.lyrics-control-btn:active {
+    transform: scale(0.95);
+}
+
+.lyrics-control-btn.active {
+    background: rgba(124, 58, 237, 0.4);
+    border-color: rgba(124, 58, 237, 0.5);
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+}
+
+/* 播放/暂停按钮特殊样式 */
+.lyrics-control-btn#lyricsPlayPauseBtn {
+    width: 56px;
+    height: 56px;
+    font-size: 1.25rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.lyrics-control-btn#lyricsPlayPauseBtn:hover {
+    background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+    transform: scale(1.15);
+    box-shadow: 0 8px 30px rgba(124, 58, 237, 0.5);
 }
 
 /* 歌词区域 */

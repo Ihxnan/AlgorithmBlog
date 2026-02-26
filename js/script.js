@@ -2422,6 +2422,47 @@ class MusicPlayer {
             this.showLyrics();
         });
 
+        // 黑胶唱片点击切换播放/暂停
+        const vinylRecord = document.getElementById('vinylRecord');
+        if (vinylRecord) {
+            vinylRecord.style.cursor = 'pointer';
+            vinylRecord.addEventListener('click', (e) => {
+                e.stopPropagation(); // 阻止事件冒泡
+                this.togglePlay();
+            });
+        }
+
+        // 播放状态点击切换播放/暂停
+        const playStatus = document.getElementById('playStatus');
+        if (playStatus) {
+            playStatus.style.cursor = 'pointer';
+            playStatus.addEventListener('click', (e) => {
+                e.stopPropagation(); // 阻止事件冒泡
+                this.togglePlay();
+            });
+        }
+
+        // 歌词控制按钮
+        document.getElementById('lyricsPrevBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.playPrevious();
+        });
+
+        document.getElementById('lyricsPlayPauseBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.togglePlay();
+        });
+
+        document.getElementById('lyricsNextBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.playNext();
+        });
+
+        document.getElementById('lyricsShuffleBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleShuffle();
+        });
+
         document.getElementById('closeLyrics').addEventListener('click', () => {
             this.hideLyrics();
         });
@@ -3234,21 +3275,30 @@ lyricsPanel.classList.add('show');
 
     updatePlayModeUI() {
         const btn = document.getElementById('shuffleBtn');
+        const lyricsBtn = document.getElementById('lyricsShuffleBtn');
         const icon = btn.querySelector('i');
+        const lyricsIcon = lyricsBtn.querySelector('i');
         
         // 移除所有状态类
         btn.classList.remove('active', 'shuffle', 'repeat');
+        lyricsBtn.classList.remove('active', 'shuffle', 'repeat');
         
         switch (this.playMode) {
             case 0: // 单曲循环
                 icon.className = 'fas fa-redo-alt';
+                lyricsIcon.className = 'fas fa-redo-alt';
                 btn.classList.add('repeat');
+                lyricsBtn.classList.add('active');
                 btn.title = '单曲循环';
+                lyricsBtn.title = '单曲循环';
                 break;
             case 1: // 随机播放
                 icon.className = 'fas fa-random';
+                lyricsIcon.className = 'fas fa-random';
                 btn.classList.add('shuffle');
+                lyricsBtn.classList.add('shuffle');
                 btn.title = '随机播放';
+                lyricsBtn.title = '随机播放';
                 break;
         }
     }
@@ -3312,10 +3362,12 @@ lyricsPanel.classList.add('show');
     updateUI() {
         const topBtn = document.getElementById('musicPlayPause');
         const bottomBtn = document.getElementById('playPauseBtn');
+        const lyricsBtn = document.getElementById('lyricsPlayPauseBtn');
 
         const icon = this.isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
         topBtn.innerHTML = icon;
         bottomBtn.innerHTML = icon;
+        lyricsBtn.innerHTML = icon;
     }
 
     formatTime(seconds) {

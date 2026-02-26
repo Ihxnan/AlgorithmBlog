@@ -288,15 +288,29 @@
         </div>
         <div class="lyrics-body">
             <div class="lyrics-cover-section">
-                <div class="vinyl-record" id="vinylRecord">
+                <div class="vinyl-record" id="vinylRecord" title="点击切换播放/暂停">
                     <div class="vinyl-disc"></div>
                     <div class="vinyl-label">
                         <img src="" alt="专辑封面" id="lyricsCover">
                     </div>
                 </div>
-                <div class="play-status" id="playStatus">
+                <div class="play-status" id="playStatus" title="点击切换播放/暂停">
                     <i class="fas fa-pause"></i>
                     <span>正在播放</span>
+                </div>
+                <div class="lyrics-control-buttons">
+                    <button class="lyrics-control-btn" id="lyricsPrevBtn" title="上一首">
+                        <i class="fas fa-step-backward"></i>
+                    </button>
+                    <button class="lyrics-control-btn" id="lyricsPlayPauseBtn" title="播放/暂停">
+                        <i class="fas fa-pause"></i>
+                    </button>
+                    <button class="lyrics-control-btn" id="lyricsNextBtn" title="下一首">
+                        <i class="fas fa-step-forward"></i>
+                    </button>
+                    <button class="lyrics-control-btn" id="lyricsShuffleBtn" title="切换播放模式">
+                        <i class="fas fa-redo-alt"></i>
+                    </button>
                 </div>
             </div>
             <div class="lyrics-text-section">
