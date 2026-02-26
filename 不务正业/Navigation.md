@@ -22,4 +22,4 @@
 
     ![matugen](../img/matugen/5.png)
 
--   [] [install.sh](https://github.com/ihxnan/dotfiles)
+-   [] <a href="https://github.com/ihxnan/dotfiles" target="_blank"> install.sh </a>
