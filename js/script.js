@@ -4236,8 +4236,10 @@ class AuthManager {
             const isCurrentUser = user.id === currentUser.id;
             const isUserAdmin = user.is_admin === 1;
 
-            // 管理员标识
-            const adminBadge = isUserAdmin ? '<span class="admin-badge"><i class="fas fa-crown"></i> 管理员</span>' : '';
+            // 用户标识：管理员或普通用户
+            const userBadge = isUserAdmin 
+                ? '<span class="admin-badge"><i class="fas fa-crown"></i> 管理员</span>' 
+                : '<span class="user-badge"><i class="fas fa-user"></i> 用户</span>';
 
             // 踢出按钮（仅管理员可见，且不能踢出自己和其他管理员）
             const kickButton = isAdmin && !isCurrentUser && !isUserAdmin
@@ -4252,7 +4254,7 @@ class AuthManager {
                     <div class="user-card-info">
                         <div class="user-card-name">
                             ${user.username}
-                            ${adminBadge}
+                            ${userBadge}
                         </div>
                         <div class="user-card-email">${user.email}</div>
                         <div class="user-card-date"><i class="fas fa-calendar-alt"></i> 注册时间: ${createdAt}</div>
