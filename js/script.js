@@ -3753,6 +3753,10 @@ class AuthManager {
         document.getElementById('closeUsersListModal').addEventListener('click', () => this.closeUsersListModal());
         document.getElementById('usersListOverlay').addEventListener('click', () => this.closeUsersListModal());
 
+        // 图片查看器关闭事件
+        document.getElementById('closeImageViewer').addEventListener('click', () => this.closeImageViewer());
+        document.getElementById('imageViewerOverlay').addEventListener('click', () => this.closeImageViewer());
+
         // 绑定用户菜单操作按钮
         document.getElementById('changeUsernameBtn').addEventListener('click', () => this.openChangeUsernameModal());
         document.getElementById('changePasswordBtn').addEventListener('click', () => this.openChangePasswordModal());
@@ -4281,6 +4285,35 @@ class AuthManager {
                 });
             });
         }
+
+        // 绑定头像点击事件，查看完整图片
+        container.querySelectorAll('.user-card-avatar').forEach(avatar => {
+            avatar.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.openImageViewer(avatar.src);
+            });
+        });
+    }
+
+    openImageViewer(imageSrc) {
+        const overlay = document.getElementById('imageViewerOverlay');
+        const viewer = document.getElementById('imageViewer');
+        const image = document.getElementById('imageViewerImage');
+
+        image.src = imageSrc;
+        overlay.classList.add('active');
+        viewer.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeImageViewer() {
+        const overlay = document.getElementById('imageViewerOverlay');
+        const viewer = document.getElementById('imageViewer');
+
+        overlay.classList.remove('active');
+        viewer.classList.remove('active');
+        document.body.style.overflow = '';
     }
 
     async kickUser(userId, username) {
