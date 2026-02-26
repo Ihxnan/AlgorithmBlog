@@ -1165,7 +1165,7 @@ setupEventListeners() {
             this.showLinesPanel();
         });
 
-        // 不务正业笔记
+        // notes笔记
         document.getElementById('openMemo').addEventListener('click', () => {
             this.openMemoPanel();
         });
@@ -1995,14 +1995,14 @@ function addLineNumbers() {
 
 // ========== Markdown 相关功能 ==========
 
-// 打开不务正业笔记面板
+// 打开notes笔记面板
 AlgorithmBlog.prototype.openMemoPanel = async function() {
     try {
-        // 扫描不务正业目录下的 Markdown 文件
+        // 扫描notes目录下的 Markdown 文件
         const memoFiles = await this.scanMemoDirectory();
         
         if (memoFiles.length === 0) {
-            this.showToast('不务正业目录中没有 Markdown 文件', 'warning');
+            this.showToast('notes目录中没有 Markdown 文件', 'warning');
             return;
         }
         
@@ -2020,7 +2020,7 @@ AlgorithmBlog.prototype.openMemoPanel = async function() {
     }
 };
 
-// 扫描不务正业目录
+// 扫描notes目录
 AlgorithmBlog.prototype.scanMemoDirectory = async function() {
     const memoFiles = [];
     
@@ -2040,11 +2040,11 @@ AlgorithmBlog.prototype.scanMemoDirectory = async function() {
     } catch (apiError) {
         // 如果 API 不可用，尝试直接访问目录
         try {
-            const memoDir = '不务正业/';
+            const memoDir = 'notes/';
             const response = await fetch(memoDir);
             
             if (!response.ok) {
-                throw new Error('无法访问不务正业目录');
+                throw new Error('无法访问notes目录');
             }
             
             const html = await response.text();
@@ -2075,15 +2075,15 @@ AlgorithmBlog.prototype.scanMemoDirectory = async function() {
                 }
             });
         } catch (dirError) {
-            console.warn('扫描不务正业目录失败，使用静态列表:', dirError.message);
+            console.warn('扫描notes目录失败，使用静态列表:', dirError.message);
             // 使用静态列表作为后备
             memoFiles.push({
                 name: 'ArchMemo.md',
-                path: '不务正业/ArchMemo.md'
+                path: 'notes/ArchMemo.md'
             });
             memoFiles.push({
                 name: 'Navigation.md',
-                path: '不务正业/Navigation.md'
+                path: 'notes/Navigation.md'
             });
         }
     }

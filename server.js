@@ -683,10 +683,10 @@ app.get('/api/music', (req, res) => {
     }
 });
 
-// 获取不务正业目录下的 Markdown 文件列表
+// 获取notes目录下的 Markdown 文件列表
 app.get('/api/memos', (req, res) => {
     try {
-        const memoPath = path.join(__dirname, '不务正业');
+        const memoPath = path.join(__dirname, 'notes');
         if (!fs.existsSync(memoPath)) {
             return res.json({ files: [] });
         }
@@ -700,7 +700,7 @@ app.get('/api/memos', (req, res) => {
             const stats = fs.statSync(filePath);
             return {
                 name: file,
-                path: `不务正业/${file}`,
+                path: `notes/${file}`,
                 size: stats.size,
                 modified: stats.mtime
             };
