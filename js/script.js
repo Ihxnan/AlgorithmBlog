@@ -1196,6 +1196,23 @@ setupEventListeners() {
             this.hideLinesPanel();
         });
 
+        // 搜索功能
+        document.getElementById('searchInput').addEventListener('input', () => {
+            this.filterFiles();
+        });
+
+        // 算法类型筛选功能
+        document.getElementById('typeFilter').addEventListener('change', () => {
+            this.filterFiles();
+        });
+
+        // 清除搜索
+        document.getElementById('clearSearch').addEventListener('click', () => {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('typeFilter').value = '';
+            this.filterFiles();
+        });
+
         }
 
     
@@ -1530,19 +1547,19 @@ setupEventListeners() {
     filterFiles() {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const typeFilter = document.getElementById('typeFilter').value;
-        
+
         // 筛选文件
         const filteredFiles = this.files.filter(file => {
             // 搜索过滤
             if (searchTerm && !file.name.toLowerCase().includes(searchTerm)) {
                 return false;
             }
-            
-            // 算法类型过滤（使用原有的tag属性）
-            if (typeFilter && file.tag !== typeFilter) {
+
+            // 算法类型过滤（使用 category 属性）
+            if (typeFilter && file.category !== typeFilter) {
                 return false;
             }
-            
+
             return true;
         });
         
