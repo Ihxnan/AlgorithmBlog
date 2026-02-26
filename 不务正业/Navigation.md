@@ -1,4 +1,4 @@
-# Navigation
+# Navigation (ArchLinux + i3wm)
 
 -   [x] Archlinux 安装
     ![fastfetch](../img/fastfetch/fastfetch1.png)
@@ -22,4 +22,4 @@
 
     ![matugen](../img/matugen/5.png)
 
--   [] install.sh
+-   [] [install.sh](https://github.com/ihxnan/dotfiles)
