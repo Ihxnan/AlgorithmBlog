@@ -1213,6 +1213,16 @@ setupEventListeners() {
             this.filterFiles();
         });
 
+        // 下载代码
+        document.getElementById('downloadCode').addEventListener('click', () => {
+            this.downloadCurrentCode();
+        });
+
+        // 复制代码
+        document.getElementById('copyCode').addEventListener('click', () => {
+            this.copyCode();
+        });
+
         }
 
     
@@ -3018,7 +3028,7 @@ lyricsPanel.classList.add('show');
         let lastUserScrollTime = 0;
         let scrollTimeout = null;
         const isMobile = window.innerWidth < 768;
-        const AUTO_FOCUS_DELAY = isMobile ? 3000 : 5000; // 移动端3秒，桌面端5秒后自动聚焦
+        const AUTO_FOCUS_DELAY = isMobile ? 2000 : 3000; // 移动端2秒，桌面端3秒后自动聚焦
         const CHECK_INTERVAL = 1000; // 每秒检查一次，减少频率
 
         // 缓存容器尺寸信息，避免重复计算
