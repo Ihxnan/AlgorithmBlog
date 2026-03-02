@@ -21,6 +21,8 @@
 #define out1(x) cout << #x << " = " << (x) << endl
 #define out2(x, y) cout << #x << " = " << (x) << ", " << #y << " = " << (y) << endl
 #define out3(x, y, z) cout << #x << " = " << (x) << ", " << #y << " = " << (y) << ", " << #z << " = " << (z) << endl
+#define pb push_back
+#define qb pop_back
 #define ls(x) ((x) << 1)
 #define rs(x) ((x) << 1 | 1)
 #define lowbit(x) ((x) & -(x))

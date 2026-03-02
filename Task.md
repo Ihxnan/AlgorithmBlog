@@ -4,11 +4,10 @@
 
 ### Mar.
 
--   [] <a href="https://atcoder.jp/contests/abc446" target="_blank">牛客周赛 Round 133(03-01 19:00)</a>
+-   [x] <a href="https://atcoder.jp/contests/abc446" target="_blank">牛客周赛 Round 133(03-01 19:00)</a>
 
 ### Feb.
 
--   [] <a href="https://ac.nowcoder.com/acm/contest/128675" target="_blank">牛客小白月赛129(02-27 19:00)</a>
 -   [x] <a href="https://ac.nowcoder.com/acm/contest/128672" target="_blank">牛客周赛 Round 132(02-22 19:00)</a>
 -   [x] <a href="https://leetcode.cn/contest/weekly-contest-490/" target="_blank">力扣第490场周赛(02-22 10:30)</a>
 -   [x] <a href="https://atcoder.jp/contests/abc446" target="_blank">abc446(02-21 20:00)</a>
