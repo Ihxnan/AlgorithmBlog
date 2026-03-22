@@ -1185,8 +1185,8 @@ body {
     box-shadow: 0 3px 10px rgba(245, 158, 11, 0.3);
 }
 
-/* CCPC tag badge */
-.ccpc-badge {
+/* CCCC tag badge */
+.cccc-badge {
     display: inline-block;
     background: linear-gradient(135deg, #ef4444, #dc2626);
     color: white;
@@ -5434,7 +5434,7 @@ body {
     /* 各种badge移动端适配 */
     .dp-badge,
     .str-badge,
-    .ccpc-badge,
+    .cccc-badge,
     .trie-badge,
     .template-badge,
     .tmpl-badge,
@@ -5602,7 +5602,7 @@ body {
     /* 各种badge超小屏幕适配 */
     .dp-badge,
     .str-badge,
-    .ccpc-badge,
+    .cccc-badge,
     .trie-badge,
     .template-badge,
     .tmpl-badge,

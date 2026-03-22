@@ -510,7 +510,7 @@ app.delete('/api/auth/users/:userId', authenticateToken, requireAdmin, (req, res
 // 获取文件列表
 app.get('/api/files', (req, res) => {
     try {
-        const algorithmTypes = ['dp', 'str', 'ccpc', 'trie'];
+        const algorithmTypes = ['dp', 'str', 'cccc', 'trie'];
         const files = [];
 
         // 扫描根目录的 cpp 文件（如 template.cpp）

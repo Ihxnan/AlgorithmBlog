@@ -167,11 +167,11 @@ class AlgorithmBlog {
             console.warn('扫描str目录失败:', error.message);
         }
 
-        // 扫描ccpc目录
+        // 扫描cccc目录
         try {
-            await this.scanAlgorithmDirectory('ccpc', files);
+            await this.scanAlgorithmDirectory('cccc', files);
         } catch (error) {
-            console.warn('扫描ccpc目录失败:', error.message);
+            console.warn('扫描cccc目录失败:', error.message);
         }
 
         // 扫描trie目录
@@ -221,7 +221,7 @@ class AlgorithmBlog {
                     directoriesToScan = ['2025-12-30', '2025-12-31'];
                 } else if (dirName === 'str') {
                     directoriesToScan = ['2026-01-01'];
-                } else if (dirName === 'ccpc') {
+                } else if (dirName === 'cccc') {
                     directoriesToScan = ['2026-01-13'];
                 } else if (dirName === 'trie') {
                     directoriesToScan = ['2026-01-14'];
@@ -326,7 +326,7 @@ class AlgorithmBlog {
             // 2026-01-01 的题目
             { name: '迎新字符串.cpp', path: 'str/2026-01-01/迎新字符串.cpp', date: '2026-01-01', category: 'str' },
             // 2026-01-13 的题目
-            { name: 'L1-001.cpp', path: 'ccpc/2026-01-13/L1-001.cpp', date: '2026-01-13', category: 'ccpc' },
+            { name: 'L1-001.cpp', path: 'cccc/2026-01-13/L1-001.cpp', date: '2026-01-13', category: 'cccc' },
             // 2026-01-14 的题目
             { name: '字典树的实现.cpp', path: 'trie/2026-01-14/字典树的实现.cpp', date: '2026-01-14', category: 'trie' }
         ];
@@ -341,8 +341,8 @@ class AlgorithmBlog {
                     file.tag = 'dp';
                 } else if (file.path.includes('str/')) {
                     file.tag = 'str';
-                } else if (file.path.includes('ccpc/')) {
-                    file.tag = 'ccpc';
+                } else if (file.path.includes('cccc/')) {
+                    file.tag = 'cccc';
                 } else if (file.path.includes('trie/')) {
                     file.tag = 'trie';
                 }
@@ -758,7 +758,7 @@ class AlgorithmBlog {
                 // 检查文件类型和标签
                 const hasDpTag = file.tag === 'dp';
                 const hasStrTag = file.tag === 'str';
-                const hasCcpcTag = file.tag === 'ccpc';
+                const hasCcccTag = file.tag === 'cccc';
                 const hasTrieTag = file.tag === 'trie';
                 // 统一使用文件名判断PLUS标签
                 const hasPlusTag = file.name.includes('-优化空间') || file.name.includes('-优化');
@@ -774,8 +774,8 @@ class AlgorithmBlog {
                     specialBadges.push('<span class="str-badge">STR</span>');
                 }
 
-                if (hasCcpcTag) {
-                    specialBadges.push('<span class="ccpc-badge">CCPC</span>');
+                if (hasCcccTag) {
+                    specialBadges.push('<span class="cccc-badge">CCCC</span>');
                 }
 
                 if (hasTrieTag) {
@@ -3571,7 +3571,7 @@ AlgorithmBlog.prototype.renderStatsPanel = function() {
     const tagStats = {
         'dp': { name: '动态规划', count: 0, color: '#48bb78', icon: 'fa-project-diagram' },
         'str': { name: '字符串', count: 0, color: '#ed8936', icon: 'fa-font' },
-        'ccpc': { name: 'CCPC竞赛', count: 0, color: '#e53e3e', icon: 'fa-trophy' },
+        'cccc': { name: 'CCCC竞赛', count: 0, color: '#e53e3e', icon: 'fa-trophy' },
         'trie': { name: '字典树', count: 0, color: '#9f7aea', icon: 'fa-code-branch' }
     };
 
@@ -3671,7 +3671,7 @@ AlgorithmBlog.prototype.renderLinesPanel = function() {
     const lineStats = {
         'dp': { name: '动态规划', count: 0, files: 0, color: '#48bb78', icon: 'fa-project-diagram' },
         'str': { name: '字符串', count: 0, files: 0, color: '#ed8936', icon: 'fa-font' },
-        'ccpc': { name: 'CCPC竞赛', count: 0, files: 0, color: '#e53e3e', icon: 'fa-trophy' },
+        'cccc': { name: 'CCCC竞赛', count: 0, files: 0, color: '#e53e3e', icon: 'fa-trophy' },
         'trie': { name: '字典树', count: 0, files: 0, color: '#9f7aea', icon: 'fa-code-branch' },
         'template': { name: '模板文件', count: 0, files: 0, color: '#667eea', icon: 'fa-layer-group' }
     };
