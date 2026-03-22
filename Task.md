@@ -28,7 +28,7 @@
 | [2026牛客寒假算法基础集训营4](https://ac.nowcoder.com/acm/contest/120564) | 02-09 14:00 | 7 / 10 |
 | [牛客周赛 Round 130](https://ac.nowcoder.com/acm/contest/127702) | 02-08 19:00 | 4 / 6 |
 | [力扣第488场周赛](https://leetcode.cn/contest/weekly-contest-488) | 02-08 10:30 | ak |
-| [蓝桥 算法入门赛](https://www.lanqiao.cn/oj-contest/newbie-35) |  | 4 / 6 |
+| [蓝桥 算法入门赛](https://www.lanqiao.cn/oj-contest/newbie-35) | 02-07 19:00 | 4 / 6 |
 | [2026牛客寒假算法基础集训营3](https://ac.nowcoder.com/acm/contest/120563) | 02-07 14:00 | 5 / 10 |
 | [2026牛客寒假算法基础集训营2](https://ac.nowcoder.com/acm/contest/120562) | 02-05 14:00 | 6 / 10 |
 | [2026牛客寒假算法基础集训营1](https://ac.nowcoder.com/acm/contest/120561) | 02-03 14:00 | 7 / 12 |
