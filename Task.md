@@ -2,11 +2,22 @@
 
 ## 2026
 
+### Apr.
+
+| 比赛 | 时间 | 结果 |
+|------|------|------|
+| [牛客周赛 Round 140](https://ac.nowcoder.com/acm/contest/132940) | 04-19 19:00 |  |
+| [牛客周赛 Round 139](https://ac.nowcoder.com/acm/contest/131539) | 04-12 19:00 | 4 / 6 |
+| [蓝桥杯多校模拟赛 (第二场)](https://ac.nowcoder.com/acm/contest/132303) | 04-06 14:00 | 54 / 100(score) |
+| [牛客周赛 Round 138](https://ac.nowcoder.com/acm/contest/131111) | 04-05 19:00 | 4 / 6 |
+
 ### Mar.
 
 | 比赛 | 时间 | 结果 |
 |------|------|------|
-| [牛客周赛 Round 136](https://ac.nowcoder.com/acm/contest/130107) | 03-22 19:00 |         |
+| [牛客周赛 Round 137](https://ac.nowcoder.com/acm/contest/130843) | 03-29 19:00 | 4 / 6 |
+| [2026天梯赛选拔](https://pintia.cn/problem-sets/2037859816017846272/exam/overview) | 03-29 13:30 | 243 / 290(score) |
+| [牛客周赛 Round 136](https://ac.nowcoder.com/acm/contest/130107) | 03-22 19:00 | 5 / 6 |
 | [abc449](https://atcoder.jp/contests/abc450) | 03-21 20:00 | 4 / 7 |
 | [牛客周赛 Round 135](https://ac.nowcoder.com/acm/contest/129582) | 03-15 19:00 | 4 / 6 |
 | [abc449](https://atcoder.jp/contests/abc449) | 03-14 20:00 | 4 / 7 |

@@ -74,7 +74,7 @@ bool empty() const;
 
 // 返回元素数量
 size_t size() const;
-size_t lenght() const;
+size_t length() const;
 ```
 
 ## 修改器
